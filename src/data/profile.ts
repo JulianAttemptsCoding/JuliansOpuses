@@ -180,7 +180,7 @@ export const highSchool: School = {
   facts: ['Class of 2027, 4.0 GPA'],
   courses: [
     { title: 'AP Calculus BC' },
-    { title: 'AP Physics C: Mechanics and E&M' },
+    { title: 'AP Physics C: Mechanics and E&M', ongoing: true },
     { title: 'AP Chemistry' },
     { title: 'AP Biology' },
     { title: 'Introduction to Engineering Design' },

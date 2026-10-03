@@ -24,7 +24,7 @@ export const site = {
  */
 export const contact = {
   endpoint: 'https://api.web3forms.com/submit',
-  accessKey: '',
+  accessKey: '930d0e62-1bbc-4bde-82f7-5e49c6b6024f',
 };
 
 export const nav = [
