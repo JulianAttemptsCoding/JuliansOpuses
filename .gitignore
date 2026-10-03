@@ -8,3 +8,6 @@ dist/
 # Résumé source files carry a personal email address: keep them out of the public repo.
 # To publish one, export a copy without the address to public/resume.pdf.
 resume/
+
+# graft's local graph cache — regenerable, not committed (run `graft build`).
+/graft/
