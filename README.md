@@ -60,8 +60,9 @@ page lists LinkedIn and GitHub instead.
 ## Before publishing
 
 1. Add the contact-form key (above).
-2. For a résumé link, export a copy **without a personal email address** to `public/resume.pdf` and set
-   `resume: '/resume.pdf'` in `src/data/site.ts`. The `resume/` folder is git-ignored for that reason.
+2. `public/resume.pdf` is the published résumé and carries **no personal email address**. When the
+   résumé changes, replace it with a copy that still has none. The working files with the address
+   live in `resume/`, which is git-ignored for that reason.
 3. Read every case study once for voice and accuracy. The copy was drafted from the project brief and
    the public repositories.
 4. The Firefighter Tracker page has a dev-only note where prototype photos and test plots belong.

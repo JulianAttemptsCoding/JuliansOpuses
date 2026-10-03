@@ -11,7 +11,7 @@ export const site = {
     'Scientific machine learning, detector simulation, graph forecasting and estimation, with the tests that show what held up and what did not.',
   github: 'https://github.com/JulianAttemptsCoding',
   linkedin: 'https://www.linkedin.com/in/4a4a75616e/',
-  resume: '', // e.g. '/resume.pdf' after adding public/resume.pdf
+  resume: '/resume.pdf', // public/resume.pdf: the copy without a personal email address
 };
 
 /**
