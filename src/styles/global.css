@@ -118,8 +118,17 @@ body {
   display: flex;
   flex-direction: column;
 }
+/* The page is a sheet lying on top of the footer: it has its own background and rounded
+   lower corners, and scrolling to the end lifts it off the footer underneath. */
 main {
   flex: 1;
+  position: relative;
+  z-index: 1;
+  padding-bottom: clamp(4rem, 10vw, 9rem);
+  background: var(--paper);
+  /* Reveals move and scale things; none of that may widen the page. */
+  overflow-x: clip;
+  border-radius: 0 0 clamp(20px, 3vw, 40px) clamp(20px, 3vw, 40px);
 }
 img,
 svg {
@@ -429,11 +438,69 @@ a.ext:hover::after {
 /* ---------- Motion ----------
    Everything here is an enhancement. Content is in place without JavaScript, in
    browsers without scroll-driven animations, and for readers who prefer reduced
-   motion. `html.js` is set by an inline script before first paint. */
+   motion. `html.js` is set by an inline script before first paint.
+
+   Scroll-driven reveals are opted into with data attributes:
+     data-reveal            fade up
+     data-reveal="left"     slide in from the left
+     data-reveal="mask"     rise out of a mask (large type)
+     data-reveal="scale"    settle from slightly small (figures)
+     data-reveal="stamp"    land like a stamp (the verdict)
+     data-stagger           each child fades up as it arrives
+     data-rule              the rule above a section draws from the left
+     data-drift             drift a little against the scroll (set --drift) */
 @keyframes reveal {
   from {
     opacity: 0;
-    transform: translateY(14px);
+    transform: translateY(18px);
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-28px);
+  }
+}
+@keyframes unmask {
+  from {
+    clip-path: inset(0 0 100% 0);
+    transform: translateY(0.45em);
+  }
+  to {
+    clip-path: inset(-30% -5%);
+    transform: none;
+  }
+}
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.96);
+  }
+}
+@keyframes stamp {
+  0% {
+    opacity: 0;
+    transform: scale(1.8) rotate(-10deg);
+  }
+  65% {
+    opacity: 1;
+    transform: scale(0.95) rotate(1.5deg);
+  }
+  100% {
+    transform: none;
+  }
+}
+@keyframes drift {
+  from {
+    transform: translateY(var(--drift, 28px));
+  }
+  to {
+    transform: translateY(calc(var(--drift, 28px) * -1));
   }
 }
 @keyframes draw-rule {
@@ -479,17 +546,41 @@ a.ext:hover::after {
   }
 
   @supports (animation-timeline: view()) {
-    [data-reveal] {
+    /* Ranges are lengths, not percentages of the element, so a short line and a tall
+       figure both finish arriving the same distance above the bottom of the window. */
+    [data-reveal],
+    [data-stagger] > * {
       animation: reveal linear both;
       animation-timeline: view();
-      animation-range: entry 0% entry 30%;
+      animation-range: entry 0px entry 200px;
+    }
+    [data-reveal='left'] {
+      animation-name: slide-in-left;
+      animation-range: entry 0px entry 260px;
+    }
+    [data-reveal='mask'] {
+      animation-name: unmask;
+      animation-range: entry 20px entry 240px;
+    }
+    [data-reveal='scale'] {
+      animation-name: scale-in;
+      animation-range: entry 0px entry 320px;
+    }
+    [data-reveal='stamp'] {
+      animation-name: stamp;
+      animation-range: entry 80px entry 380px;
+    }
+    [data-drift] {
+      animation: drift linear both;
+      animation-timeline: view();
+      animation-range: cover;
     }
     /* Section rules draw themselves from the left as they come into view. */
     [data-rule]::before {
       transform-origin: left center;
       animation: draw-rule linear both;
       animation-timeline: view();
-      animation-range: entry 0% entry 70%;
+      animation-range: entry 0px entry 340px;
     }
   }
 
@@ -499,5 +590,45 @@ a.ext:hover::after {
   ::view-transition-old(root),
   ::view-transition-new(root) {
     animation-duration: 0.25s;
+  }
+  /* Switching theme: the new colours open as a circle from the toggle. The script
+     animates the clip; these rules only switch the default cross-fade off. */
+  html.theme-switch::view-transition-old(root),
+  html.theme-switch::view-transition-new(root) {
+    animation: none;
+    mix-blend-mode: normal;
+  }
+  html.theme-switch::view-transition-new(root) {
+    z-index: 2;
+  }
+}
+
+/* A button whose fill rises from below on hover. Set --fill and --fill-ink. */
+.fill {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+.fill::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  z-index: -1;
+  background: var(--fill, var(--ink));
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  transform: translateY(102%);
+  transition:
+    transform 0.5s var(--ease),
+    border-radius 0.5s var(--ease);
+}
+@media (hover: hover) {
+  .fill:hover::before,
+  .fill:focus-visible::before {
+    border-radius: 0;
+    transform: none;
+  }
+  .fill:hover,
+  .fill:focus-visible {
+    color: var(--fill-ink, var(--paper));
   }
 }

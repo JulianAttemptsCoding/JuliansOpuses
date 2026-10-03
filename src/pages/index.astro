@@ -135,15 +135,15 @@ const headline = 'I build models of hard systems, then check whether they actual
 
   <section class="section wrap ledger" id="experience" data-rule>
     <h2 class="label marked ledger-label">Experience</h2>
-    <div data-reveal>
-      <p class="exp-org">
+    <div>
+      <p class="exp-org" data-reveal="mask">
         <a class="ext quiet" href={experience.href} rel="noopener">{experience.org}</a>
       </p>
-      <p class="exp-meta mono">
+      <p class="exp-meta mono" data-reveal>
         {experience.role} · {experience.place} · {experience.dates}
       </p>
-      <p class="exp-summary">{experience.summary}</p>
-      <ol class="strands">
+      <p class="exp-summary" data-reveal>{experience.summary}</p>
+      <ol class="strands" data-stagger>
         {
           experience.strands.map((s, i) => (
             <li>
@@ -166,7 +166,7 @@ const headline = 'I build models of hard systems, then check whether they actual
 
   <section class="section wrap ledger" id="recognition" data-rule>
     <h2 class="label marked ledger-label">Recognition</h2>
-    <ul class="awards" data-reveal>
+    <ul class="awards" data-stagger>
       {
         recognition.map((r) => (
           <li>
@@ -183,8 +183,8 @@ const headline = 'I build models of hard systems, then check whether they actual
 
   <section class="section wrap ledger" id="leadership" data-rule>
     <h2 class="label marked ledger-label">Leadership</h2>
-    <div data-reveal>
-      <div class="lead-grid">
+    <div>
+      <div class="lead-grid" data-stagger>
         {
           leadership.map((l) => (
             <article class="lead">
@@ -209,14 +209,15 @@ const headline = 'I build models of hard systems, then check whether they actual
           ))
         }
       </div>
-      <p class="onward">
-        <a href={href('/about/')}>Education, outreach and the rest are on the About page →</a>
+      <p class="onward" data-reveal>
+        <a href={href('/about/')}>Education, Los Gatos Hacks, outreach and the rest are on the About page →</a>
       </p>
     </div>
   </section>
 
   <div class="preview" data-preview aria-hidden="true">
     {all.map((w) => <img src={covers[w.id].src} alt="" data-for={w.id} loading="lazy" decoding="async" />)}
+    <span class="preview-tag mono">Open case study →</span>
   </div>
 </Base>
 
@@ -495,14 +496,71 @@ const headline = 'I build models of hard systems, then check whether they actual
     z-index: 2;
   }
 
-  /* Rows come up one after another as the list scrolls into view. */
+  /* The verdict sits above the cells after it, so its explanation is never underneath them. */
+  .result {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Each row assembles as it arrives: number, title out of its mask, then the rest. All
+     the parts read one timeline, the row's own passage up the window. */
   @media (prefers-reduced-motion: no-preference) {
     @supports (animation-timeline: view()) {
       .rows > li {
-        animation: reveal linear both;
-        animation-timeline: view();
-        animation-range: entry 0% entry 45%;
+        view-timeline: --row block;
       }
+      .row .num,
+      .row .title,
+      .row .question,
+      .row .result,
+      .row .domain,
+      .row .arrow {
+        animation: reveal linear both;
+        animation-timeline: --row;
+        animation-range: entry 60px entry 300px;
+      }
+      .row .num {
+        animation-name: slide-in-left;
+        animation-range: entry 0px entry 220px;
+      }
+      .row .title {
+        animation-name: unmask;
+        animation-range: entry 10px entry 250px;
+      }
+      .row .result {
+        animation-range: entry 100px entry 340px;
+      }
+      /* These two move on hover, so only their opacity is animated here. */
+      .row .domain,
+      .row .arrow {
+        animation-name: fade-in;
+        animation-range: entry 140px entry 380px;
+      }
+
+      /* Leaving the top of the page, the headline lags behind and thins out. */
+      .hero h1 {
+        animation: hero-out linear both;
+        animation-timeline: scroll(root block);
+        animation-range: 0px 85vh;
+      }
+      .lede,
+      .facts {
+        animation: hero-out-fast linear both;
+        animation-timeline: scroll(root block);
+        animation-range: 0px 70vh;
+      }
+    }
+  }
+  @keyframes hero-out {
+    to {
+      opacity: 0.12;
+      transform: translateY(70px);
+    }
+  }
+  @keyframes hero-out-fast {
+    to {
+      opacity: 0;
+      transform: translateY(-30px);
     }
   }
 
@@ -563,6 +621,16 @@ const headline = 'I build models of hard systems, then check whether they actual
   }
   .preview img.on {
     opacity: 1;
+  }
+  .preview-tag {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    padding: 0.35em 0.8em;
+    background: var(--fig-ink);
+    color: var(--fig);
+    border-radius: 999px;
+    font-size: 0.68rem;
   }
   @media not ((hover: hover) and (pointer: fine)) {
     .preview {
@@ -650,10 +718,23 @@ const headline = 'I build models of hard systems, then check whether they actual
     padding-top: 0;
   }
   .award-name {
+    display: inline-block;
     font-size: 1.05rem;
     font-weight: 500;
     letter-spacing: -0.01em;
     text-decoration: none;
+    transition:
+      transform 0.4s var(--ease),
+      color 0.2s;
+  }
+  .awards li:hover .award-name {
+    transform: translateX(0.5rem);
+  }
+  .award-result {
+    transition: color 0.25s;
+  }
+  .awards li:hover .award-result {
+    color: var(--accent-2);
   }
   .award-result {
     color: var(--ink);

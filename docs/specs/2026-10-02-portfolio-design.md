@@ -76,3 +76,8 @@ above, this section is current.
 - **No repetition.** Education moved to About only. The "Also" list and the hackathons line are gone:
   every recognition entry gets the same row.
 - **Verdicts** explain themselves on hover, focus or tap.
+- **Second pass on motion.** The ticker keeps one steady speed (it no longer speeds up with the
+  scroll). Count-up figures take about 2.6 s and start once they are well inside the window. Scroll
+  now drives more: per-part row reveals, masked headings, figures that settle, a stamped verdict and a
+  footer the page lifts off. Wheel scrolling is eased with Lenis.
+- **Los Gatos Hacks** is a normal entry at the top of About's activities, not a hidden foldout.

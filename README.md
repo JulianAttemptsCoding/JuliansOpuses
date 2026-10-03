@@ -55,13 +55,18 @@ them are labelled as illustrations: only the numbers quoted from a project are p
 - **Links.** Every named school, organiser, competition and tool links to its own site. The link
   targets live with the data in `src/data/profile.ts`.
 - **Verdicts.** Pointing at, focusing or tapping a verdict explains what it means.
-- **Motion.** A short intro on the first page of a visit, a headline that rises word by word, a ticker
-  that drifts and follows the scroll, rules and rows that reveal on scroll, numbers that count up, a
-  reading-progress line on case studies, and a 3D scene that turns until it is touched. All of it is
-  an enhancement: with reduced motion, without JavaScript, or without scroll-driven animations the
-  content is simply in place.
-- **One home per fact.** Education lives on About; recognition and leadership live on the home page.
-  Nothing is repeated across pages except the navigation and the footer.
+- **Motion.** A short intro on the first page of a visit and a headline that rises word by word. On
+  scroll: the hero thins out, each work row assembles part by part, rules draw, figures settle in,
+  lists arrive item by item, numbers count up, the verdict lands like a stamp, and the page lifts off
+  the footer underneath it. Always moving: a steady ticker, the turning 3D scene and a footer clock.
+  The wheel is eased with [Lenis](https://lenis.darkroom.engineering/) (mouse and trackpad only), and
+  switching theme opens the new colours as a circle from the toggle. All of it is an enhancement:
+  with reduced motion, without JavaScript, or without scroll-driven animations the content is simply
+  in place. The reveals are opted into with `data-reveal`, `data-stagger` and `data-rule` attributes,
+  documented at the top of the motion section in `src/styles/global.css`.
+- **One home per fact.** Education and activities (Los Gatos Hacks, outreach, the club, tutoring) live
+  on About; recognition and leadership live on the home page. Nothing is repeated across pages except
+  the navigation and the footer.
 
 ## Contact form
 

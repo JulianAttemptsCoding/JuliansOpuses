@@ -25,7 +25,7 @@ const num = (n: number) => String(n).padStart(2, '0');
 
 <Base title={data.heading ?? data.title} description={data.claim} progress>
   <article class="case wrap">
-    <aside class="rail">
+    <aside class="rail" data-lenis-prevent>
       <div class="rail-top mono">
         <a href={href('/#work')}>← Index</a>
         <span>{num(index + 1)} / {num(total)}</span>
@@ -63,9 +63,7 @@ const num = (n: number) => String(n).padStart(2, '0');
           <ul class="links">
             {data.links.map((l) => (
               <li>
-                <a class="ext" href={l.href} rel="noopener">
-                  {l.label}
-                </a>
+                <a class="ext fill" href={l.href} rel="noopener">{l.label}</a>
               </li>
             ))}
           </ul>
@@ -97,19 +95,21 @@ const num = (n: number) => String(n).padStart(2, '0');
       <section class="outcome" id="verdict" aria-labelledby="verdict-h">
         <h2 id="verdict-h">Verdict</h2>
         <p class="outcome-status">
-          <Verdict status={data.status} />
+          <span class="stamp" data-reveal="stamp">
+            <Verdict status={data.status} />
+          </span>
           <span>{VERDICTS[data.status].meaning}</span>
         </p>
         <div class="outcome-cols">
           <div>
             <h3 class="label">What worked</h3>
-            <ul class="worked">
+            <ul class="worked" data-stagger>
               {data.worked.map((item) => <li>{item}</li>)}
             </ul>
           </div>
           <div>
             <h3 class="label">{data.openLabel}</h3>
-            <ul class="unresolved">
+            <ul class="unresolved" data-stagger>
               {data.open.map((item) => <li>{item}</li>)}
             </ul>
           </div>
@@ -118,7 +118,7 @@ const num = (n: number) => String(n).padStart(2, '0');
 
       <a class="next" href={href(`/work/${next.id}/`)}>
         <span class="label">Next</span>
-        <span class="next-title">{next.data.title}</span>
+        <span class="next-title" data-reveal="mask">{next.data.title}</span>
         <span class="next-arrow" aria-hidden="true">→</span>
       </a>
     </div>
@@ -261,9 +261,9 @@ const num = (n: number) => String(n).padStart(2, '0');
       background-color 0.25s var(--ease),
       color 0.25s var(--ease);
   }
-  .links a:hover {
-    background: var(--ink);
-    color: var(--paper);
+  .links a {
+    --fill: var(--ink);
+    --fill-ink: var(--paper);
   }
   .toc {
     margin-top: 1.75rem;
@@ -411,6 +411,28 @@ const num = (n: number) => String(n).padStart(2, '0');
   }
   .outcome-status :global(.verdict) {
     color: var(--ink);
+  }
+  .stamp {
+    display: inline-block;
+    transform-origin: center;
+  }
+  /* The meaning is written out beside this one, so it needs no explanation on hover. */
+  .stamp :global(.tip) {
+    display: none;
+  }
+  .stamp :global(.verdict) {
+    cursor: default;
+  }
+  /* Section headings in the evidence column rise as they arrive. */
+  @media (prefers-reduced-motion: no-preference) {
+    @supports (animation-timeline: view()) {
+      .prose :global(h2:not(figure *)),
+      .outcome h2 {
+        animation: reveal linear both;
+        animation-timeline: view();
+        animation-range: entry 0px entry 180px;
+      }
+    }
   }
   .outcome-cols {
     display: grid;

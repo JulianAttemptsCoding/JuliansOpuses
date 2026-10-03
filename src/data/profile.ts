@@ -137,7 +137,21 @@ export const leadership: {
   },
 ];
 
-export const activities: { title: string; href?: string; role: string; body: string }[] = [
+export const activities: {
+  title: string;
+  href?: string;
+  role: string;
+  body: string;
+  link?: { label: string; href: string };
+}[] = [
+  {
+    // Figures are the ones the organisation publishes on its archive page.
+    title: 'Los Gatos Hacks',
+    href: links.lgHacks,
+    role: 'Director of Strategy',
+    body: 'A nonprofit that runs a one-day hackathon for middle and high school students. It has grown every year: 50 hackers and 17 projects in 2023, 115 hackers and 39 projects in 2026.',
+    link: { label: 'Browse every edition in the archive', href: links.lgHacksArchive },
+  },
   {
     title: 'STEM Beyond Boundaries',
     href: links.stemBeyondBoundaries,
@@ -231,17 +245,3 @@ export const tools: { label: string; href: string }[] = [
   { label: 'Vertex AI', href: 'https://cloud.google.com/vertex-ai' },
   { label: 'Zarr', href: 'https://zarr.dev/' },
 ];
-
-/**
- * Not on the front page: a foldout at the end of About, for anyone who reads that far.
- * Figures are the ones the organisation publishes on its archive page.
- */
-export const treat = {
-  summary: 'Still reading? One more thing.',
-  body: [
-    'Away from research I am Director of Strategy at ',
-    { text: 'Los Gatos Hacks', href: links.lgHacks },
-    ', a nonprofit that runs a one-day hackathon for middle and high school students. It has grown every year: 50 hackers and 17 projects in 2023, 115 hackers and 39 projects in 2026.',
-  ] satisfies Part[],
-  link: { label: 'Browse every edition in the archive', href: links.lgHacksArchive },
-};

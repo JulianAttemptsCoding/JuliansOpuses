@@ -9,4 +9,11 @@ export default defineConfig({
   trailingSlash: 'always',
   integrations: [mdx()],
   devToolbar: { enabled: false },
+  vite: {
+    // These are loaded on demand in the browser. Listing them lets the dev server prepare
+    // them at startup, instead of discovering them mid-visit and reloading the page.
+    optimizeDeps: {
+      include: ['three', 'three/examples/jsm/controls/OrbitControls.js', 'lenis'],
+    },
+  },
 });

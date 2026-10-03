@@ -1,6 +1,7 @@
 ---
 import '@fontsource-variable/geist';
 import '@fontsource-variable/geist-mono';
+import 'lenis/dist/lenis.css';
 import '../styles/global.css';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
@@ -89,9 +90,15 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
 
   // ---- Intro: unlock the page when the curtain has lifted, or at once if skipped. ----
   const intro = document.querySelector<HTMLElement>('[data-intro]');
-  if (intro && root.classList.contains('intro')) {
-    const done = () => root.classList.add('intro-done');
-    intro.addEventListener('animationend', (e) => {
+  const introRunning = !!intro && root.classList.contains('intro');
+  /** Resolves when the intro is out of the way (immediately if there is none). */
+  const introDone = new Promise<void>((resolve) => {
+    if (!introRunning) return resolve();
+    const done = () => {
+      root.classList.add('intro-done');
+      resolve();
+    };
+    intro!.addEventListener('animationend', (e) => {
       if (e.animationName.includes('intro-lift')) done();
     });
     // Any key or click skips it, and the page's own entrance then starts at once.
@@ -103,34 +110,60 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     addEventListener('pointerdown', skip, { once: true });
     // A backstop in case the animation never runs.
     setTimeout(done, 2600);
+  });
+
+  // ---- Smooth wheel scrolling (mouse and trackpad only; touch keeps its native feel). ----
+  // The scroll-driven reveals follow the scroll position exactly, so easing the wheel is
+  // what makes them glide instead of stepping. It is still the page's own scroll.
+  if (fine && !calm) {
+    import('lenis').then(({ default: Lenis }) => {
+      // In-page links are eased too; the page's own scroll-padding keeps them clear of the header.
+      const lenis = new Lenis({ lerp: 0.11, anchors: true, autoRaf: true });
+      if (introRunning) {
+        lenis.stop();
+        introDone.then(() => lenis.start());
+      }
+    });
   }
 
-  // ---- Numbers count up the first time they scroll into view. ----
+  // ---- Numbers count up, slowly enough to watch, once they are well inside the window. ----
   const counters = document.querySelectorAll<HTMLElement>('[data-count]');
   if (counters.length && !calm && 'IntersectionObserver' in window) {
+    const DURATION = 2600;
+    const plans = new Map<Element, { pre: string; target: number; post: string }>();
+    counters.forEach((el) => {
+      // Only plain quantities count up: "$88M" does, a range like "9th–10th" stays as written.
+      const m = el.textContent!.trim().match(/^([$€£]?)(\d+)([A-Za-z%+]{0,3})$/);
+      if (!m) return;
+      plans.set(el, { pre: m[1], target: Number(m[2]), post: m[3] });
+      // Hold the width of the final value so nothing shifts while it counts.
+      el.style.minWidth = `${el.getBoundingClientRect().width}px`;
+      el.style.display = 'inline-block';
+      el.textContent = `${m[1]}0${m[3]}`;
+    });
     const io = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
           if (!entry.isIntersecting) continue;
           io.unobserve(entry.target);
           const el = entry.target as HTMLElement;
-          const m = el.textContent!.trim().match(/^(\D*)(\d+)(.*)$/);
-          if (!m) continue;
-          const [, pre, digits, post] = m;
-          const target = Number(digits);
+          const plan = plans.get(el);
+          if (!plan) continue;
           const t0 = performance.now();
           const step = (now: number) => {
-            const t = Math.min(1, (now - t0) / 900);
-            const eased = 1 - (1 - t) ** 3;
-            el.textContent = `${pre}${Math.round(target * eased)}${post}`;
+            const t = Math.min(1, (now - t0) / DURATION);
+            // A steady climb that eases onto the value, rather than a rush to it.
+            const eased = 1 - (1 - t) ** 2;
+            el.textContent = `${plan.pre}${Math.round(plan.target * eased)}${plan.post}`;
             if (t < 1) requestAnimationFrame(step);
           };
           requestAnimationFrame(step);
         }
       },
-      { threshold: 0.6 },
+      // Start only once the number has cleared the bottom quarter of the window.
+      { threshold: 1, rootMargin: '0px 0px -25% 0px' },
     );
-    counters.forEach((el) => io.observe(el));
+    introDone.then(() => plans.forEach((_, el) => io.observe(el)));
   }
 
   // ---- Magnetic buttons: lean toward the pointer, spring back when it leaves. ----
@@ -146,6 +179,24 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
         el.style.transform = '';
       });
     });
+  }
+
+  // ---- Local time in the footer, so a reader knows when a reply is likely. ----
+  const clock = document.querySelector<HTMLElement>('[data-clock]');
+  if (clock) {
+    const fmt = new Intl.DateTimeFormat('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      timeZone: 'America/Los_Angeles',
+      timeZoneName: 'short',
+    });
+    const tick = () => {
+      const parts = fmt.formatToParts(new Date());
+      const get = (type: string) => parts.find((p) => p.type === type)?.value ?? '';
+      clock.innerHTML = `${get('hour')}<span class="colon">:</span>${get('minute')} ${get('dayPeriod')} ${get('timeZoneName')}`;
+    };
+    tick();
+    setInterval(tick, 15_000);
   }
 </script>
 

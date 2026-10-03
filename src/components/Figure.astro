@@ -15,7 +15,7 @@ const { n, caption, src, alt = '', source } = Astro.props;
 const full = src ? await getImage({ src, width: src.width }) : null;
 ---
 
-<figure class="fig">
+<figure class="fig" data-reveal="scale">
   <div class="frame">
     {
       src && full ? (

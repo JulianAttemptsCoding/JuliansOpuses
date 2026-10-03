@@ -1,7 +1,7 @@
 ---
 // A slow band of the fields the work sits in, separated by the five verdict glyphs.
-// It always drifts, and picks up speed and direction from the page scroll. Decorative:
-// everything in it is stated elsewhere on the page, so it is hidden from assistive tech.
+// It drifts at one steady speed and pauses under the pointer. Decorative: everything in
+// it is stated elsewhere on the page, so it is hidden from assistive tech.
 import { STATUS_ORDER } from '../data/verdicts';
 
 const fields = [
@@ -16,8 +16,8 @@ const fields = [
 const halves = [0, 1];
 ---
 
-<div class="ticker" aria-hidden="true" data-ticker>
-  <div class="track" data-ticker-track>
+<div class="ticker" aria-hidden="true">
+  <div class="track">
     {
       halves.map(() => (
         <ul>
@@ -55,38 +55,6 @@ const halves = [0, 1];
   </div>
 </div>
 
-<script>
-  // Scroll adds to the ticker's speed and sets its direction; it then eases back to a drift.
-  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  document.querySelectorAll<HTMLElement>('[data-ticker-track]').forEach((track) => {
-    if (still) return;
-    const anim = track.getAnimations()[0];
-    if (!anim) return;
-    // Start many loops in, so scrolling up can run it backwards without reaching the start.
-    anim.currentTime = 48_000 * 200;
-    let lastY = scrollY;
-    let boost = 0;
-    let dir = 1;
-    let raf = 0;
-    const settle = () => {
-      boost *= 0.92;
-      anim.playbackRate = dir * (1 + boost);
-      raf = boost > 0.02 ? requestAnimationFrame(settle) : 0;
-    };
-    addEventListener(
-      'scroll',
-      () => {
-        const dy = scrollY - lastY;
-        lastY = scrollY;
-        if (dy === 0) return;
-        dir = dy > 0 ? 1 : -1;
-        boost = Math.min(6, boost + Math.abs(dy) * 0.05);
-        if (!raf) raf = requestAnimationFrame(settle);
-      },
-      { passive: true },
-    );
-  });
-</script>
 
 <style>
   .ticker {
@@ -139,7 +107,10 @@ const halves = [0, 1];
   }
   @media (prefers-reduced-motion: no-preference) {
     .track {
-      animation: tick 48s linear infinite;
+      animation: tick 70s linear infinite;
+    }
+    .ticker:hover .track {
+      animation-play-state: paused;
     }
   }
 </style>

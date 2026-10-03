@@ -17,7 +17,9 @@ const year = new Date().getFullYear();
       cta && (
         <>
           <p class="label">Contact</p>
-          <h2 class="cta">Get in touch.</h2>
+          <h2 class="cta">
+            <span class="cta-line">Get in touch.</span>
+          </h2>
 
           <ul class="links">
             <li>
@@ -30,19 +32,15 @@ const year = new Date().getFullYear();
             </li>
             {site.linkedin && (
               <li>
-                <a class="pill ext" href={site.linkedin} rel="noopener">
-                  LinkedIn
-                </a>
+                <a class="pill fill ext" href={site.linkedin} rel="noopener">LinkedIn</a>
               </li>
             )}
             <li>
-              <a class="pill ext" href={site.github} rel="noopener">
-                GitHub
-              </a>
+              <a class="pill fill ext" href={site.github} rel="noopener">GitHub</a>
             </li>
             {site.resume ? (
               <li>
-                <a class="pill" href={href(site.resume)}>
+                <a class="pill fill" href={href(site.resume)}>
                   Résumé (PDF)
                 </a>
               </li>
@@ -64,12 +62,18 @@ const year = new Date().getFullYear();
     }
 
     <div class="base">
-      <span class="mono">© {year} {site.name}</span>
+      <span class="mono meta">
+        <span>© {year} {site.name}</span>
+        <span class="local">
+          <span class="live-dot" aria-hidden="true"></span>
+          Local time <span data-clock>in California</span>
+        </span>
+      </span>
       <nav aria-label="Footer">
         <a href={href('/')}>Index</a>
         <a href={href('/about/')}>About</a>
         <a href={href('/contact/')}>Contact</a>
-        <a href="#top">Back to top ↑</a>
+        <a class="top" href="#top">Back to top <span aria-hidden="true">↑</span></a>
       </nav>
     </div>
   </div>
@@ -77,15 +81,22 @@ const year = new Date().getFullYear();
 
 <style>
   .site-footer {
-    margin-top: clamp(4rem, 10vw, 9rem);
     padding-block: clamp(3.5rem, 8vw, 7rem) 2rem;
     background: var(--footer-bg);
     color: var(--footer-ink);
-    border-radius: clamp(20px, 3vw, 40px) clamp(20px, 3vw, 40px) 0 0;
   }
-  /* Without the call to action only the base line remains. */
+  /* Without the call to action only the base line is left. */
   .site-footer.slim {
     padding-top: 0.25rem;
+  }
+  /* On a tall enough window the footer waits at the bottom and the page lifts off it.
+     It has to fit inside the window for that, so short windows keep the plain flow. */
+  @media (min-height: 720px) {
+    .site-footer {
+      position: sticky;
+      bottom: 0;
+      z-index: 0;
+    }
   }
   .label {
     color: var(--footer-ink-2);
@@ -95,20 +106,36 @@ const year = new Date().getFullYear();
     font-size: clamp(2.4rem, 7vw, 6rem);
     line-height: 1;
     letter-spacing: -0.04em;
+    overflow: hidden;
+    padding-bottom: 0.14em;
+    margin-bottom: -0.14em;
   }
-  /* The heading slides into place as the footer scrolls up into view. */
-  @keyframes cta-in {
+  .cta-line {
+    display: inline-block;
+  }
+  /* The heading rises out of its mask over the last stretch of the page's scroll. */
+  @keyframes cta-rise {
     from {
-      opacity: 0.25;
-      transform: translateX(-7%);
+      transform: translateY(105%);
     }
   }
-  @media (prefers-reduced-motion: no-preference) {
-    @supports (animation-timeline: view()) {
-      .cta {
-        animation: cta-in linear both;
-        animation-timeline: view();
-        animation-range: entry 10% cover 32%;
+  @keyframes links-in {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+  }
+  @media (prefers-reduced-motion: no-preference) and (min-height: 720px) {
+    @supports (animation-timeline: scroll()) {
+      .cta-line {
+        animation: cta-rise linear both;
+        animation-timeline: scroll(root block);
+        animation-range: calc(100% - 420px) calc(100% - 120px);
+      }
+      .links {
+        animation: links-in linear both;
+        animation-timeline: scroll(root block);
+        animation-range: calc(100% - 260px) calc(100% - 40px);
       }
     }
   }
@@ -121,6 +148,8 @@ const year = new Date().getFullYear();
     list-style: none;
   }
   .pill {
+    --fill: var(--footer-ink);
+    --fill-ink: var(--footer-bg);
     display: inline-flex;
     align-items: center;
     gap: 0.6em;
@@ -131,12 +160,11 @@ const year = new Date().getFullYear();
     transition:
       background-color 0.25s var(--ease),
       border-color 0.25s var(--ease),
-      color 0.25s var(--ease),
+      color 0.35s var(--ease),
       transform 0.45s cubic-bezier(0.2, 1.5, 0.4, 1);
   }
   .pill:hover {
     border-color: var(--footer-ink);
-    color: var(--footer-ink);
   }
   .pill.primary {
     background: var(--footer-ink);
@@ -178,6 +206,29 @@ const year = new Date().getFullYear();
     margin-top: 0;
     border-top: 0;
   }
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.75rem;
+  }
+  .local {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6em;
+  }
+  .local :global(.colon) {
+    animation: blink 2s steps(1) infinite;
+  }
+  @keyframes blink {
+    50% {
+      opacity: 0.25;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .local :global(.colon) {
+      animation: none;
+    }
+  }
   .base nav {
     display: flex;
     flex-wrap: wrap;
@@ -189,5 +240,12 @@ const year = new Date().getFullYear();
   }
   .base a:hover {
     color: var(--footer-ink);
+  }
+  .top span {
+    display: inline-block;
+    transition: transform 0.35s var(--ease);
+  }
+  .top:hover span {
+    transform: translateY(-3px);
   }
 </style>

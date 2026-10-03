@@ -9,7 +9,7 @@ interface Props {
 const { open = false } = Astro.props;
 ---
 
-<div class="edu">
+<div class="edu" data-stagger>
   <SchoolEntry entry={highSchool} open={open} />
 
   <section class="college">
@@ -18,7 +18,7 @@ const { open = false } = Astro.props;
       <span class="mono mode">{college.mode}</span>
     </header>
     <p class="summary">{college.summary}</p>
-    <div class="schools">
+    <div class="schools" data-stagger>
       {college.schools.map((s) => <SchoolEntry entry={s} open={open} level={4} />)}
     </div>
   </section>
