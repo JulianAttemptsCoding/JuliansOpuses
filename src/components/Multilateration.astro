@@ -1,0 +1,901 @@
+---
+// Illustrative 3D multilateration sandbox: a four-storey building, ground reference
+// points, an optional drone overhead and a tag on one floor. Move things, add range
+// noise or a blocked path, and watch where the position estimates land.
+// This is a teaching simulation with ideal Gaussian noise, not measured project data.
+const SAMPLES = 48;
+const anchors = [
+  { id: 'A1', name: 'Reference point A1' },
+  { id: 'A2', name: 'Reference point A2' },
+  { id: 'A3', name: 'Reference point A3' },
+  { id: 'A4', name: 'Reference point A4' },
+  { id: 'D1', name: 'Drone D1' },
+];
+const floors = [1, 2, 3, 4];
+---
+
+<div class="fx mlat" data-mlat data-samples={SAMPLES}>
+  <div class="fx-controls">
+    <div class="fx-group" role="group" aria-label="Reference points">
+      <span class="fx-label">Reference points</span>
+      <div class="fx-row">
+        <div class="fx-seg">
+          <button type="button" data-preset="spread" aria-pressed="true">Around the building</button>
+          <button type="button" data-preset="oneside" aria-pressed="false">All on one side</button>
+        </div>
+        <button type="button" class="fx-chip" data-toggle="drone" aria-pressed="true">Drone overhead</button>
+      </div>
+    </div>
+
+    <div class="fx-group" role="group" aria-label="Firefighter's floor">
+      <span class="fx-label">Firefighter's floor</span>
+      <div class="fx-seg">
+        {
+          floors.map((f) => (
+            <button type="button" data-floor={f} aria-pressed={f === 2 ? 'true' : 'false'} aria-label={`Floor ${f}`}>
+              {f}
+            </button>
+          ))
+        }
+      </div>
+    </div>
+
+    <div class="fx-group view" role="group" aria-label="View">
+      <span class="fx-label">View</span>
+      <div class="fx-seg">
+        <button type="button" data-view="iso" aria-pressed="true">3D</button>
+        <button type="button" data-view="top" aria-pressed="false">Top</button>
+        <button type="button" data-view="side" aria-pressed="false">Side</button>
+      </div>
+    </div>
+
+    <label class="fx-group slider">
+      <span class="fx-label">Range noise <output data-out="sigma">0.30 m</output></span>
+      <input type="range" min="0" max="1.5" step="0.05" value="0.3" data-ctl="sigma" />
+    </label>
+
+    <div class="fx-group" role="group" aria-label="Signal">
+      <span class="fx-label">Signal</span>
+      <button type="button" class="fx-chip" data-toggle="nlos" aria-pressed="false">Block the path to A4</button>
+    </div>
+  </div>
+
+  <div class="stage-wrap">
+    <svg
+      data-stage
+      role="group"
+      aria-label="Rotatable view of a four-storey building with reference points outside, a drone above and a tag inside. The reference points, the drone and the tag can be dragged."
+    >
+      <path class="ground" data-ground></path>
+      <path class="grid" data-grid></path>
+      <path class="floor-fill" data-floorfill></path>
+      <path class="bldg thin" data-slabs></path>
+      <path class="bldg" data-frame></path>
+      <g>{floors.map((f) => <text class="t" data-floorlabel={f} text-anchor="end">F{f}</text>)}</g>
+
+      <g>{anchors.map((_, i) => <path class="ring" data-ring={i} />)}</g>
+      <g>{anchors.map((_, i) => <line class="sight" data-sight={i} />)}</g>
+      <g>{anchors.map((_, i) => <line class="drop" data-drop={i} />)}</g>
+      <line class="drop" data-drop="tag"></line>
+      <g>{anchors.map((_, i) => <circle class="foot" data-foot={i} r="2.5" />)}</g>
+      <circle class="foot" data-foot="tag" r="2.5"></circle>
+
+      {/* The true position is a small dot over the cloud, so a tight cloud still shows around it. */}
+      <g class="overlay">{Array.from({ length: SAMPLES }, () => <circle class="est" data-est r="2.4" />)}</g>
+      <g
+        class="handle tag"
+        data-handle="tag"
+        tabindex="0"
+        role="button"
+        aria-roledescription="draggable point"
+        aria-label="True position of the tag. Drag, or use the arrow keys, to move it across its floor. Page Up and Page Down change the floor."
+      >
+        <circle class="grab" r="20"></circle>
+        <circle class="dot" r="4.5"></circle>
+      </g>
+      <g class="overlay">
+        <line class="err" data-err></line>
+        <circle class="mean" data-mean r="9"></circle>
+      </g>
+
+      {
+        anchors.map((a, i) => (
+          <g
+            class:list={['handle', 'anchor', { drone: a.id === 'D1' }]}
+            data-handle={i}
+            tabindex="0"
+            role="button"
+            aria-roledescription="draggable point"
+            aria-label={`${a.name}. Drag, or use the arrow keys, to move it.`}
+          >
+            <circle class="grab" r="20" />
+            {a.id === 'D1' ? <path d="M0 -9L9 0L0 9L-9 0z" /> : <rect x="-7" y="-7" width="14" height="14" rx="2" />}
+            <text class="t strong" y="-14" text-anchor="middle">
+              {a.id}
+            </text>
+          </g>
+        ))
+      }
+      <text class="t" data-scale x="10" y="0">grid: 4 m · building 20 × 13 m, 4 floors</text>
+    </svg>
+    <noscript><p class="fx-note">This sandbox needs JavaScript to run.</p></noscript>
+  </div>
+  <p class="fx-note">Drag the background to rotate. Drag a reference point, the drone or the tag to move it.</p>
+
+  <p class="fx-insight" data-out="insight" role="status" aria-live="polite"></p>
+
+  <dl class="fx-readout">
+    <div>
+      <dt>Error on the map</dt>
+      <dd data-out="hrms">–</dd>
+    </div>
+    <div>
+      <dt>Error in height</dt>
+      <dd data-out="vrms">–</dd>
+    </div>
+    <div>
+      <dt>Right floor</dt>
+      <dd data-out="floor">–</dd>
+    </div>
+    <div>
+      <dt title="Dilution of precision: how much the layout of the reference points multiplies range error. Horizontal, then vertical.">
+        Geometry penalty
+      </dt>
+      <dd data-out="dop">–</dd>
+    </div>
+  </dl>
+
+  <ul class="fx-key">
+    <li><span class="k k-true"></span>true position</li>
+    <li><span class="k k-est"></span>{SAMPLES} estimates, one per noisy measurement</li>
+    <li><span class="k k-mean"></span>their average</li>
+    <li><span class="k k-range"></span>one set of ranges, cut at the tag's height</li>
+  </ul>
+</div>
+
+<script>
+  type V3 = { x: number; y: number; z: number };
+  type P2 = { x: number; y: number };
+
+  // ---- Scene, in metres. x runs along the long wall, y along the short one, z is up. ----
+  const BLDG = { w: 20, d: 13, floors: 4, floorH: 3 };
+  const SITE = { x0: -8, x1: 28, y0: -7, y1: 21 }; // multiples of the 4 m grid from each origin
+  const CENTER: V3 = { x: 10, y: 6.5, z: 4.5 };
+  const GROUND_UNIT_Z = 1.5; // reference point on a tripod
+  const DRONE_Z = 18;
+  const TAG_ABOVE_FLOOR = 1.2; // worn on the body
+  const NLOS_BIAS_M = 3;
+  const BLOCKED = 3; // A4
+  const DRONE = 4;
+  const STEP_PX = 12;
+  // The estimate is kept between the ground and the roof: the one thing known in advance.
+  const Z_MIN = 0;
+  const Z_MAX = BLDG.floors * BLDG.floorH + 0.6;
+  const INIT: V3 = { x: BLDG.w / 2, y: BLDG.d / 2, z: 6 };
+
+  const PRESETS: Record<string, P2[]> = {
+    spread: [
+      { x: -5, y: -4 },
+      { x: 25, y: -3 },
+      { x: 24, y: 17 },
+      { x: -4, y: 16 },
+    ],
+    // Staged together beside the engine: every range points nearly the same way.
+    oneside: [
+      { x: -6, y: 1 },
+      { x: -5, y: 4.5 },
+      { x: -6.5, y: 8 },
+      { x: -5, y: 11.5 },
+    ],
+  };
+  const VIEWS: Record<string, { yaw: number; pitch: number }> = {
+    iso: { yaw: -0.55, pitch: 0.5 },
+    top: { yaw: 0, pitch: Math.PI / 2 },
+    side: { yaw: 0, pitch: 0 },
+  };
+
+  // Deterministic noise, so moving things changes geometry without the cloud flickering.
+  function mulberry32(seed: number) {
+    return () => {
+      seed = (seed + 0x6d2b79f5) | 0;
+      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function standardNormals(count: number, seed: number): number[] {
+    const rand = mulberry32(seed);
+    return Array.from({ length: count }, () => {
+      const u = Math.max(rand(), 1e-12);
+      return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * rand());
+    });
+  }
+
+  const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
+  /** Keep receiving this pointer's moves even when it leaves the element. */
+  const capture = (el: Element, pointerId: number) => {
+    try {
+      el.setPointerCapture(pointerId);
+    } catch {
+      /* the pointer was already released: the drag simply ends on the next event */
+    }
+  };
+  const dist = (a: V3, b: V3) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
+
+  /** Sum of squared range residuals at q. */
+  function cost(A: V3[], ranges: number[], q: V3): number {
+    let c = 0;
+    for (let i = 0; i < A.length; i++) c += (dist(q, A[i]) - ranges[i]) ** 2;
+    return c;
+  }
+
+  /** Levenberg–Marquardt least squares on range residuals, in metres. */
+  function solve(A: V3[], ranges: number[], init: V3): V3 {
+    let p = { ...init };
+    let c = cost(A, ranges, p);
+    let lambda = 1e-2;
+    for (let k = 0; k < 40; k++) {
+      let a00 = 0, a01 = 0, a02 = 0, a11 = 0, a12 = 0, a22 = 0; // prettier-ignore
+      let g0 = 0, g1 = 0, g2 = 0; // prettier-ignore
+      for (let i = 0; i < A.length; i++) {
+        const dx = p.x - A[i].x;
+        const dy = p.y - A[i].y;
+        const dz = p.z - A[i].z;
+        const d = Math.hypot(dx, dy, dz) || 1e-9;
+        const ux = dx / d;
+        const uy = dy / d;
+        const uz = dz / d;
+        const f = d - ranges[i];
+        a00 += ux * ux;
+        a01 += ux * uy;
+        a02 += ux * uz;
+        a11 += uy * uy;
+        a12 += uy * uz;
+        a22 += uz * uz;
+        g0 += ux * f;
+        g1 += uy * f;
+        g2 += uz * f;
+      }
+      const m00 = a00 * (1 + lambda) + 1e-9;
+      const m11 = a11 * (1 + lambda) + 1e-9;
+      const m22 = a22 * (1 + lambda) + 1e-6;
+      const det =
+        m00 * (m11 * m22 - a12 * a12) - a01 * (a01 * m22 - a12 * a02) + a02 * (a01 * a12 - m11 * a02);
+      if (Math.abs(det) < 1e-14) {
+        lambda *= 10;
+        continue;
+      }
+      const sx = -(g0 * (m11 * m22 - a12 * a12) - a01 * (g1 * m22 - a12 * g2) + a02 * (g1 * a12 - m11 * g2)) / det;
+      const sy = -(m00 * (g1 * m22 - a12 * g2) - g0 * (a01 * m22 - a12 * a02) + a02 * (a01 * g2 - g1 * a02)) / det;
+      const sz = -(m00 * (m11 * g2 - g1 * a12) - a01 * (a01 * g2 - g1 * a02) + g0 * (a01 * a12 - m11 * a02)) / det;
+      const q = { x: p.x + sx, y: p.y + sy, z: clamp(p.z + sz, Z_MIN, Z_MAX) };
+      const cq = cost(A, ranges, q);
+      if (cq < c) {
+        const moved = Math.abs(q.x - p.x) + Math.abs(q.y - p.y) + Math.abs(q.z - p.z);
+        p = q;
+        c = cq;
+        lambda = Math.max(lambda * 0.3, 1e-7);
+        if (moved < 1e-4) break;
+      } else {
+        lambda *= 5;
+        if (lambda > 1e7) break;
+      }
+    }
+    return p;
+  }
+
+  /** Horizontal and vertical dilution of precision at the true position. */
+  function dops(A: V3[], T: V3): { h: number; v: number } {
+    let a00 = 0, a01 = 0, a02 = 0, a11 = 0, a12 = 0, a22 = 0; // prettier-ignore
+    for (const a of A) {
+      const d = dist(T, a) || 1e-9;
+      const ux = (T.x - a.x) / d;
+      const uy = (T.y - a.y) / d;
+      const uz = (T.z - a.z) / d;
+      a00 += ux * ux;
+      a01 += ux * uy;
+      a02 += ux * uz;
+      a11 += uy * uy;
+      a12 += uy * uz;
+      a22 += uz * uz;
+    }
+    const det = a00 * (a11 * a22 - a12 * a12) - a01 * (a01 * a22 - a12 * a02) + a02 * (a01 * a12 - a11 * a02);
+    if (det < 1e-9) return { h: Infinity, v: Infinity };
+    const qxx = (a11 * a22 - a12 * a12) / det;
+    const qyy = (a00 * a22 - a02 * a02) / det;
+    const qzz = (a00 * a11 - a01 * a01) / det;
+    return { h: Math.sqrt(Math.max(qxx + qyy, 0)), v: Math.sqrt(Math.max(qzz, 0)) };
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-mlat]').forEach((root) => {
+    const stage = root.querySelector<SVGSVGElement>('[data-stage]')!;
+    const samples = Number(root.dataset.samples);
+    const q = <T extends Element>(sel: string) => root.querySelector<T>(sel)!;
+    const qa = <T extends Element>(sel: string) => [...root.querySelectorAll<T>(sel)];
+    const anchorEls = qa<SVGGElement>('.handle.anchor');
+    const tagEl = q<SVGGElement>('.handle.tag');
+    const estEls = qa<SVGCircleElement>('[data-est]');
+    const ringEls = qa<SVGPathElement>('[data-ring]');
+    const sightEls = qa<SVGLineElement>('[data-sight]');
+    const dropEls = anchorEls.map((_, i) => q<SVGLineElement>(`[data-drop="${i}"]`));
+    const footEls = anchorEls.map((_, i) => q<SVGCircleElement>(`[data-foot="${i}"]`));
+    const tagDrop = q<SVGLineElement>('[data-drop="tag"]');
+    const tagFoot = q<SVGCircleElement>('[data-foot="tag"]');
+    const floorLabels = qa<SVGTextElement>('[data-floorlabel]');
+    const out = (name: string) => q<HTMLElement>(`[data-out="${name}"]`);
+    const sigmaCtl = q<HTMLInputElement>('[data-ctl="sigma"]');
+    const presetBtns = qa<HTMLButtonElement>('[data-preset]');
+    const floorBtns = qa<HTMLButtonElement>('[data-floor]');
+    const viewBtns = qa<HTMLButtonElement>('[data-view]');
+    const droneBtn = q<HTMLButtonElement>('[data-toggle="drone"]');
+    const nlosBtn = q<HTMLButtonElement>('[data-toggle="nlos"]');
+    const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // ---- State ----
+    const Z = standardNormals(samples * anchorEls.length, 20261002);
+    const anchors: V3[] = [
+      ...PRESETS.spread.map((p) => ({ ...p, z: GROUND_UNIT_Z })),
+      { x: BLDG.w / 2, y: BLDG.d / 2, z: DRONE_Z },
+    ];
+    const tag: V3 = { x: 12.5, y: 5.5, z: 0 };
+    let floor = 2;
+    let drone = true;
+    let nlos = false;
+    const cam = { ...VIEWS.iso };
+    // Solver output, kept so that rotating the view only re-projects.
+    let estimates: V3[] = [];
+    let mean: V3 = { ...INIT };
+    let ranges0: number[] = [];
+
+    const tagZ = () => (floor - 1) * BLDG.floorH + TAG_ABOVE_FLOOR;
+    const active = (i: number) => i !== DRONE || drone;
+
+    // ---- Projection: orthographic, yaw about the vertical axis then tilt. ----
+    let W = 720;
+    let H = 460;
+    let scale = 13;
+    const project = (p: V3): P2 => {
+      const X = p.x - CENTER.x;
+      const Y = p.y - CENTER.y;
+      const cy = Math.cos(cam.yaw);
+      const sy = Math.sin(cam.yaw);
+      const xr = X * cy - Y * sy;
+      const yr = X * sy + Y * cy;
+      return {
+        x: W / 2 + scale * xr,
+        y: H / 2 - scale * (yr * Math.sin(cam.pitch) + (p.z - CENTER.z) * Math.cos(cam.pitch)),
+      };
+    };
+    /** Screen point back to the horizontal plane at height z. Edge-on, depth cannot be read, so it is kept. */
+    const unproject = (sx: number, sy: number, z: number, keep: V3): P2 => {
+      const cy = Math.cos(cam.yaw);
+      const sn = Math.sin(cam.yaw);
+      const sp = Math.sin(cam.pitch);
+      const xr = (sx - W / 2) / scale;
+      const yr =
+        sp > 0.25
+          ? ((H / 2 - sy) / scale - (z - CENTER.z) * Math.cos(cam.pitch)) / sp
+          : (keep.x - CENTER.x) * sn + (keep.y - CENTER.y) * cy;
+      return { x: CENTER.x + xr * cy + yr * sn, y: CENTER.y - xr * sn + yr * cy };
+    };
+    const path = (pts: V3[], close = true) =>
+      pts
+        .map((p, i) => {
+          const s = project(p);
+          return `${i ? 'L' : 'M'}${s.x.toFixed(1)} ${s.y.toFixed(1)}`;
+        })
+        .join('') + (close ? 'Z' : '');
+    const rect = (x0: number, y0: number, x1: number, y1: number, z: number): V3[] => [
+      { x: x0, y: y0, z },
+      { x: x1, y: y0, z },
+      { x: x1, y: y1, z },
+      { x: x0, y: y1, z },
+    ];
+    const setLine = (el: SVGLineElement, a: P2, b: P2) => {
+      el.setAttribute('x1', a.x.toFixed(1));
+      el.setAttribute('y1', a.y.toFixed(1));
+      el.setAttribute('x2', b.x.toFixed(1));
+      el.setAttribute('y2', b.y.toFixed(1));
+    };
+    const setDot = (el: SVGCircleElement, p: P2) => {
+      el.setAttribute('cx', p.x.toFixed(1));
+      el.setAttribute('cy', p.y.toFixed(1));
+    };
+
+    // ---- Model: ranges, estimates, statistics. Runs when the scene changes. ----
+    function compute() {
+      const sigma = Number(sigmaCtl.value);
+      tag.z = tagZ();
+      const idx = anchors.map((_, i) => i).filter(active);
+      const A = idx.map((i) => anchors[i]);
+      const trueDist = A.map((a) => dist(tag, a));
+
+      estimates = [];
+      let mx = 0;
+      let my = 0;
+      let mz = 0;
+      let sqH = 0;
+      let sqV = 0;
+      let floorOk = 0;
+      for (let s = 0; s < samples; s++) {
+        const ranges = trueDist.map((d, k) =>
+          Math.max(0.05, d + sigma * Z[s * anchors.length + idx[k]] + (nlos && idx[k] === BLOCKED ? NLOS_BIAS_M : 0)),
+        );
+        if (s === 0) {
+          ranges0 = anchors.map(() => 0);
+          idx.forEach((i, k) => (ranges0[i] = ranges[k]));
+        }
+        const p = solve(A, ranges, INIT);
+        estimates.push(p);
+        mx += p.x;
+        my += p.y;
+        mz += p.z;
+        sqH += (p.x - tag.x) ** 2 + (p.y - tag.y) ** 2;
+        sqV += (p.z - tag.z) ** 2;
+        const f = clamp(Math.floor(p.z / BLDG.floorH) + 1, 1, BLDG.floors);
+        if (f === floor) floorOk++;
+      }
+      mean = { x: mx / samples, y: my / samples, z: mz / samples };
+      const hRms = Math.sqrt(sqH / samples);
+      const vRms = Math.sqrt(sqV / samples);
+      const pull = Math.hypot(mean.x - tag.x, mean.y - tag.y);
+      const dop = dops(A, tag);
+      const fmtDop = (v: number) => (Number.isFinite(v) && v < 99 ? `×${v.toFixed(1)}` : '>×99');
+
+      out('sigma').textContent = `${sigma.toFixed(2)} m`;
+      out('hrms').textContent = `${hRms.toFixed(2)} m`;
+      out('vrms').textContent = `${vRms.toFixed(2)} m`;
+      out('floor').innerHTML = `${floorOk} <small>of ${samples}</small>`;
+      out('dop').innerHTML = `${fmtDop(dop.h)} <small>across</small> ${fmtDop(dop.v)} <small>up</small>`;
+
+      // One sentence on what the current settings show, most specific cause first.
+      const wrongFloor = floorOk < samples * 0.9;
+      const heightBlind = !(dop.v < 2);
+      const sideways = !(dop.h < 1.8);
+      const map = `${hRms.toFixed(1)} m`;
+      let insight: string;
+      if (nlos && pull > 0.4) {
+        insight = `The blocked path makes A4 read ${NLOS_BIAS_M} m long, and every estimate is dragged about ${pull.toFixed(1)} m off the true position. Averaging more measurements does not remove it.`;
+      } else if (sigma === 0) {
+        insight = `With perfect ranges every estimate lands exactly on the firefighter. Add noise to see what the layout does to it.`;
+      } else if (wrongFloor && heightBlind) {
+        insight = drone
+          ? `The map position is within about ${map}, but the floor is right in only ${floorOk} of ${samples} tries. Height is the weak direction for this layout.`
+          : `The map position is within about ${map}, but the floor is right in only ${floorOk} of ${samples} tries. Every reference point sits near ground level, so none of them sees height well. Turn the drone back on.`;
+      } else if (sideways) {
+        insight = `Estimates smear across about ${map}. The reference points look at the firefighter from nearly the same direction, which multiplies the same range noise by ${fmtDop(dop.h).replace('×', '')}.`;
+      } else if (wrongFloor || hRms > 1) {
+        insight = `The layout is fine here; the ranges are not. This much noise scatters the estimates by about ${map}, and the floor is right in ${floorOk} of ${samples} tries.`;
+      } else {
+        insight = `Good fix: within about ${map} on the map, and on the right floor in ${floorOk} of ${samples} tries.`;
+      }
+      out('insight').textContent = insight;
+    }
+
+    // ---- Drawing: projects the current state. Runs on every change, including rotation. ----
+    function draw() {
+      const roof = BLDG.floors * BLDG.floorH;
+      q<SVGPathElement>('[data-ground]').setAttribute('d', path(rect(SITE.x0, SITE.y0, SITE.x1, SITE.y1, 0)));
+      let grid = '';
+      for (let x = SITE.x0; x <= SITE.x1; x += 4) grid += path([{ x, y: SITE.y0, z: 0 }, { x, y: SITE.y1, z: 0 }], false); // prettier-ignore
+      for (let y = SITE.y0; y <= SITE.y1; y += 4) grid += path([{ x: SITE.x0, y, z: 0 }, { x: SITE.x1, y, z: 0 }], false); // prettier-ignore
+      q<SVGPathElement>('[data-grid]').setAttribute('d', grid);
+
+      let slabs = '';
+      for (let f = 1; f < BLDG.floors; f++) slabs += path(rect(0, 0, BLDG.w, BLDG.d, f * BLDG.floorH));
+      q<SVGPathElement>('[data-slabs]').setAttribute('d', slabs);
+      let frame = path(rect(0, 0, BLDG.w, BLDG.d, 0)) + path(rect(0, 0, BLDG.w, BLDG.d, roof));
+      for (const c of rect(0, 0, BLDG.w, BLDG.d, 0)) frame += path([c, { ...c, z: roof }], false);
+      q<SVGPathElement>('[data-frame]').setAttribute('d', frame);
+      q<SVGPathElement>('[data-floorfill]').setAttribute(
+        'd',
+        path(rect(0, 0, BLDG.w, BLDG.d, (floor - 1) * BLDG.floorH)),
+      );
+
+      // Floor labels hang off whichever corner is leftmost on screen.
+      const corners = rect(0, 0, BLDG.w, BLDG.d, 0);
+      const left = corners.reduce((a, b) => (project(b).x < project(a).x ? b : a));
+      floorLabels.forEach((el, i) => {
+        const p = project({ ...left, z: (i + 0.5) * BLDG.floorH });
+        el.setAttribute('x', (p.x - 8).toFixed(1));
+        el.setAttribute('y', (p.y + 4).toFixed(1));
+        el.classList.toggle('strong', i + 1 === floor);
+        // Seen from straight above, the four labels would stack on one spot.
+        el.style.display = cam.pitch > 1.15 ? 'none' : '';
+      });
+
+      const T = project(tag);
+      anchors.forEach((a, i) => {
+        const on = active(i);
+        for (const el of [anchorEls[i], ringEls[i], sightEls[i], dropEls[i], footEls[i]]) {
+          el.toggleAttribute('hidden', !on);
+          (el as SVGElement).style.display = on ? '' : 'none';
+        }
+        if (!on) return;
+        const P = project(a);
+        anchorEls[i].setAttribute('transform', `translate(${P.x.toFixed(1)} ${P.y.toFixed(1)})`);
+        const ground = project({ ...a, z: 0 });
+        setLine(dropEls[i], P, ground);
+        setDot(footEls[i], ground);
+        setLine(sightEls[i], P, T);
+        const blocked = nlos && i === BLOCKED;
+        sightEls[i].classList.toggle('blocked', blocked);
+        ringEls[i].classList.toggle('blocked', blocked);
+
+        // Where this measured range meets the horizontal plane at the tag's height.
+        const r2 = ranges0[i] ** 2 - (a.z - tag.z) ** 2;
+        if (r2 <= 0) {
+          ringEls[i].setAttribute('d', '');
+        } else {
+          const r = Math.sqrt(r2);
+          const pts: V3[] = [];
+          for (let k = 0; k < 72; k++) {
+            const t = (k / 72) * 2 * Math.PI;
+            pts.push({ x: a.x + r * Math.cos(t), y: a.y + r * Math.sin(t), z: tag.z });
+          }
+          ringEls[i].setAttribute('d', path(pts));
+        }
+      });
+
+      tagEl.setAttribute('transform', `translate(${T.x.toFixed(1)} ${T.y.toFixed(1)})`);
+      const tagGround = project({ ...tag, z: 0 });
+      setLine(tagDrop, T, tagGround);
+      setDot(tagFoot, tagGround);
+
+      estimates.forEach((p, s) => setDot(estEls[s], project(p)));
+      const M = project(mean);
+      setDot(q<SVGCircleElement>('[data-mean]'), M);
+      setLine(q<SVGLineElement>('[data-err]'), T, M);
+      q<SVGTextElement>('[data-scale]').setAttribute('y', String(H - 10));
+    }
+
+    const update = () => {
+      compute();
+      draw();
+    };
+
+    // ---- Sizing: one SVG unit is one CSS pixel, so labels and handles keep their size. ----
+    const wrap = stage.parentElement!;
+    const resize = () => {
+      const w = wrap.clientWidth;
+      if (!w) return;
+      W = w;
+      H = Math.round(clamp(w * 0.7, 330, 520));
+      scale = Math.min(W / 43, H / 31);
+      stage.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      stage.style.height = `${H}px`;
+      draw();
+    };
+
+    // ---- Camera ----
+    let camRaf = 0;
+    const pressView = (name: string | null) =>
+      viewBtns.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.view === name)));
+    function flyTo(target: { yaw: number; pitch: number }) {
+      cancelAnimationFrame(camRaf);
+      // Take the short way round.
+      const from = { ...cam };
+      const dyaw = Math.atan2(Math.sin(target.yaw - from.yaw), Math.cos(target.yaw - from.yaw));
+      // No animation frames arrive while the page is hidden, so jump instead of waiting.
+      if (reduceMotion || document.hidden) {
+        cam.yaw = target.yaw;
+        cam.pitch = target.pitch;
+        draw();
+        return;
+      }
+      const t0 = performance.now();
+      const step = (now: number) => {
+        const t = clamp((now - t0) / 450, 0, 1);
+        const e = 1 - (1 - t) ** 3;
+        cam.yaw = from.yaw + dyaw * e;
+        cam.pitch = from.pitch + (target.pitch - from.pitch) * e;
+        draw();
+        if (t < 1) camRaf = requestAnimationFrame(step);
+      };
+      camRaf = requestAnimationFrame(step);
+    }
+    viewBtns.forEach((btn) =>
+      btn.addEventListener('click', () => {
+        pressView(btn.dataset.view!);
+        flyTo(VIEWS[btn.dataset.view!]);
+      }),
+    );
+
+    const toStage = (e: PointerEvent): P2 => {
+      const box = stage.getBoundingClientRect();
+      return { x: ((e.clientX - box.left) / box.width) * W, y: ((e.clientY - box.top) / box.height) * H };
+    };
+
+    let orbit: { x: number; y: number; id: number } | null = null;
+    stage.addEventListener('pointerdown', (e) => {
+      if ((e.target as Element).closest('.handle')) return;
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      cancelAnimationFrame(camRaf);
+      orbit = { x: e.clientX, y: e.clientY, id: e.pointerId };
+      capture(stage, e.pointerId);
+      stage.classList.add('orbiting');
+    });
+    stage.addEventListener('pointermove', (e) => {
+      if (!orbit || e.pointerId !== orbit.id) return;
+      cam.yaw += (e.clientX - orbit.x) * 0.008;
+      // A finger's vertical movement scrolls the page, so it only turns the scene.
+      if (e.pointerType !== 'touch') cam.pitch = clamp(cam.pitch + (e.clientY - orbit.y) * 0.006, 0, Math.PI / 2);
+      orbit.x = e.clientX;
+      orbit.y = e.clientY;
+      pressView(null);
+      draw();
+    });
+    const endOrbit = (e: PointerEvent) => {
+      if (!orbit || e.pointerId !== orbit.id) return;
+      orbit = null;
+      stage.classList.remove('orbiting');
+    };
+    stage.addEventListener('pointerup', endOrbit);
+    stage.addEventListener('pointercancel', endOrbit);
+
+    // ---- Draggable points ----
+    const clearPreset = () => presetBtns.forEach((b) => b.setAttribute('aria-pressed', 'false'));
+    function place(target: V3, isTag: boolean, sx: number, sy: number) {
+      const p = unproject(sx, sy, target.z, target);
+      if (isTag) {
+        target.x = clamp(p.x, 0.5, BLDG.w - 0.5);
+        target.y = clamp(p.y, 0.5, BLDG.d - 0.5);
+      } else {
+        target.x = clamp(p.x, SITE.x0, SITE.x1);
+        target.y = clamp(p.y, SITE.y0, SITE.y1);
+        clearPreset();
+      }
+      update();
+    }
+    function bind(el: SVGGElement, target: V3, isTag: boolean) {
+      let dragging = false;
+      let grab: P2 = { x: 0, y: 0 };
+      el.addEventListener('pointerdown', (e) => {
+        if (e.pointerType === 'mouse' && e.button !== 0) return;
+        dragging = true;
+        // Keep the offset between the pointer and the point, so it does not jump on grab.
+        const at = toStage(e);
+        const now = project(target);
+        grab = { x: now.x - at.x, y: now.y - at.y };
+        capture(el, e.pointerId);
+        el.classList.add('dragging');
+        e.preventDefault();
+        el.focus({ preventScroll: true });
+      });
+      el.addEventListener('pointermove', (e) => {
+        if (!dragging) return;
+        const at = toStage(e);
+        place(target, isTag, at.x + grab.x, at.y + grab.y);
+      });
+      const end = () => {
+        dragging = false;
+        el.classList.remove('dragging');
+      };
+      el.addEventListener('pointerup', end);
+      el.addEventListener('pointercancel', end);
+      el.addEventListener('keydown', (e) => {
+        if (isTag && (e.key === 'PageUp' || e.key === 'PageDown')) {
+          e.preventDefault();
+          setFloor(clamp(floor + (e.key === 'PageUp' ? 1 : -1), 1, BLDG.floors));
+          return;
+        }
+        const moves: Record<string, [number, number]> = {
+          ArrowLeft: [-STEP_PX, 0],
+          ArrowRight: [STEP_PX, 0],
+          ArrowUp: [0, -STEP_PX],
+          ArrowDown: [0, STEP_PX],
+        };
+        const move = moves[e.key];
+        if (!move) return;
+        e.preventDefault();
+        const now = project(target);
+        place(target, isTag, now.x + move[0], now.y + move[1]);
+      });
+    }
+    anchorEls.forEach((el, i) => bind(el, anchors[i], false));
+    bind(tagEl, tag, true);
+
+    // ---- Controls ----
+    function setFloor(f: number) {
+      floor = f;
+      floorBtns.forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.floor) === f)));
+      update();
+    }
+    floorBtns.forEach((btn) => btn.addEventListener('click', () => setFloor(Number(btn.dataset.floor))));
+    sigmaCtl.addEventListener('input', update);
+    droneBtn.addEventListener('click', () => {
+      drone = !drone;
+      droneBtn.setAttribute('aria-pressed', String(drone));
+      update();
+    });
+    nlosBtn.addEventListener('click', () => {
+      nlos = !nlos;
+      nlosBtn.setAttribute('aria-pressed', String(nlos));
+      update();
+    });
+    presetBtns.forEach((btn) =>
+      btn.addEventListener('click', () => {
+        PRESETS[btn.dataset.preset!].forEach((p, i) => Object.assign(anchors[i], p));
+        presetBtns.forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
+        update();
+      }),
+    );
+
+    compute();
+    new ResizeObserver(resize).observe(wrap);
+    resize();
+  });
+</script>
+
+<style>
+  .slider {
+    flex: 1 1 170px;
+    max-width: 260px;
+  }
+  .stage-wrap {
+    background: var(--fig-shade);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  svg {
+    display: block;
+    width: 100%;
+    height: 460px;
+    user-select: none;
+    -webkit-user-select: none;
+    font-family: var(--font-mono);
+    cursor: grab;
+    /* A sideways drag turns the scene; a vertical swipe still scrolls the page. */
+    touch-action: pan-y;
+  }
+  svg.orbiting {
+    cursor: grabbing;
+  }
+  .ground {
+    fill: var(--fig);
+    fill-opacity: 0.55;
+  }
+  .grid {
+    fill: none;
+    stroke: var(--fig-rule);
+    stroke-width: 1;
+  }
+  .bldg {
+    fill: none;
+    stroke: var(--fig-ink);
+    stroke-width: 2;
+    stroke-linejoin: round;
+  }
+  .bldg.thin {
+    stroke-width: 1;
+    stroke-opacity: 0.45;
+  }
+  .floor-fill {
+    fill: var(--fig-accent);
+    fill-opacity: 0.1;
+    stroke: var(--fig-accent);
+    stroke-width: 1.25;
+  }
+  .t {
+    font-size: 10.5px;
+    fill: var(--fig-ink-3);
+  }
+  .t.strong {
+    fill: var(--fig-ink);
+    font-weight: 600;
+  }
+  .ring {
+    fill: none;
+    stroke: var(--fig-ink-3);
+    stroke-width: 1;
+    stroke-opacity: 0.6;
+  }
+  .ring.blocked {
+    stroke: var(--fig-accent);
+    stroke-opacity: 1;
+    stroke-dasharray: 5 4;
+  }
+  .sight {
+    stroke: var(--fig-ink-3);
+    stroke-width: 1;
+    stroke-opacity: 0.45;
+    stroke-dasharray: 2 4;
+  }
+  .sight.blocked {
+    stroke: var(--fig-accent);
+    stroke-opacity: 1;
+  }
+  .drop {
+    stroke: var(--fig-ink);
+    stroke-width: 1;
+    stroke-opacity: 0.35;
+  }
+  .foot {
+    fill: var(--fig-ink);
+    fill-opacity: 0.35;
+  }
+  .overlay {
+    pointer-events: none;
+  }
+  .est {
+    fill: var(--fig-accent);
+    fill-opacity: 0.6;
+  }
+  .mean {
+    fill: none;
+    stroke: var(--fig-accent);
+    stroke-width: 2;
+  }
+  .err {
+    stroke: var(--fig-accent);
+    stroke-width: 1.5;
+  }
+
+  /* Only the handles capture touch fully, so the page still scrolls past the stage. */
+  .handle {
+    cursor: grab;
+    touch-action: none;
+  }
+  .handle.dragging {
+    cursor: grabbing;
+  }
+  .handle:focus-visible {
+    outline: none;
+  }
+  .grab {
+    fill: transparent;
+    stroke: transparent;
+    stroke-width: 2;
+    transition: fill 0.15s;
+  }
+  .handle:hover .grab,
+  .handle.dragging .grab {
+    fill: color-mix(in srgb, var(--fig-accent) 12%, transparent);
+  }
+  .handle:focus-visible .grab {
+    stroke: var(--fig-accent);
+  }
+  .anchor rect,
+  .anchor path {
+    fill: var(--fig-ink);
+  }
+  .tag .dot {
+    fill: var(--fig-ink);
+    stroke: var(--fig);
+    stroke-width: 1.5;
+  }
+
+  /* Two factors on one line: smaller than the other readouts so it never wraps. */
+  [data-out='dop'] {
+    font-size: 1.15rem;
+    line-height: 1.57;
+    white-space: nowrap;
+  }
+
+  .k {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+  .k-true {
+    background: var(--fig-ink);
+  }
+  .k-est {
+    width: 6px;
+    height: 6px;
+    background: var(--fig-accent);
+    opacity: 0.6;
+  }
+  .k-mean {
+    border: 2px solid var(--fig-accent);
+  }
+  .k-range {
+    border: 1px solid var(--fig-ink-3);
+  }
+
+  @media (max-width: 560px) {
+    .slider {
+      max-width: none;
+    }
+  }
+</style>

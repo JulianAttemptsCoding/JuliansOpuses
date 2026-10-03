@@ -1,0 +1,185 @@
+---
+import Base from '../layouts/Base.astro';
+import Education from '../components/Education.astro';
+import { href } from '../lib/url';
+import { site } from '../data/site';
+import { activities, modeling, tools } from '../data/profile';
+---
+
+<Base title="About" description="Background, interests and activities outside research.">
+  <section class="intro wrap">
+    <p class="label">About</p>
+    <h1>I like finding out how systems work, and whether the numbers actually add up.</h1>
+    <div class="lede">
+      <p>
+        I'm a high-school student, Class of 2027, with a substantial amount of college coursework and research
+        behind me. Most of my time goes to research and engineering problems: scientific machine learning,
+        simulation, estimation and quantitative modeling.
+      </p>
+      <p>
+        My interests are broad: physics, mathematics, computing, economics and history. What connects the work
+        is a habit of taking a messy real system and making it measurable, then checking the result harder
+        than the first good-looking metric requires.
+      </p>
+      <p class="links">
+        <a href={href('/#work')}>Selected work →</a>
+        <a href={href('/contact/')}>Get in touch →</a>
+        {
+          site.linkedin && (
+            <a class="ext" href={site.linkedin} rel="noopener">
+              LinkedIn
+            </a>
+          )
+        }
+        <a class="ext" href={site.github} rel="noopener">GitHub</a>
+      </p>
+    </div>
+  </section>
+
+  <section class="section wrap ledger">
+    <h2 class="label ledger-label">Outside research</h2>
+    <ul class="items">
+      {
+        activities.map((a) => (
+          <li>
+            <div class="item-head">
+              <h3>{a.title}</h3>
+              <span class="mono">{a.role}</span>
+            </div>
+            <p>{a.body}</p>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+
+  <section class="section wrap ledger">
+    <h2 class="label ledger-label">Mathematical modeling</h2>
+    <ul class="items">
+      {
+        modeling.map((m) => (
+          <li>
+            <div class="item-head">
+              <h3>{m.title}</h3>
+            </div>
+            <p>{m.body}</p>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+
+  <section class="section wrap ledger">
+    <h2 class="label ledger-label">Education</h2>
+    <Education open />
+  </section>
+
+  <section class="section wrap ledger">
+    <h2 class="label ledger-label">Tools</h2>
+    <div>
+      <p class="tools mono">{tools}</p>
+      <p class="tools-note">The projects show how these get used better than a list does.</p>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .intro {
+    padding-top: clamp(3rem, 9vw, 7.5rem);
+  }
+  h1 {
+    max-width: 20ch;
+    margin-top: 1.5rem;
+    font-size: clamp(2.2rem, 5.6vw, 4.75rem);
+    line-height: 1;
+    letter-spacing: -0.045em;
+  }
+  .lede {
+    display: grid;
+    gap: 1.1rem;
+    max-width: 62ch;
+    margin-top: clamp(2rem, 5vw, 3.5rem);
+    margin-left: auto;
+    font-size: clamp(1.05rem, 1.4vw, 1.25rem);
+    line-height: 1.5;
+    color: var(--ink-2);
+  }
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.75rem;
+    color: var(--ink);
+    font-size: 1rem;
+  }
+
+  .section {
+    padding-top: clamp(3.5rem, 8vw, 7rem);
+  }
+  .ledger {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 9fr);
+    gap: 1.5rem clamp(1.5rem, 4vw, 4rem);
+  }
+  .ledger::before {
+    content: '';
+    grid-column: 1 / -1;
+    border-top: 1px solid var(--ink);
+  }
+  .ledger-label {
+    position: sticky;
+    top: calc(var(--header-h) + 1.5rem);
+    align-self: start;
+  }
+
+  .items {
+    list-style: none;
+  }
+  .items li {
+    padding-block: 1.1rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  .items li:first-child {
+    padding-top: 0;
+  }
+  .item-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.25rem 1.5rem;
+  }
+  .item-head h3 {
+    font-size: 1.25rem;
+    letter-spacing: -0.02em;
+  }
+  .item-head .mono {
+    color: var(--ink-3);
+  }
+  .items p {
+    max-width: 66ch;
+    margin-top: 0.45rem;
+    color: var(--ink-2);
+  }
+  .tools {
+    max-width: 60ch;
+    font-size: 0.85rem;
+    line-height: 1.9;
+  }
+  .tools-note {
+    margin-top: 0.75rem;
+    color: var(--ink-3);
+    font-size: 0.95rem;
+  }
+
+  @media (max-width: 720px) {
+    .ledger {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .ledger-label {
+      position: static;
+    }
+    .lede {
+      margin-left: 0;
+    }
+  }
+</style>

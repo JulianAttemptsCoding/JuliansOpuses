@@ -1,0 +1,92 @@
+---
+order: 5
+tier: note
+title: QTA0
+heading: 'QTA0: When a Backtest Stops Working'
+question: Does apparent trading alpha survive adversarial validation?
+claim: An equity forecasting system, followed by increasingly strict validation until the apparent edge disappeared.
+domain: Quant research
+status: negative
+evidence: Test hit rate 52.5% → 49.7% as validation tightened · not deployable
+metrics:
+  - label: run0 · adjacent chrono
+    value: 52.5%
+  - label: run1 · CPCV, 28 folds
+    value: 51.1%
+  - label: run2 · CPCV, 45 folds
+    value: 50.5%
+  - label: run2.1 · distant chrono
+    value: 49.7%
+links:
+  - label: Repository
+    href: https://github.com/JulianAttemptsCoding/QTA0
+cover: ../../assets/work/qta0/run0-oos-return.png
+coverAlt: Out-of-sample cumulative return of the first configuration against SPY buy-and-hold.
+worked:
+  - 'The validation harness did its job: combinatorial purged cross-validation and a backtest-overfitting firewall caught what a single chronological test missed.'
+  - 'The first result was taken apart honestly: mostly market beta, plus a small stock-selection signal.'
+  - 'The whole arc is documented, including the raw lab log of decisions and bugs.'
+openLabel: What did not
+open:
+  - 'No net-of-cost edge under any regime-fair validation.'
+  - 'Hit rate decays toward a coin flip as the test period moves away from training: concept drift.'
+  - 'Two re-validations use survivorship-biased free data, so they are compared only against their own universe, never against SPY.'
+  - 'Conclusion: not deployable.'
+---
+
+import Figure from '../../components/Figure.astro';
+import HitRateChart from '../../components/HitRateChart.astro';
+import oos from '../../assets/work/qta0/run0-oos-return.png';
+import rolling from '../../assets/work/qta0/hit-rate-rolling.png';
+
+## Hypothesis
+
+QTA0 is a daily-frequency, cross-sectional US-equity forecaster built as a mixture of experts, written end to end and trained on Vertex AI. The hypothesis was the usual one: that a learned model could rank stocks well enough to beat holding the index.
+
+## The result that looked good
+
+One early configuration did beat the index. Out of sample from 2023 into 2026, it returned +92.1% against +84.0% for SPY.
+
+<Figure
+  n={1}
+  src={oos}
+  alt="Line chart of cumulative out-of-sample return from January 2023 to January 2026: strategy ends at +92.1%, SPY at +84.0%, with a much deeper strategy drawdown in 2025."
+  caption="The first configuration against SPY buy-and-hold. It finishes ahead, after a much deeper drawdown in 2025."
+  source="From the QTA0 repository."
+/>
+
+Looked at more closely, the result is weaker than the headline. The strategy finished ahead on return with a worse Sharpe ratio and a deeper drawdown, and most of the return was market beta. Underneath was a small, real stock-selection signal: a test hit rate of 52.5%.
+
+## Making the test harder
+
+A single chronological split next to the training period is one path through history. It cannot distinguish a model that has learned something durable from one that fits a regime. So the strategy was re-tested under progressively stronger designs: combinatorial purged cross-validation over many train-test paths, a larger universe, and finally a chronological test placed far from the training period.
+
+<Figure
+  n={2}
+  caption="Test hit rate under each validation design, ordered by strictness. The axis is zoomed to 49–53%; pick a run to see what the test was and how small the edge is on a full scale."
+>
+  <HitRateChart />
+</Figure>
+
+| Run | Data | Universe | Validation | Test hit rate | Verdict |
+| --- | --- | --- | --- | --- | --- |
+| run0 | Alpaca SIP | 83 | Chronological, adjacent | 52.5% (t = +3.49) | Beat SPY on return only |
+| run1 | Alpaca SIP | 196 | CPCV (8,2), 28 folds | 51.1% (t = +5.36) | Negative |
+| run2 | yfinance | 153 | CPCV (10,2), 45 folds | 50.5% (t = +5.91) | Negative |
+| run2.1 | yfinance | 153 | Chronological, distant | 49.7% (t = −1.56) | Negative, coin flip |
+
+The hit rates in run1 and run2 are statistically distinguishable from 50%, and still too small to survive trading costs.
+
+## What the decline means
+
+Directional accuracy falls the further the test set sits from training in time. That is the fingerprint of concept drift: whatever the model learned was true of the market it trained on and fades as the market moves on.
+
+<Figure
+  n={3}
+  src={rolling}
+  alt="Two line charts of 21-session rolling hit rate: the distant chronological run hovers around 50% from 2018 to 2026, while the first configuration averages 52.5% over 2023 to 2026."
+  caption="Rolling 21-session hit rate. Top: the distant chronological run across 2018–2026, with the first configuration overlaid. Bottom: the same 2023–2026 window, head to head."
+  source="From the QTA0 repository."
+/>
+
+The useful output of this project is the conclusion, and the method that produced it: an apparent edge, tested until it was gone, and reported that way.

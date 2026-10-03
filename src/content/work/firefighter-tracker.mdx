@@ -1,0 +1,80 @@
+---
+order: 3
+tier: flagship
+title: Firefighter Tracker
+heading: Firefighter Tracker / Sentinel Nano
+question: Does localization still work once real radio noise and deployment geometry replace ideal equations?
+claim: Indoor positioning for firefighters where GPS fails, using UWB ranging to mobile reference points and estimation built for noisy, blocked signals.
+domain: Estimation · Hardware
+status: prototype
+evidence: Conrad Challenge Innovator · shaped by fire-service input
+context: Developed with input from a Fremont Fire Department battalion chief.
+metrics:
+  - label: Sensing
+    value: UWB radio ranging
+  - label: Estimation
+    value: Robust multilateration
+  - label: Recognition
+    value: Conrad Challenge, Innovator
+cover: ../../assets/work/tracker/concept.svg
+coverAlt: Schematic of reference points outside a building ranging to a tag carried by a firefighter inside.
+worked:
+  - 'The problem definition came from practitioners: smoke, lost visual contact, deployment time and hardware limits shaped the design.'
+  - 'The system concept addresses what ideal multilateration ignores: noisy ranges, blocked paths and poor reference-point geometry.'
+  - 'Recognized as a Conrad Challenge Innovator.'
+openLabel: What is still open
+open:
+  - 'How the estimate degrades in a real structure, with radios blocked and reference points placed under time pressure, is the central open question.'
+  - 'Measured ranging and localization-error results are not published here yet.'
+---
+
+import Figure from '../../components/Figure.astro';
+import DevNote from '../../components/DevNote.astro';
+import Multilateration from '../../components/Multilateration.astro';
+import Concept from '../../assets/work/tracker/concept.svg';
+
+## Problem
+
+Inside a burning building, GPS is unreliable or gone, smoke removes visual contact, and a crew can lose track of where its own members are. The project asks how to determine a firefighter's position in exactly those conditions.
+
+## Starting with practitioners
+
+The engineering started with a conversation. A battalion chief at the Fremont Fire Department described what crews actually deal with: heavy smoke, no way to see team members, indoor positioning that cannot be trusted, very little time to deploy anything, and hard limits on what hardware a firefighter can carry.
+
+Those constraints set the design. A crew cannot count on infrastructure installed in advance, so the reference points have to arrive with them, and setting them up cannot cost minutes.
+
+## System concept
+
+A small tag carried by the firefighter exchanges ultra-wideband (UWB) radio signals with several reference points whose positions are known. Each exchange gives a distance. Enough distances pin down a position: multilateration.
+
+<Figure
+  n={1}
+  caption="System concept. Reference points, mobile or drone-based, range to a tag inside the building. Three ranges agree near the tag; the fourth passes through a stair core and reads long."
+>
+  <Concept />
+</Figure>
+
+## What makes it hard
+
+With exact ranges, the equations are a textbook exercise. The project is about everything that breaks them:
+
+- **Noise.** Every range carries measurement error, and the position error it produces depends on where the reference points are.
+- **Blocked paths.** A signal that passes through a wall or a stair core arrives late, so the range reads long. That is a bias, not noise, and averaging does not remove it.
+- **Geometry.** Reference points placed where it is convenient, such as along one side of a building, amplify error in the direction they cannot see.
+- **Height.** Knowing which floor someone is on makes this a 3D problem. Reference points that all sit near ground level barely constrain height; one placed well above them does.
+
+<Figure
+  n={2}
+  caption="Illustrative 3D simulation with ideal Gaussian range noise, not measured project data. Rotate the building and move anything. Three things to try: stage every reference point on one side, block the path to A4, or switch the drone off and put the firefighter on floor 1."
+>
+  <Multilateration />
+</Figure>
+
+## Estimation
+
+The estimator is built for those failure cases rather than the ideal one: robust estimation that tolerates inconsistent ranges, and machine-learning-assisted correction of range error, particularly for measurements taken without a clear line of sight. Reference-point placement is treated as part of the system, because geometry sets how much any range error is amplified.
+
+<DevNote>
+  Prototype photographs, ranging tests and localization-error plots would strengthen this page. Add them as
+  figures here.
+</DevNote>

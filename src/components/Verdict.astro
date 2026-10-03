@@ -1,0 +1,69 @@
+---
+import { VERDICTS, type Status } from '../data/verdicts';
+
+interface Props {
+  status: Status;
+  /** Render the glyph without the bordered chip (used in the legend). */
+  bare?: boolean;
+}
+const { status, bare = false } = Astro.props;
+---
+
+<span class:list={['verdict', { bare }]} title={VERDICTS[status].meaning}>
+  <svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true">
+    {status === 'holds' && <circle cx="6" cy="6" r="5" fill="currentColor" />}
+    {
+      status === 'open' && (
+        <>
+          <circle cx="6" cy="6" r="4.25" fill="none" stroke="currentColor" stroke-width="1.5" />
+          <path d="M6 1.75a4.25 4.25 0 0 1 0 8.5z" fill="currentColor" />
+        </>
+      )
+    }
+    {
+      status === 'prototype' && (
+        <circle cx="6" cy="6" r="4.25" fill="none" stroke="currentColor" stroke-width="1.5" />
+      )
+    }
+    {
+      status === 'shipped' && (
+        <rect x="2.5" y="2.5" width="7" height="7" fill="currentColor" transform="rotate(45 6 6)" />
+      )
+    }
+    {
+      status === 'negative' && (
+        <path
+          d="M2.25 2.25l7.5 7.5M9.75 2.25l-7.5 7.5"
+          stroke="currentColor"
+          stroke-width="1.75"
+          stroke-linecap="round"
+        />
+      )
+    }
+  </svg>
+  <span>{VERDICTS[status].label}</span>
+</span>
+
+<style>
+  .verdict {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5em;
+    padding: 0.28em 0.7em 0.28em 0.6em;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    line-height: 1.2;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .verdict.bare {
+    padding: 0;
+    border: 0;
+  }
+  svg {
+    flex: none;
+  }
+</style>

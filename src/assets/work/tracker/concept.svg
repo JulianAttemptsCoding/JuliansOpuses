@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 440" role="img" aria-label="Schematic: four reference points outside a building measure radio range to a tag carried by a firefighter inside. Three ranges agree near the tag; a fourth passes through a stair core and reads long.">
+  <!-- Building -->
+  <rect x="250" y="90" width="380" height="260" fill="#f3f2ee" stroke="#15161a" stroke-width="5"/>
+  <rect x="305" y="225" width="80" height="60" fill="#15161a"/>
+
+  <!-- Range lines -->
+  <g stroke="#6a6c74" stroke-width="1.25" stroke-dasharray="5 5" fill="none">
+    <path d="M120 70L470 180"/>
+    <path d="M760 90L470 180"/>
+    <path d="M780 380L470 180"/>
+  </g>
+  <path d="M110 360L470 180" stroke="#c2410c" stroke-width="1.5" stroke-dasharray="5 5" fill="none"/>
+
+  <!-- Short range arcs near the tag: three agree, the blocked one overshoots -->
+  <g stroke="#15161a" stroke-width="1.5" fill="none">
+    <path d="M478.3 149.1A366.9 366.9 0 0 1 459.1 210.1"/>
+    <path d="M463.3 154.4A303.6 303.6 0 0 0 479 204.9"/>
+    <path d="M453.8 207.8A368.9 368.9 0 0 1 488.6 153.8"/>
+  </g>
+  <path d="M478.5 133.6A432.5 432.5 0 0 1 512.2 201" stroke="#c2410c" stroke-width="1.75" fill="none"/>
+
+  <!-- Tag -->
+  <path d="M470 84V166" stroke="#c2410c" stroke-width="1" fill="none"/>
+  <circle cx="470" cy="180" r="7" fill="#c2410c" stroke="#ffffff" stroke-width="2"/>
+
+  <!-- Reference points -->
+  <g fill="#15161a">
+    <rect x="112" y="62" width="16" height="16" rx="2"/>
+    <rect x="752" y="82" width="16" height="16" rx="2"/>
+    <rect x="772" y="372" width="16" height="16" rx="2"/>
+    <rect x="102" y="352" width="16" height="16" rx="2"/>
+  </g>
+
+  <g font-family="'Geist Mono Variable', ui-monospace, Menlo, Consolas, monospace" font-size="11" fill="#15161a">
+    <text x="120" y="50" text-anchor="middle">A1</text>
+    <text x="760" y="70" text-anchor="middle">A2</text>
+    <text x="780" y="408" text-anchor="middle">A3</text>
+    <text x="110" y="388" text-anchor="middle">A4</text>
+  </g>
+  <g font-family="'Geist Mono Variable', ui-monospace, Menlo, Consolas, monospace" font-size="10.5" fill="#6a6c74">
+    <text x="140" y="50">reference points: mobile or drone-based</text>
+    <text x="264" y="336">building</text>
+    <text x="345" y="303" text-anchor="middle" fill="#4a4c54">stair core</text>
+    <text x="470" y="74" text-anchor="middle" fill="#9a3412">tag on firefighter</text>
+    <text x="648" y="152">UWB range</text>
+    <text x="118" y="258" fill="#9a3412">blocked path:</text>
+    <text x="118" y="273" fill="#9a3412">range reads long</text>
+    <text x="864" y="428" text-anchor="end">schematic, not to scale</text>
+  </g>
+</svg>

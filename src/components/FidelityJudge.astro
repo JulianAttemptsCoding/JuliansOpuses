@@ -1,0 +1,353 @@
+---
+// What the classifier two-sample test measures, without the vocabulary.
+// A "judge" scores every shower; the two bell curves are its scores for real and for
+// generated showers. The further apart they sit, the more often the judge is right.
+// Illustration with ideal Gaussian scores: only the three marked AUROC values are project numbers.
+const marks = [
+  { auc: 0.5, value: '0.50', name: 'cannot tell', jump: 'A perfect generator' },
+  { auc: 0.65, value: '0.65', name: 'project target', jump: 'Project target' },
+  { auc: 0.84, value: '0.84', name: 'Fast-MC today', jump: 'Fast-MC today' },
+];
+const pos = (auc: number) => `${((auc - 0.5) / 0.5) * 100}%`;
+---
+
+<div class="fx judge" data-judge>
+  <div class="fx-controls">
+    <label class="fx-group slider">
+      <span class="fx-label">How different the generated showers are</span>
+      <input
+        type="range"
+        min="0"
+        max="3.3"
+        step="0.01"
+        value="1.41"
+        data-ctl="gap"
+        aria-describedby="judge-ends"
+      />
+      <span class="ends mono" id="judge-ends"><span>identical</span><span>obviously different</span></span>
+    </label>
+    <div class="fx-group" role="group" aria-label="Jump to a marked value">
+      <span class="fx-label">Jump to</span>
+      <div class="fx-seg">
+        {
+          marks.map((m) => (
+            <button type="button" data-jump={m.auc} aria-pressed={m.auc === 0.84 ? 'true' : 'false'}>
+              {m.jump}
+            </button>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+
+  <div class="plot">
+    <svg viewBox="0 0 100 44" preserveAspectRatio="none" aria-hidden="true">
+      <path class="overlap" data-curve="overlap"></path>
+      <path class="gen" data-curve="gen"></path>
+      <path class="real" data-curve="real"></path>
+      <line class="axis" x1="0" x2="100" y1="43.5" y2="43.5"></line>
+    </svg>
+    <div class="axis-ends mono">
+      <span>← judge says “real”</span>
+      <span>judge says “generated” →</span>
+    </div>
+  </div>
+
+  <ul class="fx-key">
+    <li><span class="k k-real"></span>Geant4 showers</li>
+    <li><span class="k k-gen"></span>generated showers</li>
+    <li><span class="k k-overlap"></span>overlap: the judge has to guess</li>
+  </ul>
+
+  <div class="scale" aria-hidden="true">
+    <div class="track">
+      <div class="fill" data-fill></div>
+      {marks.map((m) => <span class="tick" style={`left:${pos(m.auc)}`} />)}
+      <span class="thumb" data-thumb></span>
+    </div>
+    <div class="marks mono">
+      {
+        marks.map((m, i) => (
+          <span class:list={['mark', { first: i === 0 }]} style={`left:${pos(m.auc)}`}>
+            <b>{m.value}</b>
+            {m.name}
+          </span>
+        ))
+      }
+      <span class="mark last" style="left:100%">
+        <b>1.00</b>
+        always right
+      </span>
+    </div>
+  </div>
+
+  <p class="fx-insight" data-out="insight" role="status" aria-live="polite"></p>
+
+  <dl class="fx-readout">
+    <div>
+      <dt title="Area under the ROC curve of the judge. 0.5 is chance, 1.0 is perfect separation.">
+        AUROC · lower is better
+      </dt>
+      <dd data-out="auc">–</dd>
+    </div>
+    <div>
+      <dt>Judge right, per 100 pairs</dt>
+      <dd data-out="pairs">–</dd>
+    </div>
+    <div>
+      <dt>In words</dt>
+      <dd class="word" data-out="word">–</dd>
+    </div>
+  </dl>
+</div>
+
+<script>
+  const X0 = -3.4;
+  const X1 = 6.8;
+  const PEAK = 0.3989;
+  const SQRT2 = Math.SQRT2;
+
+  /** Standard normal CDF (Abramowitz–Stegun 7.1.26 for erf). */
+  function phi(x: number): number {
+    const z = Math.abs(x) / SQRT2;
+    const t = 1 / (1 + 0.3275911 * z);
+    const erf =
+      1 - ((((1.061405429 * t - 1.453152027) * t + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-z * z);
+    return x >= 0 ? 0.5 * (1 + erf) : 0.5 * (1 - erf);
+  }
+  /** Gap between two unit-variance bell curves that gives this AUROC. */
+  function gapFor(auc: number): number {
+    let lo = 0;
+    let hi = 6;
+    for (let i = 0; i < 40; i++) {
+      const mid = (lo + hi) / 2;
+      if (phi(mid / SQRT2) < auc) lo = mid;
+      else hi = mid;
+    }
+    return (lo + hi) / 2;
+  }
+  const pdf = (x: number, mu: number) => Math.exp(-0.5 * (x - mu) ** 2) * PEAK;
+
+  document.querySelectorAll<HTMLElement>('[data-judge]').forEach((root) => {
+    const q = <T extends Element>(sel: string) => root.querySelector<T>(sel)!;
+    const gapCtl = q<HTMLInputElement>('[data-ctl="gap"]');
+    const jumps = [...root.querySelectorAll<HTMLButtonElement>('[data-jump]')];
+    const out = (name: string) => q<HTMLElement>(`[data-out="${name}"]`);
+
+    const sx = (x: number) => ((x - X0) / (X1 - X0)) * 100;
+    const sy = (y: number) => 43.5 - (y / PEAK) * 40;
+    const curve = (f: (x: number) => number) => {
+      let d = `M0 43.5`;
+      for (let i = 0; i <= 160; i++) {
+        const x = X0 + ((X1 - X0) * i) / 160;
+        d += `L${sx(x).toFixed(2)} ${sy(f(x)).toFixed(2)}`;
+      }
+      return `${d}L100 43.5Z`;
+    };
+
+    function update() {
+      const gap = Number(gapCtl.value);
+      const auc = phi(gap / SQRT2);
+      const shown = Number(auc.toFixed(2));
+      q('[data-curve="real"]').setAttribute('d', curve((x) => pdf(x, 0)));
+      q('[data-curve="gen"]').setAttribute('d', curve((x) => pdf(x, gap)));
+      q('[data-curve="overlap"]').setAttribute('d', curve((x) => Math.min(pdf(x, 0), pdf(x, gap))));
+
+      const left = `${((auc - 0.5) / 0.5) * 100}%`;
+      q<HTMLElement>('[data-thumb]').style.left = left;
+      q<HTMLElement>('[data-fill]').style.width = left;
+      jumps.forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.jump) === shown)));
+
+      const pairs = Math.round(auc * 100);
+      out('auc').textContent = auc.toFixed(2);
+      out('pairs').innerHTML = `${pairs} <small>of 100</small>`;
+      let word: string;
+      let insight: string;
+      if (auc < 0.53) {
+        word = 'Indistinguishable';
+        insight = `The judge is guessing: right ${pairs} times in 100, the same as a coin. This is what a faithful generator looks like.`;
+      } else if (shown <= 0.65) {
+        word = 'Hard to tell apart';
+        insight = `At or under the project's target of 0.65. Shown one real and one generated shower, the judge picks the generated one only ${pairs} times in 100.`;
+      } else if (shown >= 0.83 && shown <= 0.85) {
+        word = 'Easy to tell apart';
+        insight = `This is where Fast-MC is today. Shown one real and one generated shower, the judge picks the generated one ${pairs} times in 100, even though the averages match.`;
+      } else if (auc < 0.95) {
+        word = auc < 0.8 ? 'Distinguishable' : 'Easy to tell apart';
+        insight = `Above the 0.65 target. Shown one real and one generated shower, the judge picks the generated one ${pairs} times in 100.`;
+      } else {
+        word = 'Obviously different';
+        insight = `The two kinds of shower barely overlap. The judge is right ${pairs} times in 100.`;
+      }
+      out('word').textContent = word;
+      out('insight').textContent = insight;
+      gapCtl.setAttribute('aria-valuetext', `AUROC ${auc.toFixed(2)}: ${word.toLowerCase()}`);
+    }
+
+    gapCtl.addEventListener('input', update);
+    jumps.forEach((btn) =>
+      btn.addEventListener('click', () => {
+        gapCtl.value = gapFor(Number(btn.dataset.jump)).toFixed(2);
+        update();
+      }),
+    );
+    // Start exactly on the measured value rather than on a rounded slider step.
+    gapCtl.value = gapFor(0.84).toFixed(2);
+    update();
+  });
+</script>
+
+<style>
+  .slider {
+    flex: 1 1 240px;
+    max-width: 360px;
+  }
+  .ends,
+  .axis-ends {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    font-size: 0.68rem;
+    color: var(--fig-ink-3);
+  }
+  .ends {
+    margin-top: -0.35rem;
+  }
+
+  .plot {
+    padding: 0.75rem 0.75rem 0.5rem;
+    background: var(--fig-shade);
+    border-radius: 6px;
+  }
+  svg {
+    display: block;
+    width: 100%;
+    height: clamp(120px, 24vw, 190px);
+  }
+  svg path,
+  svg line {
+    vector-effect: non-scaling-stroke;
+  }
+  .real {
+    fill: none;
+    stroke: var(--fig-ink);
+    stroke-width: 2;
+  }
+  .gen {
+    fill: var(--fig-accent);
+    fill-opacity: 0.16;
+    stroke: var(--fig-accent);
+    stroke-width: 2;
+  }
+  .overlap {
+    fill: var(--fig-ink);
+    fill-opacity: 0.14;
+    stroke: none;
+  }
+  .axis {
+    stroke: var(--fig-ink);
+    stroke-width: 1;
+  }
+  .axis-ends {
+    margin-top: 0.4rem;
+  }
+
+  .k {
+    width: 14px;
+    height: 10px;
+    border-radius: 2px;
+  }
+  .k-real {
+    border: 2px solid var(--fig-ink);
+  }
+  .k-gen {
+    border: 2px solid var(--fig-accent);
+    background: color-mix(in srgb, var(--fig-accent) 16%, transparent);
+  }
+  .k-overlap {
+    background: color-mix(in srgb, var(--fig-ink) 22%, transparent);
+  }
+
+  /* AUROC scale from chance to certainty, with the project's three values marked. */
+  .scale {
+    margin-top: 1.4rem;
+    padding-inline: 0.5rem;
+  }
+  .track {
+    position: relative;
+    height: 6px;
+    background: var(--fig-rule);
+    border-radius: 999px;
+  }
+  .fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    background: var(--fig-accent);
+    border-radius: 999px;
+  }
+  .tick {
+    position: absolute;
+    top: -4px;
+    width: 2px;
+    height: 14px;
+    margin-left: -1px;
+    background: var(--fig-ink);
+  }
+  .thumb {
+    position: absolute;
+    top: 50%;
+    width: 16px;
+    height: 16px;
+    margin: -8px 0 0 -8px;
+    background: var(--fig);
+    border: 3px solid var(--fig-accent);
+    border-radius: 50%;
+  }
+  .marks {
+    position: relative;
+    height: 2.7rem;
+    margin-top: 0.6rem;
+    font-size: 0.66rem;
+    line-height: 1.3;
+    color: var(--fig-ink-3);
+  }
+  .mark {
+    position: absolute;
+    display: grid;
+    width: max-content;
+    max-width: 6.5rem;
+    transform: translateX(-50%);
+    text-align: center;
+  }
+  .mark.first {
+    transform: none;
+    text-align: left;
+  }
+  .mark.last {
+    transform: translateX(-100%);
+    text-align: right;
+  }
+  .mark b {
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: var(--fig-ink);
+  }
+  .word {
+    font-size: 1.15rem;
+    line-height: 1.6;
+    letter-spacing: -0.02em;
+  }
+
+  @media (max-width: 560px) {
+    .slider {
+      max-width: none;
+    }
+    /* Too narrow for four labels in a row: every second one drops to a second line. */
+    .marks {
+      height: 5.2rem;
+    }
+    .mark:nth-child(even) {
+      top: 2.5rem;
+    }
+  }
+</style>

@@ -1,0 +1,96 @@
+---
+order: 2
+tier: flagship
+title: PathoGraph-DL
+question: Does strong predictive performance survive leakage-safe evaluation in time?
+claim: A spatio-temporal graph neural network that forecasts agricultural pathogen risk across about 194 countries from trade, climate and outbreak reports.
+domain: Graph ML
+status: holds
+evidence: Macro AUROC 0.960 ± 0.010 on held-out test · calibration error 0.020
+context: Independent research, part of my science-fair work.
+metrics:
+  - label: AUROC, macro
+    value: 0.9604 ± 0.0099
+  - label: AUPRC, macro
+    value: 0.7849 ± 0.0579
+  - label: Brier score
+    value: 0.0214 ± 0.0033
+  - label: ECE
+    value: 0.0197 ± 0.0036
+  - label: Graph
+    value: ~194 countries · ~8 pathogens
+links:
+  - label: Repository
+    href: https://github.com/JulianAttemptsCoding/pathograph-dl
+cover: ../../assets/work/pathograph/pipeline.svg
+coverAlt: Schematic of the PathoGraph pipeline from data sources through a country graph to calibrated risk.
+worked:
+  - 'Held-out test performance is strong and calibrated: macro AUROC 0.960 ± 0.010 with expected calibration error near 0.02.'
+  - 'Splits are chronological and enforced by data contracts, so no future information reaches training.'
+  - 'Results come from a frozen record: the package, config and checkpoint are pinned and validated.'
+  - 'The code is a tested system, not a notebook: configuration-driven experiments and 32 test files.'
+openLabel: Where the limits are
+open:
+  - 'Outbreaks are rare events, so every held-out estimate rests on few positive cases.'
+  - 'Macro AUPRC varies far more between runs (0.71 to 0.86) than AUROC does.'
+  - 'Labels are reported outbreaks, so the model inherits whatever gaps exist in reporting.'
+---
+
+import Figure from '../../components/Figure.astro';
+import Pipeline from '../../assets/work/pathograph/pipeline.svg';
+import Split from '../../assets/work/pathograph/split.svg';
+import SplitLeak from '../../components/SplitLeak.astro';
+
+## Problem
+
+Crop pathogens do not respect borders. They travel with traded goods and establish where the climate allows. A model that treats each country as an independent time series ignores the main mechanism of spread.
+
+PathoGraph-DL treats forecasting as a problem on a graph that changes over time: countries are nodes, trade connects them, and risk in one place depends on what is happening in the places it trades with.
+
+## Graph and data
+
+Three kinds of signal come together: international trade, climate, and reported outbreak information for roughly eight crop pathogens across about 194 countries.
+
+<Figure
+  n={1}
+  caption="Pipeline schematic. Trade defines the edges of a country graph, climate and outbreak history describe each node over time, and the model outputs a calibrated risk for every country and pathogen. Shading is illustrative."
+>
+  <Pipeline />
+</Figure>
+
+Getting heterogeneous public data into one consistent tensor is most of the work. Inputs are audited, stored as Zarr tensors, and guarded by strict data contracts so that a silent change in shape, units or coverage fails loudly instead of quietly changing a result.
+
+## Model
+
+The model is a spatio-temporal multi-modal graph neural network (ST-MM-GNN), written in PyTorch and PyTorch Lightning. Experiments are driven by configuration files and trained on Vertex AI, with the code packaged so the same build runs locally and in the cloud.
+
+## Evaluation
+
+The easiest way to get an impressive score on data like this is to leak the future: split rows at random and the model sees the same outbreak from both sides.
+
+<Figure
+  n={2}
+  caption="Why a random split flatters a forecaster. A toy calendar, not project data: six made-up countries, 24 months and a handful of outbreaks. Switch to a random split and see how many tested outbreak months the model had already seen the end of."
+>
+  <SplitLeak />
+</Figure>
+
+Every split here is chronological.
+
+<Figure
+  n={3}
+  caption="The split PathoGraph uses is by date. The checkpoint is selected on validation, and the held-out period is scored from a frozen checkpoint and config."
+>
+  <Split />
+</Figure>
+
+Outbreaks are rare, and on rare events AUROC alone can flatter a model. The frozen record therefore reports precision-recall and calibration alongside it:
+
+| Held-out test metric | Mean ± s.d. | Range |
+| --- | --- | --- |
+| Macro AUROC | 0.9604 ± 0.0099 | 0.9528 – 0.9717 |
+| Macro AUPRC | 0.7849 ± 0.0579 | 0.7128 – 0.8563 |
+| Brier score | 0.0214 ± 0.0033 | 0.0179 – 0.0244 |
+| Expected calibration error | 0.0197 ± 0.0036 | 0.0157 – 0.0244 |
+
+The numbers are less interesting than what they were measured against. The forecast is scored on a period the model never saw, with probabilities that mean what they say, from an artifact that can be rebuilt.

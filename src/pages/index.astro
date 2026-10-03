@@ -1,0 +1,721 @@
+---
+import { getCollection } from 'astro:content';
+import { getImage } from 'astro:assets';
+import Base from '../layouts/Base.astro';
+import Verdict from '../components/Verdict.astro';
+import Education from '../components/Education.astro';
+import { href } from '../lib/url';
+import { STATUS_ORDER } from '../data/verdicts';
+import { experience, recognition, alsoRecognized, leadership } from '../data/profile';
+
+const all = (await getCollection('work')).sort((a, b) => a.data.order - b.data.order);
+const groups = [
+  { key: 'flagship', heading: null, items: all.filter((w) => w.data.tier === 'flagship') },
+  {
+    key: 'note',
+    heading: 'Research notes',
+    blurb: 'Smaller studies, including the ones that ended in a negative result.',
+    items: all.filter((w) => w.data.tier === 'note'),
+  },
+];
+const covers = Object.fromEntries(
+  await Promise.all(
+    all.map(async (w) => [w.id, await getImage({ src: w.data.cover, width: 900 })] as const),
+  ),
+);
+const num = (n: number) => String(n).padStart(2, '0');
+---
+
+<Base>
+  <section class="hero wrap">
+    <p class="label">Julian Juan · Research engineering</p>
+    <h1>I build models of hard systems, then check whether they actually work.</h1>
+    <div class="hero-foot">
+      <p class="lede">
+        Scientific machine learning, detector simulation, graph forecasting and estimation. Most of the effort
+        goes into finding out whether a result survives a harder test.
+      </p>
+      <dl class="facts mono">
+        <div>
+          <dt>Research</dt>
+          <dd>Institute of Physics, Academia Sinica</dd>
+        </div>
+        <div>
+          <dt>School</dt>
+          <dd>Los Gatos High School, Class of 2027</dd>
+        </div>
+        <div>
+          <dt>College</dt>
+          <dd>29 units by dual enrollment, 4.00 GPA</dd>
+        </div>
+      </dl>
+    </div>
+  </section>
+
+  <section class="section wrap" id="work">
+    <header class="sec-head">
+      <div>
+        <h2 class="label">Selected work</h2>
+        <p class="sec-intro">Each project ends in a verdict: what testing actually showed.</p>
+      </div>
+      <ul class="legend" aria-label="Verdict key">
+        {
+          STATUS_ORDER.map((s) => (
+            <li>
+              <Verdict status={s} bare />
+            </li>
+          ))
+        }
+      </ul>
+    </header>
+
+    {
+      groups.map((group) => (
+        <>
+          {group.heading && (
+            <div class="sub-head">
+              <h3 class="label">{group.heading}</h3>
+              <p>{group.blurb}</p>
+            </div>
+          )}
+          <ol class:list={['rows', group.key]}>
+            {group.items.map((w) => (
+              <li>
+                <a class="row" href={href(`/work/${w.id}/`)} data-row={w.id}>
+                  <span class="num mono">{num(w.data.order)}</span>
+                  <span class="main">
+                    <span class="title" style={`view-transition-name: work-${w.id}`}>
+                      {w.data.title}
+                    </span>
+                    <span class="question">{w.data.question}</span>
+                  </span>
+                  <span class="result">
+                    <Verdict status={w.data.status} />
+                    <span class="evidence mono">{w.data.evidence}</span>
+                  </span>
+                  <span class="domain mono">{w.data.domain}</span>
+                  <span class="arrow" aria-hidden="true">
+                    →
+                  </span>
+                  <img
+                    class="thumb"
+                    src={covers[w.id].src}
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                    width="900"
+                    height="520"
+                  />
+                </a>
+              </li>
+            ))}
+          </ol>
+        </>
+      ))
+    }
+  </section>
+
+  <section class="section wrap ledger" id="experience">
+    <h2 class="label ledger-label">Experience</h2>
+    <div data-reveal>
+      <p class="exp-org">{experience.org}</p>
+      <p class="exp-meta mono">
+        {experience.role} · {experience.place} · {experience.dates}
+      </p>
+      <p class="exp-summary">{experience.summary}</p>
+      <ol class="strands">
+        {
+          experience.strands.map((s, i) => (
+            <li>
+              <span class="mono strand-n">{String.fromCharCode(97 + i)}</span>
+              <div>
+                <h3>{s.title}</h3>
+                <p>{s.body}</p>
+                {s.link && (
+                  <a class="more" href={href(s.link.path)}>
+                    {s.link.label} →
+                  </a>
+                )}
+              </div>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+  </section>
+
+  <section class="section wrap ledger" id="recognition">
+    <h2 class="label ledger-label">Recognition</h2>
+    <div data-reveal>
+      <ul class="awards">
+        {
+          recognition.map((r) => (
+            <li>
+              <span class="award-name">{r.name}</span>
+              <span class="award-result mono">{r.result}</span>
+              <span class="award-note">{r.note}</span>
+            </li>
+          ))
+        }
+      </ul>
+      <h3 class="label also-label">Also</h3>
+      <dl class="also-list">
+        {
+          alsoRecognized.map((a) => (
+            <div>
+              <dt>{a.name}</dt>
+              <dd class="mono">{a.result}</dd>
+            </div>
+          ))
+        }
+      </dl>
+    </div>
+  </section>
+
+  <section class="section wrap ledger" id="leadership">
+    <h2 class="label ledger-label">Leadership</h2>
+    <div data-reveal>
+      <div class="lead-grid">
+        {
+          leadership.map((l) => (
+            <article class="lead">
+              <p class="mono lead-role">{l.role}</p>
+              <h3>{l.title}</h3>
+              <dl class="figures">
+                {l.figures.map((f) => (
+                  <div>
+                    <dt>{f.label}</dt>
+                    <dd>{f.value}</dd>
+                  </div>
+                ))}
+              </dl>
+              <p>{l.body}</p>
+            </article>
+          ))
+        }
+      </div>
+      <p class="also">
+        Also: STEM outreach, a game theory club and tutoring.{' '}
+        <a href={href('/about/')}>More on the About page →</a>
+      </p>
+    </div>
+  </section>
+
+  <section class="section wrap ledger" id="education">
+    <h2 class="label ledger-label">Education</h2>
+    <div data-reveal>
+      <Education />
+    </div>
+  </section>
+
+  <div class="preview" data-preview aria-hidden="true">
+    {all.map((w) => <img src={covers[w.id].src} alt="" data-for={w.id} loading="lazy" decoding="async" />)}
+  </div>
+</Base>
+
+<script>
+  // Figure preview for the work index (fine pointers only). It follows the cursor
+  // sideways and sits just above or below the hovered row, so the row stays readable.
+  const preview = document.querySelector<HTMLElement>('[data-preview]');
+  const rows = document.querySelectorAll<HTMLElement>('[data-row]');
+  const fine = matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+  if (preview && rows.length && fine) {
+    const smooth = !matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const imgs = preview.querySelectorAll<HTMLImageElement>('img');
+    const GAP = 14;
+    const EDGE = 16;
+    const HEADER = 64;
+    let row: HTMLElement | null = null;
+    let cursorX = 0;
+    let x = 0;
+    let y = 0;
+    let tx = 0;
+    let ty = 0;
+    let raf = 0;
+
+    const aim = () => {
+      if (!row) return;
+      const w = preview.offsetWidth;
+      const h = preview.offsetHeight;
+      const r = row.getBoundingClientRect();
+      tx = Math.min(Math.max(cursorX - w / 2, EDGE), innerWidth - w - EDGE);
+      const above = r.top - h - GAP;
+      const below = Math.min(r.bottom + GAP, innerHeight - h - EDGE);
+      ty = above >= HEADER + EDGE / 2 ? above : below;
+    };
+    const place = () => {
+      preview.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+    };
+    // Ease toward the target, and stop the loop once it has caught up.
+    const tick = () => {
+      x += (tx - x) * 0.18;
+      y += (ty - y) * 0.18;
+      place();
+      raf = Math.abs(tx - x) + Math.abs(ty - y) > 0.5 ? requestAnimationFrame(tick) : 0;
+    };
+    const move = (snap: boolean) => {
+      aim();
+      if (snap || !smooth) {
+        x = tx;
+        y = ty;
+        place();
+      } else if (!raf) {
+        raf = requestAnimationFrame(tick);
+      }
+    };
+    const show = (target: HTMLElement, e: PointerEvent) => {
+      const wasHidden = row === null;
+      row = target;
+      cursorX = e.clientX;
+      imgs.forEach((img) => img.classList.toggle('on', img.dataset.for === target.dataset.row));
+      move(wasHidden);
+      preview.classList.add('on');
+    };
+    const hide = () => {
+      row = null;
+      preview.classList.remove('on');
+    };
+
+    rows.forEach((el) => {
+      el.addEventListener('pointerenter', (e) => show(el, e));
+      el.addEventListener('pointerleave', hide);
+    });
+    addEventListener(
+      'pointermove',
+      (e) => {
+        if (!row) return;
+        cursorX = e.clientX;
+        move(false);
+      },
+      { passive: true },
+    );
+    addEventListener('scroll', hide, { passive: true });
+  }
+</script>
+
+<style>
+  /* ---------- Hero ---------- */
+  .hero {
+    padding-block: clamp(3.5rem, 11vw, 9.5rem) clamp(2.5rem, 6vw, 5rem);
+  }
+  .hero h1 {
+    max-width: 17ch;
+    margin-top: 1.5rem;
+    font-size: clamp(2.5rem, 7.2vw, 6.5rem);
+    line-height: 0.98;
+    letter-spacing: -0.045em;
+  }
+  .hero-foot {
+    display: grid;
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    gap: 2rem clamp(2rem, 6vw, 6rem);
+    align-items: end;
+    margin-top: clamp(2.5rem, 6vw, 5rem);
+  }
+  .lede {
+    max-width: 44ch;
+    font-size: clamp(1.1rem, 1.5vw, 1.35rem);
+    line-height: 1.45;
+    color: var(--ink-2);
+  }
+  .facts div {
+    display: grid;
+    grid-template-columns: 6.5rem 1fr;
+    gap: 1rem;
+    padding-block: 0.6rem;
+    border-top: 1px solid var(--rule);
+  }
+  .facts div:last-child {
+    border-bottom: 1px solid var(--rule);
+  }
+  .facts dt {
+    color: var(--ink-3);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.7rem;
+    padding-top: 0.1em;
+  }
+
+  /* ---------- Sections ---------- */
+  .section {
+    padding-top: clamp(3.5rem, 8vw, 7rem);
+  }
+  .sec-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    justify-content: space-between;
+    gap: 1rem 2rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid var(--ink);
+  }
+  .sec-intro {
+    margin-top: 0.5rem;
+    color: var(--ink-2);
+  }
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.25rem;
+    list-style: none;
+    color: var(--ink-2);
+  }
+  .sub-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.4rem 1.5rem;
+    margin-top: clamp(2.5rem, 5vw, 4rem);
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--ink);
+  }
+  .sub-head p {
+    color: var(--ink-2);
+    font-size: 0.95rem;
+  }
+
+  /* ---------- Work rows ---------- */
+  .rows {
+    list-style: none;
+  }
+  .row {
+    display: grid;
+    grid-template-columns: 3.5rem minmax(0, 1fr) minmax(0, 19rem) 9.5rem 2rem;
+    align-items: center;
+    gap: 0 clamp(1rem, 2.5vw, 2.5rem);
+    padding-block: clamp(1.5rem, 3vw, 2.6rem);
+    border-bottom: 1px solid var(--rule);
+    text-decoration: none;
+    color: inherit;
+    transition: opacity 0.3s var(--ease);
+  }
+  .row:hover {
+    color: inherit;
+  }
+  .num,
+  .domain {
+    color: var(--ink-3);
+  }
+  .main {
+    display: grid;
+    gap: 0.5rem;
+    transition: transform 0.45s var(--ease);
+  }
+  .title {
+    font-size: clamp(1.75rem, 4vw, 3.4rem);
+    font-weight: 500;
+    line-height: 1.02;
+    letter-spacing: -0.04em;
+    width: fit-content;
+  }
+  .note .title {
+    font-size: clamp(1.5rem, 2.6vw, 2.2rem);
+  }
+  .question {
+    max-width: 46ch;
+    color: var(--ink-2);
+    line-height: 1.4;
+  }
+  .result {
+    display: grid;
+    justify-items: start;
+    gap: 0.6rem;
+  }
+  .evidence {
+    color: var(--ink-2);
+    line-height: 1.5;
+  }
+  .arrow {
+    justify-self: end;
+    font-size: 1.4rem;
+    color: var(--ink-3);
+    transition:
+      transform 0.45s var(--ease),
+      color 0.3s;
+  }
+  .thumb {
+    display: none;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .rows:hover .row:not(:hover),
+    .rows:focus-within .row:not(:focus-visible) {
+      opacity: 0.4;
+    }
+    .rows:focus-within:not(:hover) .row:focus-visible {
+      opacity: 1;
+    }
+    .row:hover .main,
+    .row:focus-visible .main {
+      transform: translateX(0.75rem);
+    }
+    .row:hover .arrow,
+    .row:focus-visible .arrow {
+      transform: translateX(0.4rem);
+      color: var(--accent);
+    }
+  }
+
+  /* ---------- Cursor preview ---------- */
+  .preview {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 40;
+    width: min(440px, 34vw);
+    aspect-ratio: 16 / 10;
+    background: var(--fig);
+    border-radius: 10px;
+    box-shadow:
+      0 0 0 1px rgb(0 0 0 / 0.08),
+      0 24px 60px -18px rgb(0 0 0 / 0.35);
+    overflow: hidden;
+    pointer-events: none;
+    opacity: 0;
+    scale: 0.94;
+    transition:
+      opacity 0.25s var(--ease),
+      scale 0.35s var(--ease);
+  }
+  .preview.on {
+    opacity: 1;
+    scale: 1;
+  }
+  .preview img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    padding: 14px;
+    object-fit: contain;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .preview img.on {
+    opacity: 1;
+  }
+  @media not ((hover: hover) and (pointer: fine)) {
+    .preview {
+      display: none;
+    }
+  }
+
+  /* ---------- Ledger sections ---------- */
+  .ledger {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 9fr);
+    gap: 1.5rem clamp(1.5rem, 4vw, 4rem);
+  }
+  .ledger::before {
+    content: '';
+    grid-column: 1 / -1;
+    border-top: 1px solid var(--ink);
+  }
+  .ledger-label {
+    position: sticky;
+    top: calc(var(--header-h) + 1.5rem);
+    align-self: start;
+  }
+
+  .exp-org {
+    font-size: clamp(1.6rem, 3vw, 2.5rem);
+    line-height: 1.08;
+    letter-spacing: -0.035em;
+    font-weight: 500;
+  }
+  .exp-meta {
+    margin-top: 0.75rem;
+    color: var(--ink-3);
+  }
+  .exp-summary {
+    max-width: 56ch;
+    margin-top: 1.25rem;
+    color: var(--ink-2);
+    font-size: 1.1rem;
+  }
+  .strands {
+    list-style: none;
+    margin-top: 2rem;
+    border-top: 1px solid var(--rule);
+  }
+  .strands li {
+    display: grid;
+    grid-template-columns: 2.5rem minmax(0, 1fr);
+    padding-block: 1.25rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  .strand-n {
+    color: var(--ink-3);
+    padding-top: 0.35em;
+  }
+  .strands h3 {
+    font-size: 1.15rem;
+    letter-spacing: -0.01em;
+  }
+  .strands p {
+    max-width: 62ch;
+    margin-top: 0.4rem;
+    color: var(--ink-2);
+  }
+  .more {
+    display: inline-block;
+    margin-top: 0.6rem;
+    font-size: 0.95rem;
+  }
+
+  .awards {
+    list-style: none;
+  }
+  .awards li {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 3fr) minmax(0, 6fr);
+    gap: 0.25rem 1.5rem;
+    align-items: baseline;
+    padding-block: 0.95rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  .awards li:first-child {
+    padding-top: 0;
+  }
+  .award-name {
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+  .award-result {
+    color: var(--ink);
+  }
+  .award-note {
+    color: var(--ink-3);
+    font-size: 0.92rem;
+    line-height: 1.45;
+  }
+  .also-label {
+    margin-top: 1.75rem;
+  }
+  .also-list div {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 9fr);
+    gap: 0.15rem 1.5rem;
+    align-items: baseline;
+    padding-block: 0.6rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  .also-list dt {
+    color: var(--ink-2);
+    font-size: 0.95rem;
+  }
+  .also-list dd {
+    color: var(--ink-3);
+    line-height: 1.5;
+  }
+  .also {
+    margin-top: 1.25rem;
+    color: var(--ink-3);
+    font-size: 0.95rem;
+  }
+
+  .lead-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 clamp(1.5rem, 4vw, 3.5rem);
+  }
+  /* Each card shares the grid's rows, so titles, figures and text line up across cards. */
+  .lead {
+    display: grid;
+    grid-template-rows: subgrid;
+    grid-row: span 4;
+    gap: 0;
+  }
+  .lead-role {
+    color: var(--ink-3);
+  }
+  .lead h3 {
+    margin-top: 0.5rem;
+    font-size: clamp(1.3rem, 2vw, 1.7rem);
+    letter-spacing: -0.03em;
+  }
+  .figures {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: 0.75rem 2rem;
+    margin-block: 1.25rem;
+    padding-block: 1rem;
+    border-block: 1px solid var(--rule);
+  }
+  .figures div {
+    display: flex;
+    flex-direction: column-reverse;
+  }
+  .figures dd {
+    font-size: 1.7rem;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+  }
+  .figures dt {
+    margin-top: 0.2rem;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
+    color: var(--ink-3);
+  }
+  .lead > p:last-child {
+    color: var(--ink-2);
+    font-size: 0.98rem;
+  }
+
+  /* ---------- Small screens ---------- */
+  @media (max-width: 960px) {
+    .row {
+      grid-template-columns: 2.5rem minmax(0, 1fr) 1.5rem;
+      align-items: start;
+      row-gap: 1rem;
+    }
+    .num {
+      padding-top: 0.6em;
+    }
+    .result {
+      grid-column: 2 / -1;
+      grid-row: 2;
+    }
+    .domain {
+      grid-column: 2 / -1;
+      grid-row: 3;
+    }
+    .arrow {
+      grid-column: 3;
+      grid-row: 1;
+      padding-top: 0.15em;
+    }
+  }
+  @media (max-width: 720px) {
+    .hero-foot,
+    .ledger,
+    .lead-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .ledger-label {
+      position: static;
+    }
+    .awards li,
+    .also-list div {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+  @media (hover: none) {
+    .thumb {
+      display: block;
+      grid-column: 2 / -1;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 16 / 9;
+      padding: 10px;
+      object-fit: contain;
+      background: var(--fig);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+    }
+  }
+</style>

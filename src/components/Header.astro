@@ -1,0 +1,197 @@
+---
+import { site, nav } from '../data/site';
+import { href } from '../lib/url';
+
+const path = Astro.url.pathname;
+const isCurrent = (p: string) => !p.includes('#') && path.startsWith(href(p));
+---
+
+<header class="site-header">
+  <div class="wrap bar">
+    <a class="brand" href={href('/')}>{site.name}</a>
+
+    <nav id="site-nav" aria-label="Primary">
+      <ul>
+        {
+          nav.map((item) => (
+            <li>
+              <a href={href(item.path)} aria-current={isCurrent(item.path) ? 'page' : undefined}>
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+        {
+          site.resume ? (
+            <li>
+              <a href={href(site.resume)}>Résumé</a>
+            </li>
+          ) : (
+            import.meta.env.DEV && (
+              <li>
+                <span class="placeholder">Résumé: not set</span>
+              </li>
+            )
+          )
+        }
+        <li><a class="ext" href={site.github} rel="noopener">GitHub</a></li>
+      </ul>
+    </nav>
+
+    <div class="tools">
+      <button class="icon-btn" type="button" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme">
+        <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+          <circle cx="8" cy="8" r="6.25" fill="none" stroke="currentColor" stroke-width="1.5"></circle>
+          <path d="M8 1.75a6.25 6.25 0 0 1 0 12.5z" fill="currentColor"></path>
+        </svg>
+      </button>
+      <button class="menu-btn" type="button" data-menu-toggle aria-expanded="false" aria-controls="site-nav">
+        Menu
+      </button>
+    </div>
+  </div>
+</header>
+
+<script>
+  const header = document.querySelector<HTMLElement>('.site-header');
+  const menuBtn = document.querySelector<HTMLButtonElement>('[data-menu-toggle]');
+  const themeBtn = document.querySelector<HTMLButtonElement>('[data-theme-toggle]');
+
+  function setMenu(open: boolean) {
+    header?.classList.toggle('open', open);
+    menuBtn?.setAttribute('aria-expanded', String(open));
+    if (menuBtn) menuBtn.textContent = open ? 'Close' : 'Menu';
+  }
+  menuBtn?.addEventListener('click', () => setMenu(!header?.classList.contains('open')));
+  header?.querySelectorAll('nav a').forEach((a) => a.addEventListener('click', () => setMenu(false)));
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && header?.classList.contains('open')) {
+      setMenu(false);
+      menuBtn?.focus();
+    }
+  });
+  // A tap outside the open menu closes it.
+  document.addEventListener('pointerdown', (e) => {
+    if (header?.classList.contains('open') && !header.contains(e.target as Node)) setMenu(false);
+  });
+
+  themeBtn?.addEventListener('click', () => {
+    const root = document.documentElement;
+    const isDark =
+      root.dataset.theme === 'dark' ||
+      (!root.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches);
+    const next = isDark ? 'light' : 'dark';
+    root.dataset.theme = next;
+    try {
+      localStorage.setItem('theme', next);
+    } catch {
+      /* storage unavailable: theme still applies for this page */
+    }
+  });
+</script>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: color-mix(in srgb, var(--paper) 88%, transparent);
+    backdrop-filter: saturate(1.4) blur(12px);
+    -webkit-backdrop-filter: saturate(1.4) blur(12px);
+    border-bottom: 1px solid var(--rule);
+  }
+  .bar {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    height: var(--header-h);
+  }
+  .brand {
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    text-decoration: none;
+    margin-right: auto;
+  }
+  nav ul {
+    display: flex;
+    align-items: center;
+    gap: clamp(1rem, 2.2vw, 2rem);
+    list-style: none;
+  }
+  nav a {
+    font-size: 0.95rem;
+    text-decoration: none;
+    padding-block: 0.4rem;
+  }
+  nav a[aria-current='page'] {
+    box-shadow: 0 1.5px 0 0 currentColor;
+  }
+  .tools {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .icon-btn,
+  .menu-btn {
+    display: inline-grid;
+    place-items: center;
+    height: 36px;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    background: none;
+    cursor: pointer;
+    transition:
+      border-color 0.2s,
+      color 0.2s;
+  }
+  .icon-btn {
+    width: 36px;
+  }
+  .icon-btn:hover,
+  .menu-btn:hover {
+    border-color: var(--ink);
+  }
+  .menu-btn {
+    display: none;
+    padding-inline: 0.9rem;
+    font-size: 0.9rem;
+  }
+
+  @media (max-width: 820px) {
+    .menu-btn {
+      display: inline-grid;
+    }
+    nav {
+      display: none;
+      position: absolute;
+      inset: var(--header-h) 0 auto 0;
+      background: var(--paper);
+      border-bottom: 1px solid var(--rule);
+      padding: 0.5rem var(--gutter) 1.25rem;
+    }
+    .open nav {
+      display: block;
+    }
+    nav ul {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0;
+    }
+    nav li + li {
+      border-top: 1px solid var(--rule);
+    }
+    nav a {
+      display: block;
+      font-size: 1.5rem;
+      letter-spacing: -0.02em;
+      padding-block: 0.85rem;
+    }
+    nav a[aria-current='page'] {
+      box-shadow: none;
+      color: var(--accent);
+    }
+    nav .placeholder {
+      margin-block: 0.85rem;
+    }
+  }
+</style>

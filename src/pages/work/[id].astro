@@ -1,0 +1,491 @@
+---
+import { getCollection, render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Verdict from '../../components/Verdict.astro';
+import { href } from '../../lib/url';
+import { VERDICTS } from '../../data/verdicts';
+
+export async function getStaticPaths() {
+  const all = (await getCollection('work')).sort((a, b) => a.data.order - b.data.order);
+  return all.map((entry, i) => ({
+    params: { id: entry.id },
+    props: { entry, index: i, total: all.length, next: all[(i + 1) % all.length] },
+  }));
+}
+
+const { entry, index, total, next } = Astro.props;
+const { data } = entry;
+const { Content, headings } = await render(entry);
+const sections = [
+  ...headings.filter((h) => h.depth === 2).map((h) => ({ slug: h.slug, text: h.text })),
+  { slug: 'verdict', text: 'Verdict' },
+];
+const num = (n: number) => String(n).padStart(2, '0');
+---
+
+<Base title={data.heading ?? data.title} description={data.claim}>
+  <article class="case wrap">
+    <aside class="rail">
+      <div class="rail-top mono">
+        <a href={href('/#work')}>← Index</a>
+        <span>{num(index + 1)} / {num(total)}</span>
+      </div>
+
+      <p class="label">{data.domain}</p>
+      <h1 style={`view-transition-name: work-${entry.id}`}>{data.heading ?? data.title}</h1>
+      <p class="claim">{data.claim}</p>
+
+      <div class="status">
+        <Verdict status={data.status} />
+        <span class="mono">{data.evidence}</span>
+      </div>
+
+      {
+        data.metrics.length > 0 && (
+          <dl class="metrics">
+            {data.metrics.map((m) => (
+              <div>
+                <dt>{m.label}</dt>
+                <dd>
+                  {m.value}
+                  {m.note && <span class="note">{m.note}</span>}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        )
+      }
+
+      {data.context && <p class="context mono">{data.context}</p>}
+
+      {
+        data.links.length > 0 && (
+          <ul class="links">
+            {data.links.map((l) => (
+              <li>
+                <a class="ext" href={l.href} rel="noopener">
+                  {l.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+
+      <nav class="toc" aria-label="On this page">
+        <ol>
+          {
+            sections.map((s) => (
+              <li>
+                <a href={`#${s.slug}`} data-toc={s.slug}>
+                  {s.text}
+                </a>
+              </li>
+            ))
+          }
+        </ol>
+      </nav>
+    </aside>
+
+    <div class="body">
+      <p class="question">{data.question}</p>
+
+      <div class="prose">
+        <Content />
+      </div>
+
+      <section class="outcome" id="verdict" aria-labelledby="verdict-h">
+        <h2 id="verdict-h">Verdict</h2>
+        <p class="outcome-status">
+          <Verdict status={data.status} />
+          <span>{VERDICTS[data.status].meaning}</span>
+        </p>
+        <div class="outcome-cols">
+          <div>
+            <h3 class="label">What worked</h3>
+            <ul class="worked">
+              {data.worked.map((item) => <li>{item}</li>)}
+            </ul>
+          </div>
+          <div>
+            <h3 class="label">{data.openLabel}</h3>
+            <ul class="unresolved">
+              {data.open.map((item) => <li>{item}</li>)}
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <a class="next" href={href(`/work/${next.id}/`)}>
+        <span class="label">Next</span>
+        <span class="next-title">{next.data.title}</span>
+        <span class="next-arrow" aria-hidden="true">→</span>
+      </a>
+    </div>
+  </article>
+</Base>
+
+<script>
+  // Highlight the section currently being read in the rail's table of contents.
+  const links = new Map<string, HTMLElement>();
+  document.querySelectorAll<HTMLElement>('[data-toc]').forEach((a) => links.set(a.dataset.toc!, a));
+  const targets = [...links.keys()]
+    .map((id) => document.getElementById(id))
+    .filter((el): el is HTMLElement => el !== null);
+
+  if (targets.length && 'IntersectionObserver' in window) {
+    const visible = new Set<string>();
+    const update = () => {
+      // The first section in document order that is on screen wins.
+      const current = targets.find((t) => visible.has(t.id)) ?? null;
+      if (!current) return;
+      links.forEach((a, id) =>
+        id === current.id ? a.setAttribute('aria-current', 'true') : a.removeAttribute('aria-current'),
+      );
+    };
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) e.isIntersecting ? visible.add(e.target.id) : visible.delete(e.target.id);
+        update();
+      },
+      { rootMargin: '-15% 0px -70% 0px' },
+    );
+    targets.forEach((t) => io.observe(t));
+  }
+</script>
+
+<style>
+  .case {
+    display: grid;
+    grid-template-columns: minmax(260px, 350px) minmax(0, 1fr);
+    gap: clamp(2rem, 6vw, 6.5rem);
+    padding-top: clamp(1.5rem, 4vw, 3.5rem);
+  }
+
+  /* ---------- Rail: the pinned abstract ---------- */
+  .rail {
+    position: sticky;
+    top: calc(var(--header-h) + 1.5rem);
+    align-self: start;
+    max-height: calc(100vh - var(--header-h) - 3rem);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    padding-right: 0.25rem;
+  }
+  .rail-top {
+    display: flex;
+    justify-content: space-between;
+    padding-bottom: 0.9rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--ink);
+    color: var(--ink-3);
+  }
+  .rail-top a {
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .rail-top a:hover {
+    color: var(--accent);
+  }
+  h1 {
+    margin-top: 0.6rem;
+    font-size: clamp(2rem, 3.1vw, 2.9rem);
+    line-height: 1.02;
+    letter-spacing: -0.04em;
+    width: fit-content;
+  }
+  .claim {
+    margin-top: 1rem;
+    color: var(--ink-2);
+    line-height: 1.5;
+  }
+  .status {
+    display: grid;
+    justify-items: start;
+    gap: 0.6rem;
+    margin-top: 1.5rem;
+    color: var(--ink-2);
+  }
+  .status :global(.verdict) {
+    color: var(--ink);
+  }
+  .metrics {
+    margin-top: 1.5rem;
+    border-top: 1px solid var(--rule);
+  }
+  .metrics div {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    padding-block: 0.55rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  .metrics dt {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
+    color: var(--ink-3);
+  }
+  .metrics dd {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+  .note {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--ink-3);
+  }
+  .context {
+    margin-top: 1rem;
+    color: var(--ink-3);
+    line-height: 1.5;
+  }
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1.25rem;
+    list-style: none;
+  }
+  .links a {
+    display: inline-flex;
+    padding: 0.5em 1em;
+    border: 1px solid var(--ink);
+    border-radius: 999px;
+    font-size: 0.9rem;
+    text-decoration: none;
+    transition:
+      background-color 0.25s var(--ease),
+      color 0.25s var(--ease);
+  }
+  .links a:hover {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .toc {
+    margin-top: 1.75rem;
+  }
+  .toc ol {
+    list-style: none;
+    counter-reset: toc;
+  }
+  .toc a {
+    display: flex;
+    gap: 0.75rem;
+    padding-block: 0.28rem;
+    color: var(--ink-3);
+    font-size: 0.92rem;
+    text-decoration: none;
+    counter-increment: toc;
+    transition: color 0.2s;
+  }
+  .toc a::before {
+    content: counter(toc, decimal-leading-zero);
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    padding-top: 0.3em;
+  }
+  .toc a:hover,
+  .toc a[aria-current] {
+    color: var(--ink);
+  }
+  .toc a[aria-current]::before {
+    color: var(--accent);
+  }
+
+  /* ---------- Body: the evidence ---------- */
+  .body {
+    max-width: 860px;
+    min-width: 0;
+  }
+  .question {
+    font-size: clamp(1.7rem, 3.4vw, 2.9rem);
+    line-height: 1.08;
+    letter-spacing: -0.035em;
+    font-weight: 500;
+    text-wrap: balance;
+    padding-bottom: clamp(1.75rem, 4vw, 3rem);
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .prose :global(h2),
+  .outcome h2 {
+    margin-top: clamp(2.5rem, 5vw, 4rem);
+    font-size: clamp(1.4rem, 2.2vw, 1.8rem);
+    letter-spacing: -0.03em;
+  }
+  .prose :global(h3) {
+    margin-top: 2rem;
+    font-size: 1.1rem;
+    letter-spacing: -0.01em;
+  }
+  /* Figures style their own content: :not(figure *) keeps the prose rules, and the
+     page's theme colours, off the light figure surface. */
+  .prose :global(:is(p, ul, ol):not(figure *)) {
+    max-width: 66ch;
+    margin-top: 1rem;
+    color: var(--ink-2);
+  }
+  .prose :global(strong:not(figure *)) {
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .prose :global(:is(ul, ol):not(figure *)) {
+    padding-left: 1.2rem;
+  }
+  .prose :global(li:not(figure *) + li) {
+    margin-top: 0.4rem;
+  }
+  .prose :global(li:not(figure *)::marker) {
+    color: var(--ink-3);
+  }
+  .prose :global(code) {
+    font-family: var(--font-mono);
+    font-size: 0.86em;
+    padding: 0.1em 0.35em;
+    background: var(--paper-2);
+    border-radius: 4px;
+  }
+  .prose :global(pre) {
+    margin-top: 1.25rem;
+    padding: 1rem 1.25rem;
+    background: var(--paper-2) !important;
+    color: var(--ink) !important;
+    border-radius: 10px;
+    overflow-x: auto;
+    font-size: 0.82rem;
+    line-height: 1.6;
+  }
+  .prose :global(pre code) {
+    padding: 0;
+    background: none;
+    font-size: inherit;
+  }
+  .prose :global(pre span) {
+    color: inherit !important;
+  }
+  .prose :global(table) {
+    display: block;
+    max-width: 100%;
+    margin-top: 1.5rem;
+    overflow-x: auto;
+    border-collapse: collapse;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .prose :global(th),
+  .prose :global(td) {
+    padding: 0.6rem 1.25rem 0.6rem 0;
+    border-bottom: 1px solid var(--rule);
+    text-align: left;
+    vertical-align: top;
+    white-space: nowrap;
+  }
+  .prose :global(th) {
+    font-weight: 500;
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    border-bottom-color: var(--ink);
+  }
+
+  /* ---------- Verdict block ---------- */
+  .outcome-status {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    color: var(--ink-2);
+  }
+  .outcome-status :global(.verdict) {
+    color: var(--ink);
+  }
+  .outcome-cols {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.5rem clamp(1.5rem, 4vw, 3rem);
+    margin-top: 1.75rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--ink);
+  }
+  .outcome ul {
+    list-style: none;
+    margin-top: 0.9rem;
+  }
+  .outcome li {
+    position: relative;
+    padding: 0.7rem 0 0.7rem 1.5rem;
+    border-bottom: 1px solid var(--rule);
+    color: var(--ink-2);
+    font-size: 0.98rem;
+    line-height: 1.5;
+  }
+  .outcome li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 1.15rem;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    border: 1.5px solid var(--ink);
+  }
+  .worked li::before {
+    background: var(--ink);
+  }
+
+  /* ---------- Next project ---------- */
+  .next {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 0.5rem 1rem;
+    margin-top: clamp(3rem, 7vw, 6rem);
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--ink);
+    text-decoration: none;
+  }
+  .next .label {
+    grid-column: 1 / -1;
+  }
+  .next-title {
+    font-size: clamp(2rem, 5vw, 4rem);
+    line-height: 1;
+    letter-spacing: -0.04em;
+    font-weight: 500;
+  }
+  .next-arrow {
+    font-size: clamp(1.5rem, 3vw, 2.5rem);
+    line-height: 1.2;
+    transition: transform 0.45s var(--ease);
+  }
+  .next:hover .next-arrow {
+    transform: translateX(0.5rem);
+  }
+
+  /* Two columns only while the evidence column stays wide enough for its figures. */
+  @media (max-width: 1180px) {
+    .case {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .rail {
+      position: static;
+      max-height: none;
+      overflow: visible;
+    }
+    .toc {
+      display: none;
+    }
+  }
+  @media (max-width: 600px) {
+    .outcome-cols {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>

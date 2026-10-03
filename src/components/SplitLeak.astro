@@ -1,0 +1,368 @@
+---
+// Why the split is by date. A toy calendar of six countries over 24 months, with a few
+// outbreaks that each last several months. Splitting at random scatters test months
+// inside outbreaks the model also trained on; splitting by date cannot.
+// Toy data for illustration: no real countries, outbreaks or scores.
+const ROWS = ['A', 'B', 'C', 'D', 'E', 'F'];
+const MONTHS = 24;
+const TRAIN_END = 16; // months 1–16 train, 17–20 validation, 21–24 held-out test
+const VAL_END = 20;
+// [row, first month, last month], zero-based and inclusive.
+const EPISODES: [number, number, number][] = [
+  [0, 3, 7],
+  [0, 17, 20],
+  [1, 9, 13],
+  [2, 1, 3],
+  [2, 14, 19],
+  [3, 6, 9],
+  [3, 20, 23],
+  [4, 11, 16],
+  [5, 2, 5],
+  [5, 15, 17],
+  [5, 21, 23],
+];
+const episodeOf = (r: number, m: number) => EPISODES.findIndex(([er, a, b]) => er === r && m >= a && m <= b);
+const cells = ROWS.flatMap((_, r) =>
+  Array.from({ length: MONTHS }, (_, m) => ({
+    r,
+    m,
+    episode: episodeOf(r, m),
+    set: m < TRAIN_END ? 'train' : m < VAL_END ? 'val' : 'test',
+  })),
+);
+const pct = (months: number) => `${(months / MONTHS) * 100}%`;
+---
+
+<div
+  class="fx split"
+  data-leak
+  data-rows={ROWS.length}
+  data-months={MONTHS}
+  data-train-end={TRAIN_END}
+  data-val-end={VAL_END}
+  data-episodes={JSON.stringify(EPISODES)}
+>
+  <div class="fx-controls">
+    <div class="fx-group" role="group" aria-label="How the data is split">
+      <span class="fx-label">Split the data</span>
+      <div class="fx-row">
+        <div class="fx-seg">
+          <button type="button" data-mode="date" aria-pressed="true">By date</button>
+          <button type="button" data-mode="random" aria-pressed="false">At random</button>
+        </div>
+        <button type="button" class="reshuffle" data-reshuffle disabled>Reshuffle</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="board">
+    <div class="bands mono" data-bands aria-hidden="true">
+      <span style={`width:${pct(TRAIN_END)}`}>train</span>
+      <span style={`width:${pct(VAL_END - TRAIN_END)}`}>
+        <i class="wide">validation</i>
+        <i class="narrow">val.</i>
+      </span>
+      <span class="band-test" style={`width:${pct(MONTHS - VAL_END)}`}>
+        <i class="wide">held-out test</i>
+        <i class="narrow">test</i>
+      </span>
+    </div>
+    <div class="rows" role="img" data-grid aria-label="Six countries over 24 months, split by date.">
+      {
+        ROWS.map((name, r) => (
+          <div class="row">
+            <span class="name mono">{name}</span>
+            <div class="cells">
+              {cells
+                .filter((c) => c.r === r)
+                .map((c) => (
+                  <span class:list={['cell', c.set, { sick: c.episode >= 0 }]} data-cell />
+                ))}
+            </div>
+          </div>
+        ))
+      }
+    </div>
+    <div class="time mono" aria-hidden="true">
+      <span>month 1</span>
+      <span>time →</span>
+      <span>month {MONTHS}</span>
+    </div>
+  </div>
+
+  <ul class="fx-key">
+    <li><span class="k train"></span>train</li>
+    <li><span class="k val"></span>validation</li>
+    <li><span class="k test"></span>held-out test</li>
+    <li><span class="k sick"></span>outbreak reported</li>
+    <li><span class="k sick leaked"></span>leak: tested on an outbreak whose later months were in training</li>
+  </ul>
+
+  <p class="fx-insight" data-out="insight" role="status" aria-live="polite">
+    Every test month comes after everything the model trained on. None of the outbreak months in the test set
+    were seen from the future.
+  </p>
+
+  <dl class="fx-readout">
+    <div>
+      <dt>Outbreak months in the test set</dt>
+      <dd data-out="tested">–</dd>
+    </div>
+    <div>
+      <dt>Already seen from the future</dt>
+      <dd data-out="leaks">–</dd>
+    </div>
+  </dl>
+</div>
+
+<script>
+  function mulberry32(seed: number) {
+    return () => {
+      seed = (seed + 0x6d2b79f5) | 0;
+      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  type Part = 'train' | 'val' | 'test';
+
+  document.querySelectorAll<HTMLElement>('[data-leak]').forEach((root) => {
+    const rows = Number(root.dataset.rows);
+    const months = Number(root.dataset.months);
+    const trainEnd = Number(root.dataset.trainEnd);
+    const valEnd = Number(root.dataset.valEnd);
+    const episodes = JSON.parse(root.dataset.episodes!) as [number, number, number][];
+    const cellEls = [...root.querySelectorAll<HTMLElement>('[data-cell]')];
+    const grid = root.querySelector<HTMLElement>('[data-grid]')!;
+    const bands = root.querySelector<HTMLElement>('[data-bands]')!;
+    const modeBtns = [...root.querySelectorAll<HTMLButtonElement>('[data-mode]')];
+    const reshuffle = root.querySelector<HTMLButtonElement>('[data-reshuffle]')!;
+    const out = (name: string) => root.querySelector<HTMLElement>(`[data-out="${name}"]`)!;
+
+    const episodeAt = (r: number, m: number) => episodes.findIndex(([er, a, b]) => er === r && m >= a && m <= b);
+    let mode: 'date' | 'random' = 'date';
+    let seed = 11;
+
+    function assign(): Part[] {
+      const n = rows * months;
+      if (mode === 'date') {
+        return Array.from({ length: n }, (_, i) => {
+          const m = i % months;
+          return m < trainEnd ? 'train' : m < valEnd ? 'val' : 'test';
+        });
+      }
+      // Same number of validation and test cells as the split by date, chosen at random.
+      const rand = mulberry32(seed);
+      const order = Array.from({ length: n }, (_, i) => i);
+      for (let i = n - 1; i > 0; i--) {
+        const j = Math.floor(rand() * (i + 1));
+        [order[i], order[j]] = [order[j], order[i]];
+      }
+      const nTest = rows * (months - valEnd);
+      const nVal = rows * (valEnd - trainEnd);
+      const sets: Part[] = Array(n).fill('train');
+      order.slice(0, nTest).forEach((i) => (sets[i] = 'test'));
+      order.slice(nTest, nTest + nVal).forEach((i) => (sets[i] = 'val'));
+      return sets;
+    }
+
+    function update() {
+      const sets = assign();
+      let tested = 0;
+      let leaks = 0;
+      cellEls.forEach((el, i) => {
+        const r = Math.floor(i / months);
+        const m = i % months;
+        const e = episodeAt(r, m);
+        let leak = false;
+        if (e >= 0 && sets[i] === 'test') {
+          tested++;
+          // A leak: the model trained on a later month of this same outbreak.
+          for (let later = m + 1; later <= episodes[e][2]; later++) {
+            if (sets[r * months + later] === 'train') leak = true;
+          }
+          if (leak) leaks++;
+        }
+        el.classList.remove('train', 'val', 'test');
+        el.classList.add(sets[i]);
+        el.classList.toggle('leaked', leak);
+      });
+
+      bands.hidden = mode !== 'date';
+      reshuffle.disabled = mode !== 'random';
+      modeBtns.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === mode)));
+      out('tested').textContent = String(tested);
+      out('leaks').innerHTML = `${leaks} <small>of ${tested}</small>`;
+      const insight =
+        mode === 'date'
+          ? `Every test month comes after everything the model trained on. None of the ${tested} outbreak months in the test set were seen from the future.`
+          : leaks === 0
+            ? `This shuffle happened to leak nothing, by luck. Reshuffle and it will: nothing in a random split prevents it.`
+            : `${leaks} of the ${tested} outbreak months in the test set sit inside an outbreak whose later months the model trained on. It is being quizzed on the middle of a story after reading the ending, so the score flatters it.`;
+      out('insight').textContent = insight;
+      grid.setAttribute(
+        'aria-label',
+        `Six countries over ${months} months, split ${mode === 'date' ? 'by date' : 'at random'}. ${leaks} of ${tested} outbreak months in the test set are leaks.`,
+      );
+    }
+
+    modeBtns.forEach((btn) =>
+      btn.addEventListener('click', () => {
+        mode = btn.dataset.mode as 'date' | 'random';
+        update();
+      }),
+    );
+    reshuffle.addEventListener('click', () => {
+      seed += 1;
+      update();
+    });
+    update();
+  });
+</script>
+
+<style>
+  .reshuffle {
+    min-height: 2.2rem;
+    padding: 0.35em 0.95em;
+    border: 1px solid var(--fig-ink);
+    border-radius: 999px;
+    background: none;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  .reshuffle:hover:not(:disabled) {
+    background: var(--fig-shade);
+  }
+  .reshuffle:disabled {
+    border-color: var(--fig-rule);
+    color: var(--fig-ink-3);
+    cursor: default;
+  }
+
+  .board {
+    --name-w: 1.4rem;
+    padding: 0.85rem 0.85rem 0.6rem;
+    background: var(--fig-shade);
+    border-radius: 6px;
+  }
+  .bands {
+    display: flex;
+    margin: 0 0 0.4rem var(--name-w);
+    font-size: 0.66rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--fig-ink-2);
+  }
+  .bands[hidden] {
+    display: flex;
+    visibility: hidden;
+  }
+  .bands span {
+    padding-bottom: 0.3rem;
+    border-bottom: 2px solid var(--fig-ink);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .bands span + span {
+    border-left: 3px solid var(--fig-shade);
+  }
+  .bands .band-test {
+    color: var(--fig-accent);
+    border-bottom-color: var(--fig-accent);
+  }
+  .bands i {
+    font-style: normal;
+  }
+  .bands .narrow {
+    display: none;
+  }
+  .rows {
+    display: grid;
+    gap: 3px;
+  }
+  .row {
+    display: grid;
+    grid-template-columns: var(--name-w) minmax(0, 1fr);
+    align-items: center;
+  }
+  .name {
+    font-size: 0.7rem;
+    color: var(--fig-ink-3);
+  }
+  .cells {
+    display: grid;
+    grid-template-columns: repeat(24, minmax(0, 1fr));
+    gap: 3px;
+  }
+  .cell,
+  .k {
+    position: relative;
+    aspect-ratio: 1;
+    border: 1px solid var(--fig-rule);
+    border-radius: 2px;
+    background: var(--fig);
+    transition:
+      background-color 0.25s,
+      border-color 0.25s;
+  }
+  .train {
+    background: color-mix(in srgb, var(--fig-ink) 13%, var(--fig));
+    border-color: transparent;
+  }
+  .val {
+    border-color: var(--fig-ink);
+  }
+  .test {
+    border: 1.5px solid var(--fig-accent);
+  }
+  /* An outbreak month carries a dot. */
+  .sick::after {
+    content: '';
+    position: absolute;
+    inset: 30%;
+    border-radius: 50%;
+    background: var(--fig-ink);
+  }
+  .leaked {
+    background: var(--fig-accent);
+    border-color: var(--fig-accent);
+  }
+  .leaked::after {
+    background: var(--fig);
+  }
+  .time {
+    display: flex;
+    justify-content: space-between;
+    margin: 0.5rem 0 0 var(--name-w);
+    font-size: 0.66rem;
+    color: var(--fig-ink-3);
+  }
+  .k {
+    flex: none;
+    width: 12px;
+  }
+
+  @media (max-width: 640px) {
+    /* The last two bands are only four cells wide: use the short labels. */
+    .bands .wide {
+      display: none;
+    }
+    .bands .narrow {
+      display: inline;
+    }
+    .bands {
+      letter-spacing: 0.02em;
+    }
+  }
+  @media (max-width: 560px) {
+    .cells,
+    .rows {
+      gap: 2px;
+    }
+    .board {
+      padding-inline: 0.5rem;
+    }
+  }
+</style>

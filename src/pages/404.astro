@@ -1,0 +1,24 @@
+---
+import Base from '../layouts/Base.astro';
+import { href } from '../lib/url';
+---
+
+<Base title="Not found">
+  <section class="wrap nf">
+    <p class="label">404</p>
+    <h1>Nothing at this address.</h1>
+    <p><a href={href('/')}>Back to the index →</a></p>
+  </section>
+</Base>
+
+<style>
+  .nf {
+    padding-block: clamp(4rem, 14vw, 11rem) 2rem;
+  }
+  h1 {
+    margin-block: 1.25rem 2rem;
+    font-size: clamp(2.4rem, 7vw, 6rem);
+    line-height: 1;
+    letter-spacing: -0.045em;
+  }
+</style>

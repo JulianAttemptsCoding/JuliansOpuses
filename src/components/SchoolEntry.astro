@@ -1,0 +1,170 @@
+---
+import type { School } from '../data/profile';
+
+interface Props {
+  entry: School;
+  /** Show the coursework list expanded. */
+  open?: boolean;
+  /** Heading level for the school name. */
+  level?: 3 | 4;
+}
+const { entry, open = false, level = 3 } = Astro.props;
+const Heading = `h${level}` as 'h3' | 'h4';
+const total = entry.courses.length;
+const ongoing = entry.courses.filter((c) => c.ongoing).length;
+const count = `${total} ${total === 1 ? 'course' : 'courses'}${ongoing > 0 ? `, ${ongoing} in progress` : ''}`;
+---
+
+<article class="school">
+  <header>
+    <Heading class="name">{entry.school}</Heading>
+    <span class="mono dates">{entry.dates}</span>
+  </header>
+  {entry.facts.length > 0 && <p class="facts">{entry.facts.join(' · ')}</p>}
+  <details open={open}>
+    <summary>
+      <span class="plus" aria-hidden="true"></span>
+      <span>Coursework</span>
+      <span class="mono count">{count}</span>
+    </summary>
+    <ul class="courses">
+      {
+        entry.courses.map((c) => (
+          <li>
+            {c.code && <span class="mono code">{c.code}</span>}
+            <span>
+              {c.title}
+              {c.ongoing && <span class="mono now">in progress</span>}
+            </span>
+          </li>
+        ))
+      }
+    </ul>
+  </details>
+</article>
+
+<style>
+  .school {
+    padding-block: 1.1rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.25rem 1.5rem;
+  }
+  .name {
+    font-size: 1.2rem;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+  }
+  h4.name {
+    font-size: 1.08rem;
+    letter-spacing: -0.01em;
+  }
+  .dates,
+  .count {
+    color: var(--ink-3);
+  }
+  .facts {
+    margin-top: 0.3rem;
+    color: var(--ink-2);
+    font-size: 0.98rem;
+  }
+
+  details {
+    margin-top: 0.55rem;
+  }
+  summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding-block: 0.25rem;
+    list-style: none;
+    font-size: 0.95rem;
+    cursor: pointer;
+    user-select: none;
+  }
+  summary::-webkit-details-marker {
+    display: none;
+  }
+  summary:hover {
+    color: var(--accent);
+  }
+  .plus {
+    position: relative;
+    flex: none;
+    width: 11px;
+    height: 11px;
+  }
+  .plus::before,
+  .plus::after {
+    content: '';
+    position: absolute;
+    inset: 5px 0 auto 0;
+    height: 1.5px;
+    background: currentColor;
+    transition: transform 0.3s var(--ease);
+  }
+  .plus::after {
+    transform: rotate(90deg);
+  }
+  details[open] .plus::after {
+    transform: rotate(0deg);
+  }
+
+  .courses {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
+    gap: 0 2rem;
+    margin-top: 0.4rem;
+    list-style: none;
+    font-size: 0.95rem;
+    color: var(--ink-2);
+  }
+  .courses li {
+    display: flex;
+    align-items: baseline;
+    gap: 0.9rem;
+    padding-block: 0.4rem;
+    border-top: 1px solid var(--rule);
+  }
+  .code {
+    flex: none;
+    width: 5.75rem;
+    color: var(--ink-3);
+  }
+  .now {
+    display: inline-block;
+    margin-left: 0.6rem;
+    padding: 0.05em 0.55em;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    font-size: 0.66rem;
+    letter-spacing: 0.04em;
+    color: var(--accent);
+    white-space: nowrap;
+    vertical-align: 0.1em;
+  }
+
+  /* Ease the list open where the browser can animate to an intrinsic height. */
+  @media (prefers-reduced-motion: no-preference) {
+    @supports (interpolate-size: allow-keywords) {
+      details {
+        interpolate-size: allow-keywords;
+      }
+      details::details-content {
+        block-size: 0;
+        overflow: clip;
+        transition:
+          block-size 0.35s var(--ease),
+          content-visibility 0.35s allow-discrete;
+      }
+      details[open]::details-content {
+        block-size: auto;
+      }
+    }
+  }
+</style>

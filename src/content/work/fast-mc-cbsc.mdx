@@ -1,0 +1,129 @@
+---
+order: 1
+tier: flagship
+title: Fast-MC-CBSC
+question: Does a simulation that runs far faster still preserve the detector physics?
+claim: A conditional generative surrogate for Geant4 simulation of single-neutron showers in a 65-layer, 6,790-channel calorimeter.
+domain: Scientific ML
+status: open
+evidence: ~200× faster in early benchmarks · a classifier still tells it from Geant4 (AUROC 0.84, target ≤ 0.65)
+context: Grew out of research at the Institute of Physics, Academia Sinica.
+metrics:
+  - label: Detector
+    value: 65 layers · 6,790 channels
+  - label: Geant4 events
+    value: '764,940'
+  - label: Source tests passing
+    value: '740'
+  - label: Speed, early prototype
+    value: ~200× Geant4
+  - label: Classifier AUROC
+    value: 0.84 ± 0.01
+    note: target ≤ 0.65 · ideal 0.50
+links:
+  - label: Repository
+    href: https://github.com/JulianAttemptsCoding/Fast-MC-CBSC
+  - label: Visual QA site
+    href: https://julianattemptscoding.github.io/Fast-MC-Visual-Tests/
+cover: ../../assets/work/fast-mc/longitudinal-profile.png
+coverAlt: Mean energy deposit per detector layer, Geant4 compared with the generator.
+worked:
+  - 'Optimization: four calibrated training families train on production-derived data, and validation loss keeps improving.'
+  - 'Structure: exact zeros outside the selected cells and exact energy accounting hold by construction.'
+  - 'Reproducibility: 764,940 Geant4 events in 187 content-addressed shards, audited splits, deterministic evaluation, 740 passing tests.'
+  - 'Speed: an early prototype generated showers roughly 200× faster than the Geant4 baseline in benchmarked runs.'
+open:
+  - 'Geant4 fidelity is not established. A classifier separates generated from real showers at AUROC 0.84 ± 0.01, far from the 0.65 target, and a falling loss has not moved it.'
+  - 'The model is measurably overfitting.'
+  - 'Per-epoch distribution metrics are too noisy at the current sample size to say whether fidelity is improving.'
+---
+
+import Figure from '../../components/Figure.astro';
+import FidelityJudge from '../../components/FidelityJudge.astro';
+import geometry from '../../assets/work/fast-mc/detector-geometry.png';
+import schematic from '../../assets/work/fast-mc/generator-schematic.png';
+import profile from '../../assets/work/fast-mc/longitudinal-profile.png';
+import response from '../../assets/work/fast-mc/total-response.png';
+
+## Problem
+
+Simulating a particle shower inside a calorimeter with Geant4 is accurate and slow: every secondary particle is tracked through the detector material. An analysis that needs millions of events pays that cost millions of times.
+
+Fast-MC-CBSC is a learned surrogate. Given only the four-momentum of an incoming neutron, it generates the energy deposited in every readout channel directly. Showing that this is fast is the easy part. The real question is whether the generated showers are close enough to Geant4 that downstream physics would not notice the difference.
+
+## Detector and data
+
+The target is a zero-degree calorimeter with one electromagnetic layer followed by 64 hadronic layers: 65 layers and 6,790 channels in total.
+
+<Figure
+  n={1}
+  src={geometry}
+  alt="Three panels: a top view of 65 detector layers, the regular grid of the ECAL face, and the staggered channel layout of the first HCAL layer."
+  caption="Detector geometry as stored: 65 layers seen from above, then the channel layout of the ECAL face and of the first HCAL layer."
+  source="From the project's paper draft."
+/>
+
+The training set is 764,940 Geant4 events, converted into 187 content-addressed shards so that any result can be traced to the exact bytes it was computed from. Splits are audited for integrity, and the public visual-QA artifacts and checkpoint selection use zero test events. The primary result domain is 50–250 GeV.
+
+## Model
+
+A shower is sparse and highly structured. Most channels read exactly zero, and the total energy has to add up. Instead of asking one network to emit 6,790 numbers at once, the generator factorizes a shower into a cascade of decisions, each conditioned on the ones before it:
+
+1. the total detector response for this neutron
+2. which depths are occupied, and how much energy each layer receives
+3. how many cells fire in each layer, and which ones
+4. how a layer's energy is shared among those cells
+5. a deterministic decoder that writes the result into 6,790 channels
+
+<Figure
+  n={2}
+  src={schematic}
+  alt="Flow diagram: kinematics, embedding, stored response, occupied depth, depth energy, hit counts, hit placement, energy shares, softmax decoder, 6,790 deposits."
+  caption="The generator as a cascade of learned stages, conditional flows and a deterministic decoder. Training conditions each stage on reference upstream states; generation samples them."
+  source="From the project's paper draft."
+/>
+
+The decoder guarantees exact zeros outside the selected cells and exact energy accounting. Those are structural guarantees. On their own they say nothing about whether the showers look like Geant4.
+
+## Engineering and QA
+
+Most of the work has gone into treating the model as an experimental system that can be wrong in quiet ways. The repository is CLI-first, with strict tensor and data contracts, deterministic evaluation and 740 source tests. Its QA policy is explicit that a passing check is evidence about an artifact, not permission to move on.
+
+Defects found and corrected along the way include tensor-shape errors, masked-softmax behavior, gradient accumulation, catastrophic forgetting, non-finite gradients, loss calibration, support constraints and data-split integrity. The project record documents eleven defects with how each was caught, and five diagnoses that were wrong and later corrected.
+
+One example is the learning-rate schedule. The config declared a cosine schedule over the full run, but resuming from a checkpoint restored the scheduler state of an ancestor run, including its much shorter horizon. For its entire history the project had been annealing on a 12-epoch sawtooth rather than the schedule it declared, and nothing looked wrong because the config always stated the intended value.
+
+## Speed
+
+An early prototype generated detector showers roughly 200× faster than the Geant4 baseline in benchmarked runs. That number is the reason the project exists. It is not evidence that the showers are right.
+
+## Fidelity
+
+Averaged quantities agree reasonably well.
+
+<Figure
+  n={3}
+  src={profile}
+  alt="Bar and line plots of mean energy deposit per longitudinal layer for Geant4 and the generator, with ratio panels below."
+  caption="Mean energy deposit per layer, Geant4 against the generator. Per-event totals agree within about 1%; individual layers are off by up to roughly 15%, and by more in the last few layers."
+  source="From the project's paper draft."
+/>
+
+<Figure
+  n={4}
+  src={response}
+  alt="Four histograms of total detector response for Geant4 and Fast-MC in energy bins from 50 to 250 GeV."
+  caption="Total response in four energy bins. Means and widths agree within about 3%, but the shape near the peak does not."
+  source="Archived evaluation snapshot, 2026-07-28."
+/>
+
+Matching averages is not the same as matching the distribution. The stricter test is a classifier two-sample test: train a classifier to tell generated showers from Geant4 showers. If the generator were faithful, the classifier could do no better than chance, an AUROC of 0.5. For a generator, a lower score is the better one.
+
+<Figure
+  n={5}
+  caption="How to read the classifier test. The two bell curves are an illustration of a judge's scores, not project data; the marked values 0.50, 0.65 and 0.84 are the project's ideal, target and measured result. Move the slider to see what each number means."
+>
+  <FidelityJudge />
+</Figure>
+
+It does much better than chance. On the accepted best checkpoint the classifier reaches **AUROC 0.84 ± 0.01**, with per-energy-bin values from 0.77 to 0.92, against a target of 0.65 that has never been approached. Validation loss kept improving throughout training and did not move that number, so every loss improvement is reported as evidence about optimization, not about physics.

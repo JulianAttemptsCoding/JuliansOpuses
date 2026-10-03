@@ -1,0 +1,73 @@
+---
+order: 4
+tier: flagship
+title: LaTeXRenderer
+question: What security guarantees are actually possible on a static host?
+claim: A collaborative browser LaTeX environment whose public shell runs on GitHub Pages, with every authorization decision moved to the server.
+domain: Full-stack · Security
+status: shipped
+evidence: Live on GitHub Pages · every access decision made server-side
+metrics:
+  - label: Password check
+    value: PBKDF2 × 310,000
+  - label: Rate limit
+    value: 5 failures / 15 min
+  - label: Signed URL lifetime
+    value: 5 minutes
+  - label: Asset integrity
+    value: SHA-256, every asset
+links:
+  - label: Live site
+    href: https://julianattemptscoding.github.io/LaTeXRenderer/
+  - label: Repository
+    href: https://github.com/JulianAttemptsCoding/LaTeXRenderer
+cover: ../../assets/work/latex/auth-flow.svg
+coverAlt: Sequence diagram of sign-in, server-side password verification, signed URLs and asset integrity checks.
+worked:
+  - 'Deployed and live, with CI that type-checks, lints, runs unit and Playwright tests, scans the build for secrets, publishes, then smoke-tests the live URL.'
+  - 'Authorization never depends on client code: each access decision is made in a Supabase Edge Function against a stored grant.'
+  - 'The browser refuses to run any application bytes whose SHA-256 does not match the manifest the server published.'
+  - 'The end-to-end suite asserts, one by one, that each client-side bypass fails.'
+openLabel: Known limits
+open:
+  - 'The encrypted fallback mode ships public ciphertext, so it permits offline password guessing and is weaker than production.'
+  - 'Access is a shared password for a small team, not per-user permissions.'
+  - 'The editor implementation is in a private repository; only the shell is public.'
+---
+
+import Figure from '../../components/Figure.astro';
+import AuthFlow from '../../assets/work/latex/auth-flow.svg';
+
+## Problem
+
+LaTeXRenderer is a free collaborative LaTeX environment for a team of up to ten people, delivered from GitHub Pages. That choice of host creates the interesting problem.
+
+GitHub Pages is static file hosting. It cannot authenticate anyone, it cannot keep a secret, and nothing shipped from it is hidden. A "password-protected" static site that checks the password in JavaScript protects nothing: the check, and whatever it guards, is already in the visitor's browser.
+
+## What the shell can and cannot do
+
+The public repository is deliberately small, and explicit about its own limits.
+
+- It **cannot** hide the shared password, hide the editor bundle, or decide who is allowed in. So none of those things live there.
+- It **can** collect a Google identity, forward a password attempt to a server that knows how to check it, and refuse to execute application bytes that do not match the fingerprints the server published.
+
+## Architecture
+
+<Figure
+  n={1}
+  caption="One visit. Solid arrows are requests, dashed arrows are responses. Every decision about access happens in the middle column; the browser only verifies what it was given."
+>
+  <AuthFlow />
+</Figure>
+
+Sign-in uses Supabase Auth with Google OAuth and PKCE, verified server-side. The shared password is checked in an Edge Function with PBKDF2, a constant-time comparison and rate limiting, and a success writes a grant row that expires. The editor bundle sits in a private storage bucket and is reachable only through five-minute signed URLs, issued after the grant is checked again. Before running anything, the shell hashes every downloaded asset and compares it with the manifest.
+
+## Testing the attacks
+
+A security claim is only as good as the attempt to break it. The Playwright suite asserts each obvious bypass individually: deleting the password form in DevTools, setting a local-storage flag, calling shell functions from the console, and requesting the private bucket directly. All of them fail, and not because the shell resists them. The shell was never the thing standing in the way.
+
+Around that sit Vitest unit tests for integrity verification, lint rules that ban `innerHTML` and `eval` in the shell, a build that refuses to start if it is handed a service-role key, and a CI step that scans the built output for credential material before publishing.
+
+## Two modes
+
+The mode is chosen at build time. Production uses Supabase as described above. A direct mode exists as an encrypted offline fallback: the editor ships as public ciphertext and is decrypted locally with the shared password. It holds no server-side data and grants no privileged action, but public ciphertext can be attacked offline, so it is documented as weaker and is not what production runs.

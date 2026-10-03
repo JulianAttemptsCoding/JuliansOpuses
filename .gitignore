@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.astro/
+.env
+.env.*
+.DS_Store
+
+# Résumé source files carry a personal email address: keep them out of the public repo.
+# To publish one, export a copy without the address to public/resume.pdf.
+resume/

@@ -1,0 +1,176 @@
+---
+import { site } from '../data/site';
+import { href } from '../lib/url';
+
+interface Props {
+  /** Show the large call to action above the base line. The contact page turns it off. */
+  cta?: boolean;
+}
+const { cta = true } = Astro.props;
+const dev = import.meta.env.DEV;
+const year = new Date().getFullYear();
+---
+
+<footer class:list={['site-footer', { slim: !cta }]}>
+  <div class="wrap">
+    {
+      cta && (
+        <>
+          <p class="label">Contact</p>
+          <h2 class="cta">Get in touch.</h2>
+
+          <ul class="links">
+            <li>
+              <a class="pill primary" href={href('/contact/')}>
+                Send a message
+                <span class="pill-arrow" aria-hidden="true">
+                  →
+                </span>
+              </a>
+            </li>
+            {site.linkedin && (
+              <li>
+                <a class="pill ext" href={site.linkedin} rel="noopener">
+                  LinkedIn
+                </a>
+              </li>
+            )}
+            <li>
+              <a class="pill ext" href={site.github} rel="noopener">
+                GitHub
+              </a>
+            </li>
+            {site.resume ? (
+              <li>
+                <a class="pill" href={href(site.resume)}>
+                  Résumé (PDF)
+                </a>
+              </li>
+            ) : (
+              dev && (
+                <li>
+                  <span class="placeholder">Résumé: not set</span>
+                </li>
+              )
+            )}
+          </ul>
+          {dev && !site.resume && (
+            <p class="dev-note mono">
+              Dashed items are placeholders from src/data/site.ts and are hidden in the production build.
+            </p>
+          )}
+        </>
+      )
+    }
+
+    <div class="base">
+      <span class="mono">© {year} {site.name}</span>
+      <nav aria-label="Footer">
+        <a href={href('/')}>Index</a>
+        <a href={href('/about/')}>About</a>
+        <a href={href('/contact/')}>Contact</a>
+        <a href="#top">Back to top ↑</a>
+      </nav>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    margin-top: clamp(4rem, 10vw, 9rem);
+    padding-block: clamp(3.5rem, 8vw, 7rem) 2rem;
+    background: var(--footer-bg);
+    color: var(--footer-ink);
+    border-radius: clamp(20px, 3vw, 40px) clamp(20px, 3vw, 40px) 0 0;
+  }
+  /* Without the call to action only the base line remains. */
+  .site-footer.slim {
+    padding-top: 0.25rem;
+  }
+  .label {
+    color: var(--footer-ink-2);
+  }
+  .cta {
+    margin-top: 1.25rem;
+    font-size: clamp(2.4rem, 7vw, 6rem);
+    line-height: 1;
+    letter-spacing: -0.04em;
+  }
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: clamp(2rem, 4vw, 3.5rem);
+    list-style: none;
+  }
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6em;
+    padding: 0.85em 1.5em;
+    border: 1px solid var(--footer-rule);
+    border-radius: 999px;
+    text-decoration: none;
+    transition:
+      background-color 0.25s var(--ease),
+      border-color 0.25s var(--ease),
+      color 0.25s var(--ease);
+  }
+  .pill:hover {
+    border-color: var(--footer-ink);
+    color: var(--footer-ink);
+  }
+  .pill.primary {
+    background: var(--footer-ink);
+    border-color: var(--footer-ink);
+    color: var(--footer-bg);
+  }
+  .pill.primary:hover {
+    background: var(--accent-fill);
+    border-color: var(--accent-fill);
+    color: #fff;
+  }
+  .pill-arrow {
+    transition: transform 0.35s var(--ease);
+  }
+  .pill:hover .pill-arrow {
+    transform: translateX(0.3rem);
+  }
+  .site-footer :focus-visible {
+    outline-color: var(--footer-ink);
+  }
+  .placeholder,
+  .dev-note {
+    color: var(--footer-ink-2);
+  }
+  .dev-note {
+    margin-top: 1rem;
+  }
+  .base {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 1rem 2rem;
+    margin-top: clamp(3rem, 7vw, 6rem);
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--footer-rule);
+    color: var(--footer-ink-2);
+  }
+  .slim .base {
+    margin-top: 0;
+    border-top: 0;
+  }
+  .base nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+    font-size: 0.9rem;
+  }
+  .base a {
+    text-decoration: none;
+  }
+  .base a:hover {
+    color: var(--footer-ink);
+  }
+</style>

@@ -1,0 +1,395 @@
+/* ---------- Tokens ---------- */
+:root {
+  color-scheme: light;
+  --paper: #f6f5f1;
+  --paper-2: #edece6;
+  --ink: #15161a;
+  --ink-2: #4a4c54;
+  --ink-3: #6a6c74;
+  --rule: #d9d7cf;
+  --accent: #c2410c;
+  --accent-fill: #d9480f;
+  --on-accent: #ffffff;
+
+  /* Figures keep a light "printed page" surface in both themes. */
+  --fig: #ffffff;
+  --fig-ink: #15161a;
+  --fig-ink-2: #4a4c54;
+  --fig-ink-3: #6a6c74;
+  --fig-rule: #d9d7cf;
+  --fig-accent: #c2410c;
+  --fig-shade: #f3f2ee;
+
+  --footer-bg: #15161a;
+  --footer-ink: #f1f0ec;
+  --footer-ink-2: #a4a5ab;
+  --footer-rule: #33353b;
+
+  --font-sans: 'Geist Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'Geist Mono Variable', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+
+  --gutter: clamp(20px, 4vw, 56px);
+  --max: 1320px;
+  --header-h: 64px;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --paper: #101113;
+    --paper-2: #1a1b1f;
+    --ink: #edece8;
+    --ink-2: #b6b7bc;
+    --ink-3: #8f9198;
+    --rule: #2b2c31;
+    --accent: #ff8552;
+    --accent-fill: #f26a35;
+    --on-accent: #15161a;
+    --fig: #f4f3ef;
+    --footer-bg: #18191c;
+  }
+}
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --paper: #101113;
+  --paper-2: #1a1b1f;
+  --ink: #edece8;
+  --ink-2: #b6b7bc;
+  --ink-3: #8f9198;
+  --rule: #2b2c31;
+  --accent: #ff8552;
+  --accent-fill: #f26a35;
+  --on-accent: #15161a;
+  --fig: #f4f3ef;
+  --footer-bg: #18191c;
+}
+
+/* ---------- Base ---------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-padding-top: calc(var(--header-h) + 24px);
+}
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  font-feature-settings: 'ss01', 'cv11';
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+main {
+  flex: 1;
+}
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+img {
+  height: auto;
+}
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+p {
+  margin: 0;
+  text-wrap: pretty;
+}
+ul,
+ol,
+dl,
+dd {
+  margin: 0;
+  padding: 0;
+}
+a {
+  color: inherit;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+a:hover {
+  color: var(--accent);
+}
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+::selection {
+  background: var(--accent-fill);
+  color: var(--on-accent);
+}
+button {
+  font: inherit;
+  color: inherit;
+}
+
+/* ---------- Utilities ---------- */
+.wrap {
+  width: 100%;
+  max-width: var(--max);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+.mono {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.label {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+.ext::after {
+  content: '\2197';
+  display: inline-block;
+  margin-left: 0.25em;
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  transition: transform 0.25s var(--ease);
+}
+a.ext:hover::after {
+  transform: translate(2px, -2px);
+}
+
+/* Dev-only placeholder chip: never rendered in production builds. */
+.placeholder {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  padding: 0.3em 0.7em;
+  border: 1px dashed currentColor;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  opacity: 0.7;
+}
+
+/* ---------- Interactive figures ----------
+   Shared controls for the sandboxes inside figure frames. They use the figure
+   tokens, so they keep the light "printed page" look in both themes. */
+.fx {
+  color: var(--fig-ink);
+  font-size: 0.9rem;
+}
+.fx :focus-visible {
+  outline-color: var(--fig-accent);
+}
+.fx-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.9rem 1.5rem;
+  padding-bottom: 1rem;
+}
+.fx-group {
+  display: grid;
+  gap: 0.4rem;
+  min-width: 0;
+}
+.fx-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+.fx-label {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fig-ink-3);
+}
+.fx-label output {
+  margin-left: 0.5em;
+  color: var(--fig-ink);
+  letter-spacing: 0.02em;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
+}
+.fx-seg {
+  display: inline-flex;
+  flex-wrap: wrap;
+  border: 1px solid var(--fig-ink);
+  border-radius: 1.1rem;
+  overflow: hidden;
+}
+.fx-seg button,
+.fx-chip {
+  min-height: 2.2rem;
+  padding: 0.35em 0.95em;
+  border: 0;
+  background: none;
+  color: var(--fig-ink);
+  font-size: 0.82rem;
+  line-height: 1.2;
+  cursor: pointer;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
+}
+.fx-seg button {
+  flex: 1 1 auto;
+}
+.fx-seg button:hover,
+.fx-chip:hover {
+  background: var(--fig-shade);
+}
+.fx-seg button[aria-pressed='true'] {
+  background: var(--fig-ink);
+  color: var(--fig);
+}
+.fx-seg button:focus-visible,
+.fx-chip:focus-visible {
+  outline-offset: -3px;
+  border-radius: 999px;
+}
+/* An on/off chip: the box fills when the option is on. */
+.fx-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55em;
+  border: 1px solid var(--fig-ink);
+  border-radius: 999px;
+}
+.fx-chip::before {
+  content: '';
+  flex: none;
+  width: 0.7em;
+  height: 0.7em;
+  border: 1.5px solid currentColor;
+  border-radius: 2px;
+  transition: background-color 0.2s;
+}
+.fx-chip[aria-pressed='true']::before {
+  background: var(--fig-accent);
+  border-color: var(--fig-accent);
+}
+.fx input[type='range'] {
+  width: 100%;
+  min-width: 150px;
+  height: 2.2rem;
+  margin: 0;
+  accent-color: var(--fig-accent);
+  cursor: pointer;
+}
+/* One plain sentence saying what the current settings show. */
+.fx-insight {
+  min-height: 2.9em;
+  margin-top: 0.85rem;
+  padding-left: 0.85rem;
+  border-left: 2px solid var(--fig-accent);
+  color: var(--fig-ink);
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+.fx-readout {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+  align-items: end;
+  gap: 0.9rem 1rem;
+  margin-top: 0.9rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--fig-rule);
+}
+.fx-readout dt {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  color: var(--fig-ink-3);
+}
+.fx-readout dd {
+  font-size: 1.5rem;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+.fx-readout dd small {
+  font-size: 0.6em;
+  letter-spacing: 0;
+  color: var(--fig-ink-2);
+}
+.fx-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.25rem;
+  margin-top: 0.75rem;
+  list-style: none;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--fig-ink-2);
+}
+.fx-key li {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+.fx-note {
+  margin-top: 0.6rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--fig-ink-3);
+}
+
+/* ---------- Scroll reveal ----------
+   CSS scroll-driven, so content is never hidden behind JavaScript: browsers
+   without support, and readers who prefer reduced motion, see it in place. */
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    [data-reveal] {
+      animation: reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 30%;
+    }
+  }
+
+  @view-transition {
+    navigation: auto;
+  }
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 0.25s;
+  }
+}

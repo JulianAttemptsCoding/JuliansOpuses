@@ -1,0 +1,80 @@
+---
+import { Image, getImage } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
+interface Props {
+  n: number;
+  caption: string;
+  /** Raster figure. Omit to place a diagram or chart in the default slot instead. */
+  src?: ImageMetadata;
+  alt?: string;
+  /** Where the figure comes from, e.g. a repository snapshot. */
+  source?: string;
+}
+const { n, caption, src, alt = '', source } = Astro.props;
+const full = src ? await getImage({ src, width: src.width }) : null;
+---
+
+<figure class="fig">
+  <div class="frame">
+    {
+      src && full ? (
+        <a href={full.src} target="_blank" rel="noopener" aria-label={`Open figure ${n} at full size`}>
+          <Image src={src} alt={alt} widths={[640, 960, 1440]} sizes="(min-width: 1100px) 820px, 94vw" />
+        </a>
+      ) : (
+        <slot />
+      )
+    }
+  </div>
+  <figcaption>
+    <span class="n mono">Fig. {n}</span>
+    <span>
+      {caption}
+      {source && <span class="src"> {source}</span>}
+    </span>
+  </figcaption>
+</figure>
+
+<style>
+  .fig {
+    margin: 2.25rem 0;
+  }
+  .frame {
+    padding: clamp(10px, 2vw, 22px);
+    background: var(--fig);
+    color: var(--fig-ink);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    overflow-x: auto;
+  }
+  /* Diagrams keep a readable size on phones and scroll inside the frame instead. */
+  .frame > :global(svg) {
+    min-width: 620px;
+  }
+  .frame a {
+    display: block;
+    cursor: zoom-in;
+  }
+  .frame :global(img),
+  .frame :global(svg) {
+    width: 100%;
+    height: auto;
+  }
+  figcaption {
+    display: grid;
+    grid-template-columns: 3.75rem minmax(0, 1fr);
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+    color: var(--ink-2);
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+  .n {
+    color: var(--accent);
+    padding-top: 0.15em;
+  }
+  .src {
+    color: var(--ink-3);
+  }
+</style>
