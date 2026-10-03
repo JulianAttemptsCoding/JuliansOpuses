@@ -1,6 +1,8 @@
 # Julian Juan — portfolio
 
-Static portfolio site built with [Astro](https://astro.build), for GitHub Pages.
+**Live: https://julianattemptscoding.github.io/JuliansOpuses/**
+
+Static portfolio site built with [Astro](https://astro.build), published on GitHub Pages.
 
 ## Run locally
 
@@ -32,6 +34,7 @@ Open http://localhost:4321.
 | `src/pages/work/[id].astro` | Case-study template: pinned rail on the left, evidence on the right |
 | `src/components/` | Page furniture and the interactive figures (see below) |
 | `src/styles/global.css` | Colour, type and spacing tokens for both themes, shared figure controls, motion |
+| `public/` | Favicon, the résumé PDF and `og.png`, the card shown when a link to the site is shared |
 | `resume/` (git-ignored) | Résumé generator and the copies that carry a personal email address |
 
 ### Interactive figures
@@ -101,14 +104,12 @@ component inside it.
 
 ## Deploy to GitHub Pages
 
-`.github/workflows/deploy.yml` type-checks and builds on every push to `main`. It publishes only when
-asked, so pushing work in progress never changes the live site.
+`.github/workflows/deploy.yml` type-checks, builds and publishes on every push to `main`. Pages is set
+to Source: **GitHub Actions**, and the repository variable `PAGES_AUTO_DEPLOY` is `true`.
 
-1. In the repository, open Settings → Pages and set Source to **GitHub Actions**.
-2. Open Actions → **Build and deploy** → Run workflow.
-
-To publish on every push instead, add a repository variable `PAGES_AUTO_DEPLOY` with the value `true`
-(Settings → Secrets and variables → Actions → Variables).
+To stop pushes from publishing (for example while reworking the site), delete that variable or set it
+to anything else (Settings → Secrets and variables → Actions → Variables). The workflow then only
+builds, and publishes when run by hand: Actions → **Build and deploy** → Run workflow.
 
 The base path is worked out from the repository name: a repository named
 `JulianAttemptsCoding.github.io` serves from `https://julianattemptscoding.github.io/`, and any other

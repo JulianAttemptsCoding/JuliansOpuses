@@ -1,5 +1,5 @@
 ---
-import { site } from '../data/site';
+import { site, contact } from '../data/site';
 import { href } from '../lib/url';
 
 interface Props {
@@ -9,6 +9,8 @@ interface Props {
 const { cta = true } = Astro.props;
 const dev = import.meta.env.DEV;
 const year = new Date().getFullYear();
+// The button only promises a message form when one is actually connected.
+const contactLabel = contact.accessKey || dev ? 'Send a message' : 'Ways to reach me';
 ---
 
 <footer class:list={['site-footer', { slim: !cta }]}>
@@ -24,7 +26,7 @@ const year = new Date().getFullYear();
           <ul class="links">
             <li>
               <a class="pill primary" href={href('/contact/')} data-magnetic>
-                Send a message
+                {contactLabel}
                 <span class="pill-arrow" aria-hidden="true">
                   →
                 </span>
