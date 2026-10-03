@@ -29,7 +29,10 @@ Open http://localhost:4321.
 | `src/data/verdicts.ts` | The five verdict states and what each means |
 | `src/content/work/*.mdx` | One case study per project |
 | `src/assets/work/<project>/` | Figures for each case study |
-| `src/pages/index.astro` | Home page |
+| `src/pages/index.astro` | Home: who I am, then a short version of each section with a link to the full one |
+| `src/pages/work/index.astro` | Projects: all five |
+| `src/pages/experience.astro` | Research, every award, leadership |
+| `src/pages/about.astro` | Background, education, activities, tools |
 | `src/pages/contact.astro` | Contact form |
 | `src/pages/work/[id].astro` | Case-study template: pinned rail on the left, evidence on the right |
 | `src/components/` | Page furniture and the interactive figures (see below) |
@@ -52,6 +55,11 @@ them are labelled as illustrations: only the numbers quoted from a project are p
 
 ## Look and motion
 
+- **Voice.** First person and plain. No slogans, no "X, not Y" flourishes, no closing aphorisms; the
+  headline says who I am instead of what I stand for.
+- **Type.** Source Serif 4 for headings, Geist for reading, Geist Mono only for numbers and codes.
+  Section names are ordinary small headings, not uppercase letter-spaced labels, and verdicts are a
+  glyph and a word with no chip around them.
 - **Colour.** Soft charcoal on warm paper, never pure black on white. One vermilion accent, a teal
   second colour in a few small places, and one hue per verdict glyph. Flat colour only: no gradients,
   no translucent "glass" surfaces.
@@ -61,15 +69,15 @@ them are labelled as illustrations: only the numbers quoted from a project are p
 - **Motion.** A short intro on the first page of a visit and a headline that rises word by word. On
   scroll: the hero thins out, each work row assembles part by part, rules draw, figures settle in,
   lists arrive item by item, numbers count up, the verdict lands like a stamp, and the page lifts off
-  the footer underneath it. Always moving: a steady ticker, the turning 3D scene and a footer clock.
+  the footer underneath it. Things leave by the top of the window the way they arrived, and numbers
+  reset once out of view, so scrolling back replays them. Always moving: a steady ticker, the turning 3D scene and a footer clock.
   The wheel is eased with [Lenis](https://lenis.darkroom.engineering/) (mouse and trackpad only), and
   switching theme opens the new colours as a circle from the toggle. All of it is an enhancement:
   with reduced motion, without JavaScript, or without scroll-driven animations the content is simply
   in place. The reveals are opted into with `data-reveal`, `data-stagger` and `data-rule` attributes,
   documented at the top of the motion section in `src/styles/global.css`.
-- **One home per fact.** Education and activities (Los Gatos Hacks, outreach, the club, tutoring) live
-  on About; recognition and leadership live on the home page. Nothing is repeated across pages except
-  the navigation and the footer.
+- **One home per fact.** Projects, Experience and About each hold their own material in full. The home
+  page is the only place that repeats anything, and only as a short version with a link onward.
 
 ## Contact form
 

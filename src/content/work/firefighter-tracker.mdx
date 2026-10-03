@@ -5,9 +5,9 @@ title: Firefighter Tracker
 heading: Firefighter Tracker / Sentinel Nano
 question: Does localization still work once real radio noise and deployment geometry replace ideal equations?
 claim: Indoor positioning for firefighters where GPS fails, using UWB ranging to mobile reference points and estimation built for noisy, blocked signals.
-domain: Estimation · Hardware
+domain: Estimation, hardware
 status: prototype
-evidence: Conrad Challenge Innovator · shaped by fire-service input
+evidence: Conrad Challenge Innovator. Designed with input from a fire department.
 context: Developed with input from a Fremont Fire Department battalion chief.
 metrics:
   - label: Sensing
@@ -56,10 +56,10 @@ A small tag carried by the firefighter exchanges ultra-wideband (UWB) radio sign
 
 ## What makes it hard
 
-With exact ranges, the equations are a textbook exercise. The project is about everything that breaks them:
+With exact ranges this is a textbook problem. The project is about what happens when the ranges are not exact:
 
 - **Noise.** Every range carries measurement error, and the position error it produces depends on where the reference points are.
-- **Blocked paths.** A signal that passes through a wall or a stair core arrives late, so the range reads long. That is a bias, not noise, and averaging does not remove it.
+- **Blocked paths.** A signal that passes through a wall or a stair core arrives late, so the range reads long. That error always pushes the same way, so averaging more measurements does not remove it.
 - **Geometry.** Reference points placed where it is convenient, such as along one side of a building, amplify error in the direction they cannot see.
 - **Height.** Knowing which floor someone is on makes this a 3D problem. Reference points that all sit near ground level barely constrain height; one placed well above them does.
 
@@ -72,7 +72,7 @@ With exact ranges, the equations are a textbook exercise. The project is about e
 
 ## Estimation
 
-The estimator is built for those failure cases rather than the ideal one: robust estimation that tolerates inconsistent ranges, and machine-learning-assisted correction of range error, particularly for measurements taken without a clear line of sight. Reference-point placement is treated as part of the system, because geometry sets how much any range error is amplified.
+I designed the estimator around those failures. It uses robust estimation, which tolerates ranges that disagree with each other, and a machine-learning correction for range error, mainly for measurements taken without a clear line of sight. I treat where the reference points go as part of the system, since their geometry decides how much any range error gets amplified.
 
 <DevNote>
   Prototype photographs, ranging tests and localization-error plots would strengthen this page. Add them as

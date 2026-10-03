@@ -1,0 +1,159 @@
+---
+// The figure that follows the cursor over project rows (fine pointers only). One per page,
+// given every project whose row appears on that page.
+import type { CollectionEntry } from 'astro:content';
+import { getImage } from 'astro:assets';
+
+interface Props {
+  items: CollectionEntry<'work'>[];
+}
+const { items } = Astro.props;
+const covers = await Promise.all(
+  items.map(async (w) => ({ id: w.id, src: (await getImage({ src: w.data.cover, width: 900 })).src })),
+);
+---
+
+<div class="preview" data-preview aria-hidden="true">
+  {covers.map((c) => <img src={c.src} alt="" data-for={c.id} loading="lazy" decoding="async" />)}
+  <span class="preview-tag">Open the write-up →</span>
+</div>
+
+<script>
+  // The preview follows the cursor sideways and sits just above or below the hovered row,
+  // so the row itself stays readable.
+  const preview = document.querySelector<HTMLElement>('[data-preview]');
+  const rows = document.querySelectorAll<HTMLElement>('[data-row]');
+  const fine = matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+  if (preview && rows.length && fine) {
+    const smooth = !matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const imgs = preview.querySelectorAll<HTMLImageElement>('img');
+    const GAP = 14;
+    const EDGE = 16;
+    const HEADER = 64;
+    let row: HTMLElement | null = null;
+    let cursorX = 0;
+    let x = 0;
+    let y = 0;
+    let tx = 0;
+    let ty = 0;
+    let raf = 0;
+
+    const aim = () => {
+      if (!row) return;
+      const w = preview.offsetWidth;
+      const h = preview.offsetHeight;
+      const r = row.getBoundingClientRect();
+      tx = Math.min(Math.max(cursorX - w / 2, EDGE), innerWidth - w - EDGE);
+      const above = r.top - h - GAP;
+      const below = Math.min(r.bottom + GAP, innerHeight - h - EDGE);
+      ty = above >= HEADER + EDGE / 2 ? above : below;
+    };
+    const place = () => {
+      preview.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+    };
+    // Ease toward the target, and stop the loop once it has caught up.
+    const tick = () => {
+      x += (tx - x) * 0.18;
+      y += (ty - y) * 0.18;
+      place();
+      raf = Math.abs(tx - x) + Math.abs(ty - y) > 0.5 ? requestAnimationFrame(tick) : 0;
+    };
+    const move = (snap: boolean) => {
+      aim();
+      if (snap || !smooth) {
+        x = tx;
+        y = ty;
+        place();
+      } else if (!raf) {
+        raf = requestAnimationFrame(tick);
+      }
+    };
+    const show = (target: HTMLElement, e: PointerEvent) => {
+      const wasHidden = row === null;
+      row = target;
+      cursorX = e.clientX;
+      imgs.forEach((img) => img.classList.toggle('on', img.dataset.for === target.dataset.row));
+      move(wasHidden);
+      preview.classList.add('on');
+    };
+    const hide = () => {
+      row = null;
+      preview.classList.remove('on');
+    };
+
+    rows.forEach((el) => {
+      el.addEventListener('pointerenter', (e) => show(el, e));
+      el.addEventListener('pointerleave', hide);
+      // The preview steps aside while a verdict's explanation is open over the row.
+      el.querySelector('[data-verdict]')?.addEventListener('pointerenter', () => preview.classList.add('aside'));
+      el.querySelector('[data-verdict]')?.addEventListener('pointerleave', () => preview.classList.remove('aside'));
+    });
+    addEventListener(
+      'pointermove',
+      (e) => {
+        if (!row) return;
+        cursorX = e.clientX;
+        move(false);
+      },
+      { passive: true },
+    );
+    addEventListener('scroll', hide, { passive: true });
+  }
+</script>
+
+<style>
+  .preview {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 40;
+    width: min(440px, 34vw);
+    aspect-ratio: 16 / 10;
+    background: var(--fig);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    overflow: hidden;
+    pointer-events: none;
+    opacity: 0;
+    scale: 0.94;
+    transition:
+      opacity 0.25s var(--ease),
+      scale 0.35s var(--ease);
+  }
+  .preview.on {
+    opacity: 1;
+    scale: 1;
+  }
+  .preview.on.aside {
+    opacity: 0;
+  }
+  .preview img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    padding: 14px;
+    object-fit: contain;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .preview img.on {
+    opacity: 1;
+  }
+  .preview-tag {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    padding: 0.3em 0.75em;
+    background: var(--fig-ink);
+    color: var(--fig);
+    border-radius: 999px;
+    font-size: 0.74rem;
+  }
+  @media not ((hover: hover) and (pointer: fine)) {
+    .preview {
+      display: none;
+    }
+  }
+</style>

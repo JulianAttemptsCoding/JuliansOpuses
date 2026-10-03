@@ -6,9 +6,9 @@
  */
 export const site = {
   name: 'Julian Juan',
-  title: 'Julian Juan — research engineering portfolio',
+  title: 'Julian Juan',
   description:
-    'Scientific machine learning, detector simulation, graph forecasting and estimation, with the tests that show what held up and what did not.',
+    'Julian Juan is a high-school senior who does machine-learning research for particle physics. Projects, research and how each result held up when tested.',
   github: 'https://github.com/JulianAttemptsCoding',
   linkedin: 'https://www.linkedin.com/in/4a4a75616e/',
   resume: '/resume.pdf', // public/resume.pdf: the copy without a personal email address
@@ -28,8 +28,8 @@ export const contact = {
 };
 
 export const nav = [
-  { label: 'Work', path: '/#work' },
-  { label: 'Experience', path: '/#experience' },
+  { label: 'Projects', path: '/work/' },
+  { label: 'Experience', path: '/experience/' },
   { label: 'About', path: '/about/' },
   { label: 'Contact', path: '/contact/' },
 ];

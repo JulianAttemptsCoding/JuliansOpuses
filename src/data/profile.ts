@@ -18,26 +18,26 @@ export const links = {
 };
 
 export const experience = {
-  role: 'Research Intern',
+  role: 'Research intern',
   org: 'Institute of Physics, Academia Sinica',
   href: links.academiaSinica,
   place: 'Taipei, Taiwan',
-  dates: 'Summers 2025–2026',
+  dates: 'summers of 2025 and 2026',
   summary:
-    'Experimental particle-detector research, moving between data from real hardware and the models built on top of it.',
+    'I worked on particle detectors: testing real hardware, and building the models that run on its data.',
   strands: [
     {
       title: 'Detector testing',
-      body: 'Analyzed nearly 1,800 oscilloscope captures to compare detector prototypes on particle-counting reliability and timing behavior. Worked inside the actual detector and DAQ workflow, with ROOT, C++ and Python for analysis.',
+      body: 'I analyzed nearly 1,800 oscilloscope captures to compare detector prototypes on how reliably each one counts particles and how its timing behaves. This was inside the lab’s real detector and DAQ setup, using ROOT, C++ and Python.',
     },
     {
       title: 'Neutron reconstruction',
-      body: 'Built models that reconstruct a neutron’s physical properties from thousands of calorimeter measurements.',
+      body: 'I built models that reconstruct a neutron’s physical properties from thousands of calorimeter readings.',
     },
     {
       title: 'Fast simulation',
-      body: 'Developed a machine-learning surrogate for Geant4 calorimeter simulation. An early prototype generated showers about 200× faster in benchmarked runs; later work turned to whether the fidelity is actually sufficient.',
-      link: { label: 'Fast-MC-CBSC case study', path: '/work/fast-mc-cbsc/' },
+      body: 'I built a machine-learning stand-in for Geant4, the standard detector simulator. An early version generated showers about 200× faster in benchmarks. Since then the work has been about whether those showers are accurate enough to use.',
+      link: { label: 'Read the Fast-MC-CBSC write-up', path: '/work/fast-mc-cbsc/' },
     },
   ],
 };
@@ -55,7 +55,7 @@ export const recognition: { name: string; href: string; result: string; note: Pa
     href: 'https://immchallenge.org/',
     result: 'U.S. Candidate Round qualifier',
     note: [
-      'Advanced to the round that selects U.S. representation. Across the two contests: choosing sustainable host cities for major events, and allocating anti-poaching resources across national parks.',
+      'Advanced to the round that picks the U.S. teams. Between the two contests we chose sustainable host cities for major events and allocated anti-poaching resources across national parks.',
     ],
   },
   {
@@ -65,20 +65,20 @@ export const recognition: { name: string; href: string; result: string; note: Pa
     note: [
       'Finals at ',
       { text: 'Santa Clara University’s Leavey School of Business', href: links.leavey },
-      '. Public environmental and economic data plus optimization, to recommend an event location a nontechnical stakeholder could act on.',
+      '. We used public environmental and economic data, and some optimization, to recommend where to hold an event.',
     ],
   },
   {
     name: 'Summer Science Program',
     href: 'https://ssp.org/',
     result: 'Invitee',
-    note: ['Invited to the selective summer research program for high-school students.'],
+    note: ['Invited to the summer research program for high-school students.'],
   },
   {
     name: 'Santa Clara Valley Science & Engineering Fair',
     href: 'https://science-fair.org/',
     result: 'First Place · Honorable Mention',
-    note: ['Across science-fair research projects.'],
+    note: ['For my science-fair research projects.'],
   },
   {
     name: 'California Science & Engineering Fair',
@@ -127,7 +127,7 @@ export const leadership: {
       { value: '$88M', label: 'annual district budget' },
       { value: '$6M+', label: 'differences reconciled' },
     ],
-    body: 'Appointed to represent students in oversight of a district budget serving more than 3,000 students. Helped identify and reconcile over $6 million in cumulative differences across four years of budget reporting, and pushed for itemized records, clearer accounting and plain-language presentations so students, families and board members could follow the numbers.',
+    body: 'I was appointed to represent students on the committee that oversees the district’s budget, which covers more than 3,000 students. I helped find and reconcile over $6 million in cumulative differences across four years of budget reports. I also pushed for itemized records and plain-language presentations, so that students, families and board members could follow the numbers.',
   },
   {
     title: 'Résumé Workshop',
@@ -149,24 +149,24 @@ export const activities: {
     title: 'Los Gatos Hacks',
     href: links.lgHacks,
     role: 'Director of Strategy',
-    body: 'A nonprofit that runs a one-day hackathon for middle and high school students. It has grown every year: 50 hackers and 17 projects in 2023, 115 hackers and 39 projects in 2026.',
-    link: { label: 'Browse every edition in the archive', href: links.lgHacksArchive },
+    body: 'I’m on the leadership team of this nonprofit, which runs a one-day hackathon for middle and high school students. It has grown each year, from 50 hackers and 17 projects in 2023 to 115 hackers and 39 projects in 2026.',
+    link: { label: 'See every year in the archive', href: links.lgHacksArchive },
   },
   {
     title: 'STEM Beyond Boundaries',
     href: links.stemBeyondBoundaries,
     role: 'Director of Outreach',
-    body: 'Help lead STEM-access outreach. Taught about 80 children through interactive science lessons built to make topics like magnetism approachable.',
+    body: 'I help run outreach for a group that brings science lessons to kids. So far I’ve taught about 80 children, with hands-on lessons on topics like magnetism.',
   },
   {
     title: 'Game Theory Club',
     role: 'Founder / Co-President',
-    body: 'Founded by merging the school’s Chess Club and Cards Club into one broader club around strategy, probability, negotiation and game theory.',
+    body: 'I started it by merging the school’s Chess Club and Cards Club into one club about strategy, probability, negotiation and game theory.',
   },
   {
     title: 'Tutoring',
     role: 'Paid tutor',
-    body: 'Mathematics, science and history, including precalculus, AP Calculus BC, AP Physics, chemistry, biology, AP European History and AP U.S. History.',
+    body: 'I tutor math, science and history, including precalculus, AP Calculus BC, AP Physics, chemistry, biology, AP European History and AP U.S. History.',
   },
 ];
 
@@ -177,7 +177,7 @@ export const highSchool: School = {
   school: 'Los Gatos High School',
   href: links.lghs,
   dates: '2023 – 2027',
-  facts: ['Class of 2027 · 4.0 GPA'],
+  facts: ['Class of 2027, 4.0 GPA'],
   courses: [
     { title: 'AP Calculus BC' },
     { title: 'AP Physics C: Mechanics and E&M' },
@@ -191,14 +191,14 @@ export const highSchool: School = {
 /** College coursework, all taken through dual / concurrent enrollment during high school. */
 export const college = {
   heading: 'College coursework',
-  mode: 'Dual and concurrent enrollment',
-  summary: '29 college units completed · 4.0 GPA · Dean’s List, Spring 2026',
+  mode: 'taken alongside high school',
+  summary: '29 college units completed with a 4.0 GPA. Dean’s List, Spring 2026.',
   schools: [
     {
       school: 'West Valley College',
       href: links.westValley,
       dates: '2024 – present',
-      facts: [{ text: 'Honors Program', href: links.westValleyHonors }, ' · Mathematics and data science'],
+      facts: [{ text: 'Honors Program', href: links.westValleyHonors }, ', mathematics and data science'],
       courses: [
         { code: 'MATH 004A', title: 'Multivariable Calculus' },
         { code: 'MATH 004B', title: 'Differential Equations' },

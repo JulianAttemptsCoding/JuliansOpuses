@@ -4,9 +4,9 @@ tier: flagship
 title: LaTeXRenderer
 question: What security guarantees are actually possible on a static host?
 claim: A collaborative browser LaTeX environment whose public shell runs on GitHub Pages, with every authorization decision moved to the server.
-domain: Full-stack · Security
+domain: Full-stack, security
 status: shipped
-evidence: Live on GitHub Pages · every access decision made server-side
+evidence: Live on GitHub Pages. Every access decision is made on the server.
 metrics:
   - label: Password check
     value: PBKDF2 × 310,000
@@ -40,13 +40,13 @@ import AuthFlow from '../../assets/work/latex/auth-flow.svg';
 
 ## Problem
 
-LaTeXRenderer is a free collaborative LaTeX environment for a team of up to ten people, delivered from [GitHub Pages](https://pages.github.com/). That choice of host creates the interesting problem.
+LaTeXRenderer is a free collaborative LaTeX environment for a team of up to ten people, delivered from [GitHub Pages](https://pages.github.com/). That choice of host is where the problem comes from.
 
 GitHub Pages is static file hosting. It cannot authenticate anyone, it cannot keep a secret, and nothing shipped from it is hidden. A "password-protected" static site that checks the password in JavaScript protects nothing: the check, and whatever it guards, is already in the visitor's browser.
 
 ## What the shell can and cannot do
 
-The public repository is deliberately small, and explicit about its own limits.
+I kept the public repository small on purpose, and wrote down what it cannot do.
 
 - It **cannot** hide the shared password, hide the editor bundle, or decide who is allowed in. So none of those things live there.
 - It **can** collect a Google identity, forward a password attempt to a server that knows how to check it, and refuse to execute application bytes that do not match the fingerprints the server published.
@@ -64,7 +64,7 @@ Sign-in uses [Supabase](https://supabase.com/) Auth with Google OAuth and PKCE, 
 
 ## Testing the attacks
 
-A security claim is only as good as the attempt to break it. The [Playwright](https://playwright.dev/) suite asserts each obvious bypass individually: deleting the password form in DevTools, setting a local-storage flag, calling shell functions from the console, and requesting the private bucket directly. All of them fail, and not because the shell resists them. The shell was never the thing standing in the way.
+I didn’t want to call it secure without trying to break it. The [Playwright](https://playwright.dev/) suite asserts each obvious bypass individually: deleting the password form in DevTools, setting a local-storage flag, calling shell functions from the console, and requesting the private bucket directly. All of them fail. The shell doesn’t stop them; there is simply nothing in the shell worth reaching.
 
 Around that sit Vitest unit tests for integrity verification, lint rules that ban `innerHTML` and `eval` in the shell, a build that refuses to start if it is handed a service-role key, and a CI step that scans the built output for credential material before publishing.
 

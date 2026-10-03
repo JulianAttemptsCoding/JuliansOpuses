@@ -6,7 +6,7 @@ question: Does strong predictive performance survive leakage-safe evaluation in 
 claim: A spatio-temporal graph neural network that forecasts agricultural pathogen risk across about 194 countries from trade, climate and outbreak reports.
 domain: Graph ML
 status: holds
-evidence: Macro AUROC 0.960 ± 0.010 on held-out test · calibration error 0.020
+evidence: Macro AUROC 0.960 ± 0.010 on a held-out test, with calibration error 0.020.
 context: Independent research, part of my science-fair work.
 metrics:
   - label: AUROC, macro
@@ -18,7 +18,7 @@ metrics:
   - label: ECE
     value: 0.0197 ± 0.0036
   - label: Graph
-    value: ~194 countries · ~8 pathogens
+    value: ~194 countries, ~8 pathogens
 links:
   - label: Repository
     href: https://github.com/JulianAttemptsCoding/pathograph-dl
@@ -28,7 +28,7 @@ worked:
   - 'Held-out test performance is strong and calibrated: macro AUROC 0.960 ± 0.010 with expected calibration error near 0.02.'
   - 'Splits are chronological and enforced by data contracts, so no future information reaches training.'
   - 'Results come from a frozen record: the package, config and checkpoint are pinned and validated.'
-  - 'The code is a tested system, not a notebook: configuration-driven experiments and 32 test files.'
+  - 'The code is a tested package, with experiments driven by configuration files and 32 test files.'
 openLabel: Where the limits are
 open:
   - 'Outbreaks are rare events, so every held-out estimate rests on few positive cases.'
@@ -43,7 +43,7 @@ import SplitLeak from '../../components/SplitLeak.astro';
 
 ## Problem
 
-Crop pathogens do not respect borders. They travel with traded goods and establish where the climate allows. A model that treats each country as an independent time series ignores the main mechanism of spread.
+Crop pathogens cross borders. They travel with traded goods and take hold where the climate allows. A model that treats each country as an independent time series ignores the main mechanism of spread.
 
 PathoGraph-DL treats forecasting as a problem on a graph that changes over time: countries are nodes, trade connects them, and risk in one place depends on what is happening in the places it trades with.
 
@@ -58,7 +58,7 @@ Three kinds of signal come together: international trade, climate, and reported 
   <Pipeline />
 </Figure>
 
-Getting heterogeneous public data into one consistent tensor is most of the work. Inputs are audited, stored as [Zarr](https://zarr.dev/) tensors, and guarded by strict data contracts so that a silent change in shape, units or coverage fails loudly instead of quietly changing a result.
+Getting heterogeneous public data into one consistent tensor is most of the work. Inputs are audited, stored as [Zarr](https://zarr.dev/) tensors, and guarded by strict data contracts so that if a source changes its shape, units or coverage, the pipeline stops with an error instead of producing a slightly different result.
 
 ## Model
 
@@ -93,4 +93,4 @@ Outbreaks are rare, and on rare events AUROC alone can flatter a model. The froz
 | Brier score | 0.0214 ± 0.0033 | 0.0179 – 0.0244 |
 | Expected calibration error | 0.0197 ± 0.0036 | 0.0157 – 0.0244 |
 
-The numbers are less interesting than what they were measured against. The forecast is scored on a period the model never saw, with probabilities that mean what they say, from an artifact that can be rebuilt.
+What I trust about these numbers is how they were measured: on a period the model never saw, with calibrated probabilities, from a checkpoint that anyone can rebuild.

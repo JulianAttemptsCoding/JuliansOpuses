@@ -1,4 +1,5 @@
 ---
+import '@fontsource-variable/source-serif-4';
 import '@fontsource-variable/geist';
 import '@fontsource-variable/geist-mono';
 import 'lenis/dist/lenis.css';
@@ -18,7 +19,7 @@ interface Props {
   progress?: boolean;
 }
 const { title, description = site.description, cta = true, progress = false } = Astro.props;
-const fullTitle = title ? `${title} — ${site.name}` : site.title;
+const fullTitle = title ? `${title} | ${site.name}` : site.title;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 // The card shown when a link to the site is shared.
 const preview = new URL(href('/og.png'), Astro.site);
@@ -41,7 +42,7 @@ const preview = new URL(href('/og.png'), Astro.site);
     <meta property="og:image" content={preview} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Julian Juan, research engineering: I build models of hard systems, then check whether they actually work." />
+    <meta property="og:image:alt" content="Julian Juan, a senior at Los Gatos High School who does machine-learning research for particle physics." />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="theme-color" content="#f2f0e9" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#181b1f" media="(prefers-color-scheme: dark)" />
@@ -120,6 +121,15 @@ const preview = new URL(href('/og.png'), Astro.site);
     setTimeout(done, 2600);
   });
 
+  // ---- Page-to-page transitions: a link to something that cannot take part (the résumé
+  // PDF, another site on this host) ends the transition early. That is expected, so the
+  // rejection is absorbed here instead of surfacing as an error.
+  addEventListener('pageswap', (e) => {
+    const vt = (e as Event & { viewTransition?: ViewTransition | null }).viewTransition;
+    vt?.ready.catch(() => {});
+    vt?.finished.catch(() => {});
+  });
+
   // ---- Smooth wheel scrolling (mouse and trackpad only; touch keeps its native feel). ----
   // The scroll-driven reveals follow the scroll position exactly, so easing the wheel is
   // what makes them glide instead of stepping. It is still the page's own scroll.
@@ -149,29 +159,45 @@ const preview = new URL(href('/og.png'), Astro.site);
       el.style.display = 'inline-block';
       el.textContent = `${m[1]}0${m[3]}`;
     });
+    const running = new Map<Element, number>();
     const io = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
-          if (!entry.isIntersecting) continue;
-          io.unobserve(entry.target);
           const el = entry.target as HTMLElement;
           const plan = plans.get(el);
-          if (!plan) continue;
+          if (!plan || !entry.isIntersecting || running.has(el)) continue;
           const t0 = performance.now();
           const step = (now: number) => {
             const t = Math.min(1, (now - t0) / DURATION);
             // A steady climb that eases onto the value, rather than a rush to it.
             const eased = 1 - (1 - t) ** 2;
             el.textContent = `${plan.pre}${Math.round(plan.target * eased)}${plan.post}`;
-            if (t < 1) requestAnimationFrame(step);
+            if (t < 1) running.set(el, requestAnimationFrame(step));
           };
-          requestAnimationFrame(step);
+          running.set(el, requestAnimationFrame(step));
         }
       },
       // Start only once the number has cleared the bottom quarter of the window.
       { threshold: 1, rootMargin: '0px 0px -25% 0px' },
     );
-    introDone.then(() => plans.forEach((_, el) => io.observe(el)));
+    // Once a number has left the window entirely it goes back to zero, so it counts
+    // again the next time it is scrolled to.
+    const reset = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) continue;
+        const plan = plans.get(entry.target);
+        if (!plan) continue;
+        cancelAnimationFrame(running.get(entry.target) ?? 0);
+        running.delete(entry.target);
+        entry.target.textContent = `${plan.pre}0${plan.post}`;
+      }
+    });
+    introDone.then(() =>
+      plans.forEach((_, el) => {
+        io.observe(el);
+        reset.observe(el);
+      }),
+    );
   }
 
   // ---- Magnetic buttons: lean toward the pointer, spring back when it leaves. ----
@@ -268,16 +294,17 @@ const preview = new URL(href('/og.png'), Astro.site);
     opacity: 0;
   }
   .intro-word {
-    font-size: clamp(0.95rem, 1.8vw, 1.35rem);
-    letter-spacing: 0.24em;
-    text-transform: uppercase;
+    font-family: var(--font-sans);
+    font-size: clamp(1rem, 1.9vw, 1.4rem);
+    letter-spacing: 0.02em;
     color: var(--footer-ink-2);
     animation: intro-flick 0.11s steps(1) calc(var(--k) * 0.11s);
   }
   .intro-name {
-    font-size: clamp(2rem, 6vw, 4.5rem);
+    font-family: var(--font-display);
+    font-size: clamp(2.2rem, 6vw, 4.6rem);
     font-weight: 500;
-    letter-spacing: -0.04em;
+    letter-spacing: -0.02em;
     animation: intro-name 0.3s var(--ease) 0.55s forwards;
   }
   @keyframes intro-flick {

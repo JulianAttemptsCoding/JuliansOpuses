@@ -10,7 +10,6 @@ const showForm = connected || dev;
 
 <Base title="Contact" description="Send Julian Juan a message about research, projects or opportunities." cta={false}>
   <section class="intro wrap">
-    <p class="label">Contact</p>
     <h1>{showForm ? 'Send me a message.' : 'Get in touch.'}</h1>
   </section>
 
@@ -18,13 +17,13 @@ const showForm = connected || dev;
     <div class="side">
       <div class="say">
         <p class="lede">
-          Questions about a project, research or internship opportunities, or a result you think I got wrong: all
-          welcome.
+          If you have a question about a project, want to talk about research or an internship, or think I got a
+          result wrong, write to me.
         </p>
         {
           showForm && (
             <p class="how">
-              The form delivers straight to my inbox. Your address is only used so I can write back.
+              This goes to my inbox. I only use your email address to reply.
             </p>
           )
         }
@@ -39,13 +38,13 @@ const showForm = connected || dev;
                 <a class="ext" href={site.linkedin} rel="noopener">
                   LinkedIn
                 </a>
-                <span class="mono">Direct messages</span>
+                <span class="note">Direct messages</span>
               </li>
             )
           }
           <li>
             <a class="ext" href={site.github} rel="noopener">GitHub</a>
-            <span class="mono">Code and project history</span>
+            <span class="note">Code and project history</span>
           </li>
         </ul>
       </div>
@@ -111,9 +110,8 @@ const showForm = connected || dev;
           </form>
 
           <div class="done" data-done hidden tabindex="-1">
-            <p class="label">Sent</p>
-            <h2>Thanks. Your message is on its way.</h2>
-            <p>I read everything and reply from my own address, usually within a few days.</p>
+            <h2>Thanks, I’ve got it.</h2>
+            <p>I’ll reply from my own email address.</p>
             <button class="again" type="button" data-again>
               Send another message
             </button>
@@ -234,10 +232,9 @@ const showForm = connected || dev;
   }
   h1 {
     max-width: 16ch;
-    margin-top: 1.5rem;
     font-size: clamp(2.4rem, 6.4vw, 5.5rem);
     line-height: 0.98;
-    letter-spacing: -0.045em;
+    letter-spacing: -0.02em;
   }
   .grid {
     display: grid;
@@ -290,8 +287,9 @@ const showForm = connected || dev;
     letter-spacing: -0.02em;
     text-decoration: none;
   }
-  .routes .mono {
+  .routes .note {
     color: var(--ink-3);
+    font-size: 0.9rem;
   }
 
   .panel {
@@ -317,11 +315,9 @@ const showForm = connected || dev;
     gap: 0.4rem;
   }
   label {
-    font-family: var(--font-mono);
-    font-size: 0.72rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--ink-3);
+    font-size: 0.92rem;
+    font-weight: 500;
+    color: var(--ink-2);
   }
   input,
   textarea {
@@ -426,7 +422,7 @@ const showForm = connected || dev;
   .done h2 {
     margin-top: 0.9rem;
     font-size: clamp(1.5rem, 2.6vw, 2.1rem);
-    letter-spacing: -0.03em;
+    letter-spacing: -0.02em;
   }
   .done p:not(.label) {
     max-width: 44ch;

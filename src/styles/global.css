@@ -38,6 +38,7 @@
   --footer-ink-2: #a9abb0;
   --footer-rule: #3b4047;
 
+  --font-display: 'Source Serif 4 Variable', 'Source Serif 4', Georgia, 'Times New Roman', serif;
   --font-sans: 'Geist Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: 'Geist Mono Variable', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
 
@@ -141,11 +142,13 @@ img {
 h1,
 h2,
 h3,
-h4 {
+h4,
+.display {
   margin: 0;
+  font-family: var(--font-display);
   font-weight: 500;
   line-height: 1.1;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.015em;
   text-wrap: balance;
 }
 p {
@@ -196,20 +199,56 @@ button {
   font-variant-numeric: tabular-nums;
 }
 .label {
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--ink-3);
+  font-family: var(--font-sans);
+  font-size: 0.92rem;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0;
+  color: var(--ink-2);
 }
 /* Section labels carry a small square in the second colour. */
 .label.marked::before {
   content: '';
   display: inline-block;
-  width: 0.55em;
-  height: 0.55em;
-  margin-right: 0.7em;
+  width: 0.5em;
+  height: 0.5em;
+  margin-right: 0.6em;
   background: var(--accent-2);
+  vertical-align: 0.08em;
+}
+
+/* ---------- Page sections ----------
+   A section is a rule, its name in a narrow left column, and its content beside it. */
+.section {
+  padding-top: clamp(3.5rem, 8vw, 7rem);
+}
+.ledger {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 9fr);
+  gap: 1.5rem clamp(1.5rem, 4vw, 4rem);
+}
+.ledger::before {
+  content: '';
+  grid-column: 1 / -1;
+  border-top: 1px solid var(--ink);
+}
+.ledger-label {
+  position: sticky;
+  top: calc(var(--header-h) + 1.5rem);
+  align-self: start;
+}
+/* A plain "more of this" link under a short version of something. */
+.onward {
+  margin-top: 1.5rem;
+  font-size: 0.98rem;
+}
+@media (max-width: 720px) {
+  .ledger {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ledger-label {
+    position: static;
+  }
 }
 .sr-only {
   position: absolute;
@@ -293,17 +332,14 @@ a.ext:hover::after {
   gap: 0.5rem;
 }
 .fx-label {
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--fig-ink-3);
+  font-size: 0.8rem;
+  color: var(--fig-ink-2);
 }
 .fx-label output {
   margin-left: 0.5em;
   color: var(--fig-ink);
-  letter-spacing: 0.02em;
-  text-transform: none;
+  font-family: var(--font-mono);
+  font-size: 0.92em;
   font-variant-numeric: tabular-nums;
 }
 .fx-seg {
@@ -380,11 +416,9 @@ a.ext:hover::after {
 /* One plain sentence saying what the current settings show. */
 .fx-insight {
   min-height: 2.9em;
-  margin-top: 0.85rem;
-  padding-left: 0.85rem;
-  border-left: 2px solid var(--fig-accent);
+  margin-top: 0.9rem;
   color: var(--fig-ink);
-  font-size: 0.95rem;
+  font-size: 1rem;
   line-height: 1.45;
 }
 .fx-readout {
@@ -397,10 +431,8 @@ a.ext:hover::after {
   border-top: 1px solid var(--fig-rule);
 }
 .fx-readout dt {
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  letter-spacing: 0.04em;
-  color: var(--fig-ink-3);
+  font-size: 0.8rem;
+  color: var(--fig-ink-2);
 }
 .fx-readout dd {
   font-size: 1.5rem;
@@ -419,8 +451,7 @@ a.ext:hover::after {
   gap: 0.4rem 1.25rem;
   margin-top: 0.75rem;
   list-style: none;
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   color: var(--fig-ink-2);
 }
 .fx-key li {
@@ -430,8 +461,7 @@ a.ext:hover::after {
 }
 .fx-note {
   margin-top: 0.6rem;
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.82rem;
   color: var(--fig-ink-3);
 }
 
@@ -503,6 +533,14 @@ a.ext:hover::after {
     transform: translateY(calc(var(--drift, 28px) * -1));
   }
 }
+/* Leaving by the top of the window: the same things fade up and out, so that scrolling
+   back down brings them in again. */
+@keyframes leave {
+  to {
+    opacity: 0;
+    transform: translateY(-18px);
+  }
+}
 @keyframes draw-rule {
   from {
     transform: scaleX(0);
@@ -548,27 +586,42 @@ a.ext:hover::after {
   @supports (animation-timeline: view()) {
     /* Ranges are lengths, not percentages of the element, so a short line and a tall
        figure both finish arriving the same distance above the bottom of the window. */
+    /* Two animations share one timeline: the arrival, then the departure. The departure
+       has no effect before its own range begins, so it never fights the arrival. The top
+       inset is the sticky header: something is "gone" once it is behind that. */
     [data-reveal],
     [data-stagger] > * {
-      animation: reveal linear both;
-      animation-timeline: view();
-      animation-range: entry 0px entry 200px;
+      animation:
+        reveal linear both,
+        leave linear forwards;
+      animation-timeline: view(block 64px 0px), view(block 64px 0px);
+      animation-range:
+        entry 0px entry 200px,
+        exit calc(100% - 150px) exit 100%;
     }
     [data-reveal='left'] {
-      animation-name: slide-in-left;
-      animation-range: entry 0px entry 260px;
+      animation-name: slide-in-left, leave;
+      animation-range:
+        entry 0px entry 260px,
+        exit calc(100% - 150px) exit 100%;
     }
     [data-reveal='mask'] {
-      animation-name: unmask;
-      animation-range: entry 20px entry 240px;
+      animation-name: unmask, leave;
+      animation-range:
+        entry 20px entry 240px,
+        exit calc(100% - 150px) exit 100%;
     }
     [data-reveal='scale'] {
-      animation-name: scale-in;
-      animation-range: entry 0px entry 320px;
+      animation-name: scale-in, leave;
+      animation-range:
+        entry 0px entry 320px,
+        exit calc(100% - 220px) exit 100%;
     }
     [data-reveal='stamp'] {
-      animation-name: stamp;
-      animation-range: entry 80px entry 380px;
+      animation-name: stamp, leave;
+      animation-range:
+        entry 80px entry 380px,
+        exit calc(100% - 150px) exit 100%;
     }
     [data-drift] {
       animation: drift linear both;

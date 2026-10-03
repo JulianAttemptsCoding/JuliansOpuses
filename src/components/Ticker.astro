@@ -12,14 +12,16 @@ const fields = [
   'Security engineering',
   'Quantitative research',
 ];
-// Two identical halves: the track slides by exactly one half, then repeats seamlessly.
-const halves = [0, 1];
+// Six identical copies in a row. The track slides left by exactly one copy and starts over,
+// which looks continuous, and six copies are wider than any window, so no end is ever visible.
+const COPIES = 6;
+const copies = Array.from({ length: COPIES }, (_, i) => i);
 ---
 
 <div class="ticker" aria-hidden="true">
   <div class="track">
     {
-      halves.map(() => (
+      copies.map(() => (
         <ul>
           {fields.map((f, i) => (
             <li>
@@ -102,12 +104,12 @@ const halves = [0, 1];
 
   @keyframes tick {
     to {
-      transform: translateX(-50%);
+      transform: translateX(calc(-100% / 6));
     }
   }
   @media (prefers-reduced-motion: no-preference) {
     .track {
-      animation: tick 70s linear infinite;
+      animation: tick 38s linear infinite;
     }
     .ticker:hover .track {
       animation-play-state: paused;

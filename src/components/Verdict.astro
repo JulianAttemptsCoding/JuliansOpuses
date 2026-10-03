@@ -3,7 +3,7 @@ import { VERDICTS, type Status } from '../data/verdicts';
 
 interface Props {
   status: Status;
-  /** Legend form: no bordered chip, and a button so it can be focused or tapped. */
+  /** Legend form: a button, so the explanation can be reached by keyboard or tap. */
   bare?: boolean;
 }
 const { status, bare = false } = Astro.props;
@@ -71,26 +71,21 @@ const Tag = bare ? 'button' : 'span';
 </script>
 
 <style>
+  /* A glyph and a word. No chip around it: the shape and the word are the whole signal. */
   .verdict {
     position: relative;
     display: inline-flex;
     align-items: center;
-    gap: 0.5em;
-    padding: 0.28em 0.7em 0.28em 0.6em;
-    border: 1px solid currentColor;
-    border-radius: 999px;
+    gap: 0.45em;
+    padding: 0.2em 0;
+    border: 0;
     background: none;
-    font-family: var(--font-mono);
-    font-size: 0.7rem;
+    font-family: var(--font-sans);
+    font-size: 0.86rem;
+    font-weight: 500;
     line-height: 1.2;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
     white-space: nowrap;
     cursor: help;
-  }
-  .verdict.bare {
-    padding: 0.3em 0;
-    border: 0;
   }
   .glyph {
     flex: none;

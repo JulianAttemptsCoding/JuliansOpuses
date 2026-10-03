@@ -29,7 +29,7 @@ const isCurrent = (p: string) => !p.includes('#') && path.startsWith(href(p));
         {
           site.resume ? (
             <li>
-              <a href={href(site.resume)}>Résumé</a>
+              <a href={href(site.resume)} target="_blank" rel="noopener">Résumé</a>
             </li>
           ) : (
             import.meta.env.DEV && (
@@ -119,7 +119,9 @@ const isCurrent = (p: string) => !p.includes('#') && path.startsWith(href(p));
       .catch(() => {
         /* the transition was skipped: the theme has still been applied */
       });
-    transition.finished.finally(() => root.classList.remove('theme-switch'));
+    // Whether it ran to the end or was cut short (a navigation, a hidden tab), tidy up.
+    const tidy = () => root.classList.remove('theme-switch');
+    transition.finished.then(tidy, tidy);
   });
 </script>
 

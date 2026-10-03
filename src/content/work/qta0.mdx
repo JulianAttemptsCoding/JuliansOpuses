@@ -7,7 +7,7 @@ question: Does apparent trading alpha survive adversarial validation?
 claim: An equity forecasting system, followed by increasingly strict validation until the apparent edge disappeared.
 domain: Quant research
 status: negative
-evidence: Test hit rate 52.5% → 49.7% as validation tightened · not deployable
+evidence: Test hit rate fell from 52.5% to 49.7% as the testing got stricter. Not deployable.
 metrics:
   - label: run0 · adjacent chrono
     value: 52.5%
@@ -24,7 +24,7 @@ cover: ../../assets/work/qta0/run0-oos-return.png
 coverAlt: Out-of-sample cumulative return of the first configuration against SPY buy-and-hold.
 worked:
   - 'The validation harness did its job: combinatorial purged cross-validation and a backtest-overfitting firewall caught what a single chronological test missed.'
-  - 'The first result was taken apart honestly: mostly market beta, plus a small stock-selection signal.'
+  - 'I broke the first result down. It was mostly market beta, plus a small stock-selection signal.'
   - 'The whole arc is documented, including the raw lab log of decisions and bugs.'
 openLabel: What did not
 open:
@@ -41,7 +41,7 @@ import rolling from '../../assets/work/qta0/hit-rate-rolling.png';
 
 ## Hypothesis
 
-QTA0 is a daily-frequency, cross-sectional US-equity forecaster built as a mixture of experts, written end to end and trained on [Vertex AI](https://cloud.google.com/vertex-ai). The hypothesis was the usual one: that a learned model could rank stocks well enough to beat holding the index.
+QTA0 is a daily-frequency, cross-sectional US-equity forecaster built as a mixture of experts, written end to end and trained on [Vertex AI](https://cloud.google.com/vertex-ai). I started from the usual hypothesis, that a learned model could rank stocks well enough to beat holding the index.
 
 ## The result that looked good
 
@@ -79,7 +79,7 @@ The hit rates in run1 and run2 are statistically distinguishable from 50%, and s
 
 ## What the decline means
 
-Directional accuracy falls the further the test set sits from training in time. That is the fingerprint of concept drift: whatever the model learned was true of the market it trained on and fades as the market moves on.
+Directional accuracy falls the further the test set sits from training in time. That pattern is concept drift. What the model learned was true of the market it trained on, and it faded as the market changed.
 
 <Figure
   n={3}
@@ -89,4 +89,4 @@ Directional accuracy falls the further the test set sits from training in time. 
   source="From the QTA0 repository."
 />
 
-The useful output of this project is the conclusion, and the method that produced it: an apparent edge, tested until it was gone, and reported that way.
+What I got out of this project was a way of testing, and a clear answer: the edge was not real enough to trade.

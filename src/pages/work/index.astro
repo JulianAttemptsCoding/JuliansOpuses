@@ -1,0 +1,110 @@
+---
+// Projects: the full list. Four main projects, then the smaller study that ended in a negative result.
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Verdict from '../../components/Verdict.astro';
+import WorkRows from '../../components/WorkRows.astro';
+import RowPreview from '../../components/RowPreview.astro';
+import { STATUS_ORDER } from '../../data/verdicts';
+
+const all = (await getCollection('work')).sort((a, b) => a.data.order - b.data.order);
+const main = all.filter((w) => w.data.tier === 'flagship');
+const notes = all.filter((w) => w.data.tier === 'note');
+---
+
+<Base title="Projects" description="Five projects by Julian Juan, each with how it did when it was tested.">
+  <section class="intro wrap">
+    <h1>Projects</h1>
+    <p class="lede">
+      Five things I built, and how each one did when I tested it. One of them failed, and it’s written up the same
+      way as the others.
+    </p>
+  </section>
+
+  <section class="wrap list">
+    <header class="sec-head">
+      <p class="sec-intro">Point at a label to see what it means.</p>
+      <ul class="legend" aria-label="What the labels mean. Point at or focus one to read it.">
+        {
+          STATUS_ORDER.map((s) => (
+            <li>
+              <Verdict status={s} bare />
+            </li>
+          ))
+        }
+      </ul>
+    </header>
+    <WorkRows items={main} />
+
+    <div class="sub-head">
+      <h2 class="label marked">A smaller study</h2>
+      <p>The one where the result went away under harder testing.</p>
+    </div>
+    <WorkRows items={notes} small />
+  </section>
+
+  <RowPreview items={all} />
+</Base>
+
+<style>
+  .intro {
+    padding-top: clamp(3rem, 9vw, 7rem);
+  }
+  h1 {
+    font-size: clamp(2.6rem, 6.4vw, 5.2rem);
+    line-height: 1;
+    letter-spacing: -0.025em;
+  }
+  .lede {
+    max-width: 52ch;
+    margin-top: 1.5rem;
+    font-size: clamp(1.08rem, 1.45vw, 1.3rem);
+    line-height: 1.5;
+    color: var(--ink-2);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    :global(html.js) .intro h1,
+    :global(html.js) .intro .lede {
+      animation: fade-up 0.8s var(--ease) both;
+    }
+    :global(html.js) .intro .lede {
+      animation-delay: 0.12s;
+    }
+  }
+  .list {
+    padding-top: clamp(2.5rem, 6vw, 4.5rem);
+  }
+  .sec-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    justify-content: space-between;
+    gap: 0.75rem 2rem;
+    padding-bottom: 1.1rem;
+    border-bottom: 1px solid var(--ink);
+  }
+  .sec-intro {
+    color: var(--ink-3);
+    font-size: 0.95rem;
+  }
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1.25rem;
+    list-style: none;
+    color: var(--ink-2);
+  }
+  .sub-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.4rem 1.5rem;
+    margin-top: clamp(2.5rem, 5vw, 4rem);
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--ink);
+  }
+  .sub-head p {
+    color: var(--ink-2);
+    font-size: 0.95rem;
+  }
+</style>

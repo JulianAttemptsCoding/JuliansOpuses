@@ -1,0 +1,215 @@
+---
+// Experience: the research, every award, and the two leadership roles, in full.
+import Base from '../layouts/Base.astro';
+import Awards from '../components/Awards.astro';
+import { href } from '../lib/url';
+import { experience, leadership } from '../data/profile';
+---
+
+<Base title="Experience" description="Julian Juan’s research at Academia Sinica, awards, and leadership roles.">
+  <section class="intro wrap">
+    <h1>Experience</h1>
+    <p class="lede">The research I’ve done, the awards, and the two roles where other people were counting on me.</p>
+  </section>
+
+  <section class="section wrap ledger" id="research" data-rule>
+    <h2 class="label marked ledger-label">Research</h2>
+    <div>
+      <p class="exp-org display" data-reveal="mask">
+        <a class="ext quiet" href={experience.href} rel="noopener">{experience.org}</a>
+      </p>
+      <p class="exp-meta" data-reveal>
+        {experience.role} in {experience.place}, {experience.dates}
+      </p>
+      <p class="exp-summary" data-reveal>{experience.summary} Three pieces of work came out of it.</p>
+      <ol class="strands" data-stagger>
+        {
+          experience.strands.map((s, i) => (
+            <li>
+              <span class="strand-n">{i + 1}</span>
+              <div>
+                <h3>{s.title}</h3>
+                <p>{s.body}</p>
+                {s.link && (
+                  <a class="more" href={href(s.link.path)}>
+                    {s.link.label} →
+                  </a>
+                )}
+              </div>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+  </section>
+
+  <section class="section wrap ledger" id="awards" data-rule>
+    <h2 class="label marked ledger-label">Awards</h2>
+    <Awards />
+  </section>
+
+  <section class="section wrap ledger" id="leadership" data-rule>
+    <h2 class="label marked ledger-label">Leadership</h2>
+    <div>
+      <div class="lead-grid" data-stagger>
+        {
+          leadership.map((l) => (
+            <article class="lead">
+              <p class="lead-role">{l.role}</p>
+              <h3>
+                {l.href ? (
+                  <a class="ext quiet" href={l.href} rel="noopener">{l.title}</a>
+                ) : (
+                  l.title
+                )}
+              </h3>
+              <dl class="figures">
+                {l.figures.map((f) => (
+                  <div>
+                    <dt>{f.label}</dt>
+                    <dd data-count>{f.value}</dd>
+                  </div>
+                ))}
+              </dl>
+              <p>{l.body}</p>
+            </article>
+          ))
+        }
+      </div>
+      <p class="onward" data-reveal>
+        <a href={href('/about/#outside')}>Los Gatos Hacks, outreach and tutoring are on the About page →</a>
+      </p>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .intro {
+    padding-top: clamp(3rem, 9vw, 7rem);
+  }
+  h1 {
+    font-size: clamp(2.6rem, 6.4vw, 5.2rem);
+    line-height: 1;
+    letter-spacing: -0.025em;
+  }
+  .lede {
+    max-width: 52ch;
+    margin-top: 1.5rem;
+    font-size: clamp(1.08rem, 1.45vw, 1.3rem);
+    line-height: 1.5;
+    color: var(--ink-2);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    :global(html.js) .intro h1,
+    :global(html.js) .intro .lede {
+      animation: fade-up 0.8s var(--ease) both;
+    }
+    :global(html.js) .intro .lede {
+      animation-delay: 0.12s;
+    }
+  }
+
+  .exp-org {
+    font-size: clamp(1.7rem, 3vw, 2.5rem);
+    line-height: 1.1;
+  }
+  .exp-meta {
+    margin-top: 0.6rem;
+    color: var(--ink-3);
+  }
+  .exp-summary {
+    max-width: 58ch;
+    margin-top: 1.1rem;
+    color: var(--ink-2);
+    font-size: 1.08rem;
+  }
+  .strands {
+    list-style: none;
+    margin-top: 2rem;
+    border-top: 1px solid var(--rule);
+  }
+  .strands li {
+    display: grid;
+    grid-template-columns: 2.25rem minmax(0, 1fr);
+    padding-block: 1.25rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  .strand-n {
+    color: var(--accent-2);
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    line-height: 1.25;
+  }
+  .strands h3 {
+    font-size: 1.2rem;
+  }
+  .strands p {
+    max-width: 62ch;
+    margin-top: 0.4rem;
+    color: var(--ink-2);
+  }
+  .more {
+    display: inline-block;
+    margin-top: 0.6rem;
+    font-size: 0.95rem;
+  }
+
+  .lead-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 clamp(1.5rem, 4vw, 3.5rem);
+  }
+  /* Each card shares the grid's rows, so titles, figures and text line up across cards. */
+  .lead {
+    display: grid;
+    grid-template-rows: subgrid;
+    grid-row: span 4;
+    gap: 0;
+  }
+  .lead-role {
+    color: var(--ink-3);
+    font-size: 0.92rem;
+  }
+  .lead h3 {
+    margin-top: 0.4rem;
+    font-size: clamp(1.4rem, 2.1vw, 1.8rem);
+  }
+  .figures {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: 0.75rem 2rem;
+    margin-block: 1.25rem;
+    padding-block: 1rem;
+    border-block: 1px solid var(--rule);
+  }
+  .figures div {
+    display: flex;
+    flex-direction: column-reverse;
+  }
+  .figures dd {
+    font-family: var(--font-display);
+    font-size: 1.9rem;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+  }
+  .figures dt {
+    margin-top: 0.2rem;
+    font-size: 0.82rem;
+    color: var(--ink-3);
+  }
+  .lead > p:last-child {
+    color: var(--ink-2);
+    font-size: 0.98rem;
+  }
+
+  @media (max-width: 720px) {
+    .lead-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    /* Stacked cards need their own breathing room. */
+    .lead + .lead {
+      margin-top: 2.25rem;
+    }
+  }
+</style>

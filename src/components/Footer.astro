@@ -18,7 +18,6 @@ const contactLabel = contact.accessKey || dev ? 'Send a message' : 'Ways to reac
     {
       cta && (
         <>
-          <p class="label">Contact</p>
           <h2 class="cta">
             <span class="cta-line">Get in touch.</span>
           </h2>
@@ -42,7 +41,7 @@ const contactLabel = contact.accessKey || dev ? 'Send a message' : 'Ways to reac
             </li>
             {site.resume ? (
               <li>
-                <a class="pill fill" href={href(site.resume)}>
+                <a class="pill fill" href={href(site.resume)} target="_blank" rel="noopener">
                   Résumé (PDF)
                 </a>
               </li>
@@ -72,7 +71,7 @@ const contactLabel = contact.accessKey || dev ? 'Send a message' : 'Ways to reac
         </span>
       </span>
       <nav aria-label="Footer">
-        <a href={href('/')}>Index</a>
+        <a href={href('/')}>Home</a>
         <a href={href('/about/')}>About</a>
         <a href={href('/contact/')}>Contact</a>
         <a class="top" href="#top">Back to top <span aria-hidden="true">↑</span></a>
@@ -104,10 +103,9 @@ const contactLabel = contact.accessKey || dev ? 'Send a message' : 'Ways to reac
     color: var(--footer-ink-2);
   }
   .cta {
-    margin-top: 1.25rem;
     font-size: clamp(2.4rem, 7vw, 6rem);
     line-height: 1;
-    letter-spacing: -0.04em;
+    letter-spacing: -0.02em;
     overflow: hidden;
     padding-bottom: 0.14em;
     margin-bottom: -0.14em;

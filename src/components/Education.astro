@@ -15,7 +15,7 @@ const { open = false } = Astro.props;
   <section class="college">
     <header class="college-head">
       <h3>{college.heading}</h3>
-      <span class="mono mode">{college.mode}</span>
+      <span class="mode">{college.mode}</span>
     </header>
     <p class="summary">{college.summary}</p>
     <div class="schools" data-stagger>
@@ -45,6 +45,7 @@ const { open = false } = Astro.props;
   }
   .mode {
     color: var(--ink-3);
+    font-size: 0.92rem;
   }
   .summary {
     margin-top: 0.3rem;
@@ -54,8 +55,7 @@ const { open = false } = Astro.props;
   /* The colleges sit one level in, under the shared summary. */
   .schools {
     margin-top: 0.9rem;
-    padding-left: clamp(0.9rem, 2vw, 1.5rem);
-    border-left: 1px solid var(--ink);
+    padding-left: clamp(1rem, 2.5vw, 2rem);
   }
   .schools > :global(.school:first-child) {
     padding-top: 0.2rem;

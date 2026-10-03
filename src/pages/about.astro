@@ -6,23 +6,21 @@ import { site } from '../data/site';
 import { activities, tools } from '../data/profile';
 ---
 
-<Base title="About" description="Background, education and activities outside research.">
+<Base title="About" description="About Julian Juan: school, college coursework and what he does outside research.">
   <section class="intro wrap">
-    <p class="label">About</p>
-    <h1>I like finding out how systems work, and whether the numbers actually add up.</h1>
+    <h1>I like finding out how things work, and whether the numbers actually add up.</h1>
     <div class="lede">
       <p>
-        I'm a high-school student, Class of 2027, with a substantial amount of college coursework and research
-        behind me. Most of my time goes to research and engineering problems: scientific machine learning,
-        simulation, estimation and quantitative modeling.
+        I’m a senior at Los Gatos High School. Alongside school I’ve taken 29 units of college math, statistics,
+        computer science and economics, and I’ve spent two summers doing research at Academia Sinica in Taipei.
       </p>
       <p>
-        My interests are broad: physics, mathematics, computing, economics and history. What connects the work
-        is a habit of taking a messy real system and making it measurable, then checking the result harder
-        than the first good-looking metric requires.
+        I like physics, math, computing, economics and history about equally. What they have in common, for me,
+        is that I enjoy taking something messy, finding a way to measure it, and then not trusting the first
+        good-looking number.
       </p>
       <p class="links">
-        <a href={href('/#work')}>Selected work →</a>
+        <a href={href('/work/')}>Projects →</a>
         <a href={href('/contact/')}>Get in touch →</a>
         {
           site.linkedin && (
@@ -53,7 +51,7 @@ import { activities, tools } from '../data/profile';
                   a.title
                 )}
               </h3>
-              <span class="mono">{a.role}</span>
+              <span class="role">{a.role}</span>
             </div>
             <p>{a.body}</p>
             {a.link && (
@@ -68,32 +66,29 @@ import { activities, tools } from '../data/profile';
   </section>
 
   <section class="section wrap ledger" id="tools" data-rule>
-    <h2 class="label marked ledger-label">Tools</h2>
-    <div data-reveal>
-      <ul class="tools mono">
-        {
-          tools.map((t) => (
-            <li>
-              <a class="quiet" href={t.href} rel="noopener">{t.label}</a>
-            </li>
-          ))
-        }
-      </ul>
-      <p class="tools-note">The projects show how these get used better than a list does.</p>
-    </div>
+    <h2 class="label marked ledger-label">Tools I use</h2>
+    <p class="tools" data-reveal>
+      {
+        tools.map((t, i) => (
+          <>
+            <a class="quiet" href={t.href} rel="noopener">{t.label}</a>
+            {i < tools.length - 1 ? ', ' : '.'}
+          </>
+        ))
+      }
+    </p>
   </section>
 </Base>
 
 <style>
   .intro {
-    padding-top: clamp(3rem, 9vw, 7.5rem);
+    padding-top: clamp(3rem, 9vw, 7rem);
   }
   h1 {
-    max-width: 20ch;
-    margin-top: 1.5rem;
-    font-size: clamp(2.2rem, 5.6vw, 4.75rem);
-    line-height: 1;
-    letter-spacing: -0.045em;
+    max-width: 21ch;
+    font-size: clamp(2.2rem, 5.4vw, 4.6rem);
+    line-height: 1.04;
+    letter-spacing: -0.022em;
   }
   .lede {
     display: grid;
@@ -101,8 +96,8 @@ import { activities, tools } from '../data/profile';
     max-width: 62ch;
     margin-top: clamp(2rem, 5vw, 3.5rem);
     margin-left: auto;
-    font-size: clamp(1.05rem, 1.4vw, 1.25rem);
-    line-height: 1.5;
+    font-size: clamp(1.05rem, 1.4vw, 1.22rem);
+    line-height: 1.55;
     color: var(--ink-2);
   }
   .links {
@@ -120,25 +115,6 @@ import { activities, tools } from '../data/profile';
     :global(html.js) .intro .lede {
       animation-delay: 0.15s;
     }
-  }
-
-  .section {
-    padding-top: clamp(3.5rem, 8vw, 7rem);
-  }
-  .ledger {
-    display: grid;
-    grid-template-columns: minmax(0, 3fr) minmax(0, 9fr);
-    gap: 1.5rem clamp(1.5rem, 4vw, 4rem);
-  }
-  .ledger::before {
-    content: '';
-    grid-column: 1 / -1;
-    border-top: 1px solid var(--ink);
-  }
-  .ledger-label {
-    position: sticky;
-    top: calc(var(--header-h) + 1.5rem);
-    align-self: start;
   }
 
   .items {
@@ -159,11 +135,11 @@ import { activities, tools } from '../data/profile';
     gap: 0.25rem 1.5rem;
   }
   .item-head h3 {
-    font-size: 1.25rem;
-    letter-spacing: -0.02em;
+    font-size: 1.3rem;
   }
-  .item-head .mono {
+  .role {
     color: var(--ink-3);
+    font-size: 0.92rem;
   }
   .items p {
     max-width: 66ch;
@@ -176,39 +152,11 @@ import { activities, tools } from '../data/profile';
     color: var(--ink);
   }
   .tools {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    max-width: 60ch;
-    list-style: none;
-    font-size: 0.82rem;
-  }
-  .tools a {
-    display: inline-block;
-    padding: 0.3em 0.8em;
-    border: 1px solid var(--rule);
-    border-radius: 999px;
-    text-decoration: none;
-    transition:
-      border-color 0.2s,
-      color 0.2s;
-  }
-  .tools a:hover {
-    border-color: var(--accent);
-  }
-  .tools-note {
-    margin-top: 0.9rem;
-    color: var(--ink-3);
-    font-size: 0.95rem;
+    max-width: 58ch;
+    color: var(--ink-2);
   }
 
   @media (max-width: 720px) {
-    .ledger {
-      grid-template-columns: minmax(0, 1fr);
-    }
-    .ledger-label {
-      position: static;
-    }
     .lede {
       margin-left: 0;
     }

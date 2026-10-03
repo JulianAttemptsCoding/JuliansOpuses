@@ -6,11 +6,11 @@ question: Does a simulation that runs far faster still preserve the detector phy
 claim: A conditional generative surrogate for Geant4 simulation of single-neutron showers in a 65-layer, 6,790-channel calorimeter.
 domain: Scientific ML
 status: open
-evidence: ~200× faster in early benchmarks · a classifier still tells it from Geant4 (AUROC 0.84, target ≤ 0.65)
+evidence: About 200× faster in early benchmarks. A classifier can still tell it from Geant4 (AUROC 0.84, target 0.65 or lower).
 context: Grew out of research at the Institute of Physics, Academia Sinica.
 metrics:
   - label: Detector
-    value: 65 layers · 6,790 channels
+    value: 65 layers, 6,790 channels
   - label: Geant4 events
     value: '764,940'
   - label: Source tests passing
@@ -49,7 +49,7 @@ import response from '../../assets/work/fast-mc/total-response.png';
 
 Simulating a particle shower inside a calorimeter with [Geant4](https://geant4.web.cern.ch/) is accurate and slow: every secondary particle is tracked through the detector material. An analysis that needs millions of events pays that cost millions of times.
 
-Fast-MC-CBSC is a learned surrogate. Given only the four-momentum of an incoming neutron, it generates the energy deposited in every readout channel directly. Showing that this is fast is the easy part. The real question is whether the generated showers are close enough to Geant4 that downstream physics would not notice the difference.
+Fast-MC-CBSC is a learned surrogate. Given only the four-momentum of an incoming neutron, it generates the energy deposited in every readout channel directly. Making it fast turned out to be the easy part. What I still don’t know is whether the generated showers are close enough to Geant4 that a physics analysis wouldn’t notice the difference.
 
 ## Detector and data
 
@@ -83,11 +83,11 @@ A shower is sparse and highly structured. Most channels read exactly zero, and t
   source="From the project's paper draft."
 />
 
-The decoder guarantees exact zeros outside the selected cells and exact energy accounting. Those are structural guarantees. On their own they say nothing about whether the showers look like Geant4.
+The decoder guarantees exact zeros outside the selected cells and exact energy accounting. Both hold by construction. Neither one tells you whether the showers look like Geant4’s.
 
 ## Engineering and QA
 
-Most of the work has gone into treating the model as an experimental system that can be wrong in quiet ways. The repository is CLI-first, with strict tensor and data contracts, deterministic evaluation and 740 source tests. Its QA policy is explicit that a passing check is evidence about an artifact, not permission to move on.
+Most of my time has gone into checking the model the way you would check an experiment, because it can be wrong without anything looking broken. The repository is CLI-first, with strict tensor and data contracts, deterministic evaluation and 740 source tests. The rule I wrote down for QA is that a passing check tells you about one artifact. It doesn’t mean the model is done.
 
 Defects found and corrected along the way include tensor-shape errors, masked-softmax behavior, gradient accumulation, catastrophic forgetting, non-finite gradients, loss calibration, support constraints and data-split integrity. The project record documents eleven defects with how each was caught, and five diagnoses that were wrong and later corrected.
 
@@ -95,7 +95,7 @@ One example is the learning-rate schedule. The config declared a cosine schedule
 
 ## Speed
 
-An early prototype generated detector showers roughly 200× faster than the Geant4 baseline in benchmarked runs. That number is the reason the project exists. It is not evidence that the showers are right.
+An early prototype generated detector showers roughly 200× faster than the Geant4 baseline in benchmarked runs. That speed-up is why the project exists. It says nothing about whether the showers are right.
 
 ## Fidelity
 
@@ -126,4 +126,4 @@ Matching averages is not the same as matching the distribution. The stricter tes
   <FidelityJudge />
 </Figure>
 
-It does much better than chance. On the accepted best checkpoint the classifier reaches **AUROC 0.84 ± 0.01**, with per-energy-bin values from 0.77 to 0.92, against a target of 0.65 that has never been approached. Validation loss kept improving throughout training and did not move that number, so every loss improvement is reported as evidence about optimization, not about physics.
+It does much better than chance. On the accepted best checkpoint the classifier reaches **AUROC 0.84 ± 0.01**, with per-energy-bin values from 0.77 to 0.92, against a target of 0.65. I have never gotten close to it. Validation loss kept improving during training and that number did not move, so I report a lower loss as progress in training and nothing more.

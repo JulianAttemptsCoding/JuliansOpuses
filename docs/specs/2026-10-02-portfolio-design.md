@@ -81,3 +81,9 @@ above, this section is current.
   now drives more: per-part row reveals, masked headings, figures that settle, a stamped verdict and a
   footer the page lifts off. Wheel scrolling is eased with Lenis.
 - **Los Gatos Hacks** is a normal entry at the top of About's activities, not a hidden foldout.
+- **Third pass, same day.** The home page became a summary (identity, three projects, research,
+  four awards, three roles) with Projects, Experience and About as full pages. The headline now
+  states who Julian is. A sweep removed common AI tells: uppercase eyebrow labels, pill chips,
+  accent stripes down the left edge, dot separators, mono type used as decoration, em dashes in
+  titles, and slogan-like or "X, not Y" sentences in the copy. Headings moved to a serif. The ticker
+  loops seamlessly at any width, and scroll motion now runs in both directions.
