@@ -1,4 +1,5 @@
 ---
+import Rich from './Rich.astro';
 import type { School } from '../data/profile';
 
 interface Props {
@@ -17,10 +18,18 @@ const count = `${total} ${total === 1 ? 'course' : 'courses'}${ongoing > 0 ? `, 
 
 <article class="school">
   <header>
-    <Heading class="name">{entry.school}</Heading>
+    <Heading class="name">
+      <a class="ext quiet" href={entry.href} rel="noopener">{entry.school}</a>
+    </Heading>
     <span class="mono dates">{entry.dates}</span>
   </header>
-  {entry.facts.length > 0 && <p class="facts">{entry.facts.join(' · ')}</p>}
+  {
+    entry.facts.length > 0 && (
+      <p class="facts">
+        <Rich parts={entry.facts} />
+      </p>
+    )
+  }
   <details open={open}>
     <summary>
       <span class="plus" aria-hidden="true"></span>
@@ -34,7 +43,12 @@ const count = `${total} ${total === 1 ? 'course' : 'courses'}${ongoing > 0 ? `, 
             {c.code && <span class="mono code">{c.code}</span>}
             <span>
               {c.title}
-              {c.ongoing && <span class="mono now">in progress</span>}
+              {c.ongoing && (
+                <span class="mono now">
+                  <span class="live-dot" aria-hidden="true" />
+                  in progress
+                </span>
+              )}
             </span>
           </li>
         ))
@@ -86,6 +100,7 @@ const count = `${total} ${total === 1 ? 'course' : 'courses'}${ongoing > 0 ? `, 
     font-size: 0.95rem;
     cursor: pointer;
     user-select: none;
+    transition: color 0.2s;
   }
   summary::-webkit-details-marker {
     display: none;
@@ -137,14 +152,13 @@ const count = `${total} ${total === 1 ? 'course' : 'courses'}${ongoing > 0 ? `, 
     color: var(--ink-3);
   }
   .now {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45em;
     margin-left: 0.6rem;
-    padding: 0.05em 0.55em;
-    border: 1px solid currentColor;
-    border-radius: 999px;
-    font-size: 0.66rem;
+    font-size: 0.68rem;
     letter-spacing: 0.04em;
-    color: var(--accent);
+    color: var(--accent-2);
     white-space: nowrap;
     vertical-align: 0.1em;
   }

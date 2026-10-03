@@ -3,14 +3,17 @@ import { VERDICTS, type Status } from '../data/verdicts';
 
 interface Props {
   status: Status;
-  /** Render the glyph without the bordered chip (used in the legend). */
+  /** Legend form: no bordered chip, and a button so it can be focused or tapped. */
   bare?: boolean;
 }
 const { status, bare = false } = Astro.props;
+// The legend entries are buttons so the explanation is reachable by keyboard and touch.
+// Elsewhere the chip sits inside a link or beside its own explanation, so it stays a span.
+const Tag = bare ? 'button' : 'span';
 ---
 
-<span class:list={['verdict', { bare }]} title={VERDICTS[status].meaning}>
-  <svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true">
+<Tag class:list={['verdict', status, { bare }]} type={bare ? 'button' : undefined} data-verdict>
+  <svg class="glyph" viewBox="0 0 12 12" width="11" height="11" aria-hidden="true">
     {status === 'holds' && <circle cx="6" cy="6" r="5" fill="currentColor" />}
     {
       status === 'open' && (
@@ -42,28 +45,116 @@ const { status, bare = false } = Astro.props;
     }
   </svg>
   <span>{VERDICTS[status].label}</span>
-</span>
+  <span class="tip" role="tooltip">
+    <span class="sr-only">: </span>{VERDICTS[status].meaning}
+  </span>
+</Tag>
+
+<script>
+  // Keep each explanation inside the viewport: nudge it sideways if it would spill out.
+  const EDGE = 12;
+  document.querySelectorAll<HTMLElement>('[data-verdict]').forEach((el) => {
+    const tip = el.querySelector<HTMLElement>('.tip');
+    if (!tip) return;
+    const fit = () => {
+      tip.style.setProperty('--shift', '0px');
+      const r = tip.getBoundingClientRect();
+      const vw = document.documentElement.clientWidth;
+      let shift = 0;
+      if (r.right > vw - EDGE) shift = vw - EDGE - r.right;
+      if (r.left + shift < EDGE) shift = EDGE - r.left;
+      tip.style.setProperty('--shift', `${Math.round(shift)}px`);
+    };
+    el.addEventListener('pointerenter', fit);
+    el.addEventListener('focus', fit);
+  });
+</script>
 
 <style>
   .verdict {
+    position: relative;
     display: inline-flex;
     align-items: center;
     gap: 0.5em;
     padding: 0.28em 0.7em 0.28em 0.6em;
     border: 1px solid currentColor;
     border-radius: 999px;
+    background: none;
     font-family: var(--font-mono);
     font-size: 0.7rem;
     line-height: 1.2;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     white-space: nowrap;
+    cursor: help;
   }
   .verdict.bare {
-    padding: 0;
+    padding: 0.3em 0;
     border: 0;
   }
-  svg {
+  .glyph {
     flex: none;
+    transition: transform 0.3s var(--ease);
+  }
+  .verdict:hover .glyph,
+  .verdict:focus-visible .glyph {
+    transform: scale(1.25);
+  }
+  /* The hue is an extra cue; the glyph shape and the label carry the state on their own. */
+  .holds .glyph {
+    color: var(--v-holds);
+  }
+  .open .glyph {
+    color: var(--v-open);
+  }
+  .prototype .glyph {
+    color: var(--v-prototype);
+  }
+  .shipped .glyph {
+    color: var(--v-shipped);
+  }
+  .negative .glyph {
+    color: var(--v-negative);
+  }
+
+  .tip {
+    position: absolute;
+    top: calc(100% + 9px);
+    left: 0;
+    z-index: 45;
+    width: max-content;
+    max-width: min(17rem, 78vw);
+    padding: 0.55rem 0.75rem;
+    background: var(--ink);
+    color: var(--paper);
+    border-radius: 8px;
+    font-family: var(--font-sans);
+    font-size: 0.82rem;
+    font-weight: 400;
+    line-height: 1.4;
+    letter-spacing: 0;
+    text-align: left;
+    text-transform: none;
+    white-space: normal;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    translate: var(--shift, 0px) -4px;
+    transition:
+      opacity 0.18s,
+      translate 0.18s var(--ease),
+      visibility 0.18s;
+  }
+  /* The legend sits at the right of its row, so its explanations open leftward. A hidden
+     box still counts toward the page's scroll width, and this keeps them inside it. */
+  .bare .tip {
+    left: auto;
+    right: 0;
+  }
+  .verdict:hover .tip,
+  .verdict:focus .tip {
+    opacity: 1;
+    visibility: visible;
+    translate: var(--shift, 0px) 0;
   }
 </style>

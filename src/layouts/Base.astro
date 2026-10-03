@@ -6,14 +6,17 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import { site } from '../data/site';
 import { href } from '../lib/url';
+import { VERDICTS, STATUS_ORDER } from '../data/verdicts';
 
 interface Props {
   title?: string;
   description?: string;
   /** Show the footer's large contact call to action. */
   cta?: boolean;
+  /** Show a reading-progress line under the header (case studies). */
+  progress?: boolean;
 }
-const { title, description = site.description, cta = true } = Astro.props;
+const { title, description = site.description, cta = true, progress = false } = Astro.props;
 const fullTitle = title ? `${title} — ${site.name}` : site.title;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 ---
@@ -31,21 +34,47 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
-    <meta name="theme-color" content="#f6f5f1" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#101113" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f2f0e9" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#181b1f" media="(prefers-color-scheme: dark)" />
     <script is:inline>
-      // Apply a saved theme before first paint to avoid a flash.
+      // Runs before first paint: mark that scripts work, apply a saved theme, and decide
+      // whether this is the first page of the visit (which gets the short intro).
       (function () {
+        var d = document.documentElement;
+        d.classList.add('js');
         try {
           var t = localStorage.getItem('theme');
-          if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+          if (t === 'light' || t === 'dark') d.dataset.theme = t;
+        } catch (e) {}
+        try {
+          var calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+          if (!calm && !sessionStorage.getItem('intro')) {
+            d.classList.add('intro');
+            sessionStorage.setItem('intro', '1');
+          }
         } catch (e) {}
       })();
     </script>
   </head>
   <body id="top">
+    <!-- First-visit intro: the five verdicts flick past, then the curtain lifts. It only
+         appears when the inline script above adds `intro`, so it never blocks a reader
+         without JavaScript or one who prefers reduced motion. -->
+    <div class="intro-screen" aria-hidden="true" data-intro>
+      <div class="intro-stack">
+        {
+          STATUS_ORDER.map((s, i) => (
+            <span class="intro-word mono" style={`--k:${i}`}>
+              {VERDICTS[s].label}
+            </span>
+          ))
+        }
+        <span class="intro-name">{site.name}</span>
+      </div>
+    </div>
+
     <a class="skip" href="#main">Skip to content</a>
-    <Header />
+    <Header progress={progress} />
     <main id="main">
       <slot />
     </main>
@@ -53,7 +82,74 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
   </body>
 </html>
 
-<style>
+<script>
+  const root = document.documentElement;
+  const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const fine = matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+  // ---- Intro: unlock the page when the curtain has lifted, or at once if skipped. ----
+  const intro = document.querySelector<HTMLElement>('[data-intro]');
+  if (intro && root.classList.contains('intro')) {
+    const done = () => root.classList.add('intro-done');
+    intro.addEventListener('animationend', (e) => {
+      if (e.animationName.includes('intro-lift')) done();
+    });
+    // Any key or click skips it, and the page's own entrance then starts at once.
+    const skip = () => {
+      if (!root.classList.contains('intro-done')) root.classList.add('intro-skipped');
+      done();
+    };
+    addEventListener('keydown', skip, { once: true });
+    addEventListener('pointerdown', skip, { once: true });
+    // A backstop in case the animation never runs.
+    setTimeout(done, 2600);
+  }
+
+  // ---- Numbers count up the first time they scroll into view. ----
+  const counters = document.querySelectorAll<HTMLElement>('[data-count]');
+  if (counters.length && !calm && 'IntersectionObserver' in window) {
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          io.unobserve(entry.target);
+          const el = entry.target as HTMLElement;
+          const m = el.textContent!.trim().match(/^(\D*)(\d+)(.*)$/);
+          if (!m) continue;
+          const [, pre, digits, post] = m;
+          const target = Number(digits);
+          const t0 = performance.now();
+          const step = (now: number) => {
+            const t = Math.min(1, (now - t0) / 900);
+            const eased = 1 - (1 - t) ** 3;
+            el.textContent = `${pre}${Math.round(target * eased)}${post}`;
+            if (t < 1) requestAnimationFrame(step);
+          };
+          requestAnimationFrame(step);
+        }
+      },
+      { threshold: 0.6 },
+    );
+    counters.forEach((el) => io.observe(el));
+  }
+
+  // ---- Magnetic buttons: lean toward the pointer, spring back when it leaves. ----
+  if (fine && !calm) {
+    document.querySelectorAll<HTMLElement>('[data-magnetic]').forEach((el) => {
+      el.addEventListener('pointermove', (e) => {
+        const r = el.getBoundingClientRect();
+        const dx = e.clientX - (r.left + r.width / 2);
+        const dy = e.clientY - (r.top + r.height / 2);
+        el.style.transform = `translate(${(dx * 0.22).toFixed(1)}px, ${(dy * 0.32).toFixed(1)}px)`;
+      });
+      el.addEventListener('pointerleave', () => {
+        el.style.transform = '';
+      });
+    });
+  }
+</script>
+
+<style is:global>
   .skip {
     position: absolute;
     left: var(--gutter);
@@ -66,5 +162,89 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
   }
   .skip:focus {
     top: 0;
+  }
+
+  [data-magnetic] {
+    transition: transform 0.45s cubic-bezier(0.2, 1.5, 0.4, 1);
+    will-change: transform;
+  }
+
+  /* ---------- Intro ---------- */
+  .intro-screen {
+    display: none;
+  }
+  html.intro:not(.intro-done) {
+    overflow: hidden;
+  }
+  html.intro:not(.intro-done) .intro-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: grid;
+    place-items: center;
+    background: var(--footer-bg);
+    color: var(--footer-ink);
+    animation: intro-lift 0.7s var(--ease-inout) 1.05s forwards;
+  }
+  /* The curtain's lower edge is an arc that flattens as it rises. */
+  html.intro:not(.intro-done) .intro-screen::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: -15%;
+    width: 130%;
+    height: 22vh;
+    margin-top: -1px;
+    background: inherit;
+    border-radius: 0 0 50% 50% / 0 0 100% 100%;
+    animation: intro-arc 0.7s var(--ease-inout) 1.05s forwards;
+  }
+  .intro-stack {
+    position: relative;
+    display: grid;
+    place-items: center;
+  }
+  .intro-stack > * {
+    grid-area: 1 / 1;
+    opacity: 0;
+  }
+  .intro-word {
+    font-size: clamp(0.95rem, 1.8vw, 1.35rem);
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--footer-ink-2);
+    animation: intro-flick 0.11s steps(1) calc(var(--k) * 0.11s);
+  }
+  .intro-name {
+    font-size: clamp(2rem, 6vw, 4.5rem);
+    font-weight: 500;
+    letter-spacing: -0.04em;
+    animation: intro-name 0.3s var(--ease) 0.55s forwards;
+  }
+  @keyframes intro-flick {
+    from,
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes intro-name {
+    from {
+      opacity: 0;
+      transform: translateY(0.3em);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes intro-lift {
+    to {
+      transform: translateY(-125%);
+    }
+  }
+  @keyframes intro-arc {
+    to {
+      height: 0;
+    }
   }
 </style>

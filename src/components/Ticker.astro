@@ -1,0 +1,145 @@
+---
+// A slow band of the fields the work sits in, separated by the five verdict glyphs.
+// It always drifts, and picks up speed and direction from the page scroll. Decorative:
+// everything in it is stated elsewhere on the page, so it is hidden from assistive tech.
+import { STATUS_ORDER } from '../data/verdicts';
+
+const fields = [
+  'Scientific machine learning',
+  'Detector simulation',
+  'Graph forecasting',
+  'Estimation',
+  'Security engineering',
+  'Quantitative research',
+];
+// Two identical halves: the track slides by exactly one half, then repeats seamlessly.
+const halves = [0, 1];
+---
+
+<div class="ticker" aria-hidden="true" data-ticker>
+  <div class="track" data-ticker-track>
+    {
+      halves.map(() => (
+        <ul>
+          {fields.map((f, i) => (
+            <li>
+              <span>{f}</span>
+              <svg class:list={['glyph', STATUS_ORDER[i % STATUS_ORDER.length]]} viewBox="0 0 12 12" width="12" height="12">
+                {STATUS_ORDER[i % 5] === 'holds' && <circle cx="6" cy="6" r="5" fill="currentColor" />}
+                {STATUS_ORDER[i % 5] === 'open' && (
+                  <>
+                    <circle cx="6" cy="6" r="4.25" fill="none" stroke="currentColor" stroke-width="1.5" />
+                    <path d="M6 1.75a4.25 4.25 0 0 1 0 8.5z" fill="currentColor" />
+                  </>
+                )}
+                {STATUS_ORDER[i % 5] === 'prototype' && (
+                  <circle cx="6" cy="6" r="4.25" fill="none" stroke="currentColor" stroke-width="1.5" />
+                )}
+                {STATUS_ORDER[i % 5] === 'shipped' && (
+                  <rect x="2.5" y="2.5" width="7" height="7" fill="currentColor" transform="rotate(45 6 6)" />
+                )}
+                {STATUS_ORDER[i % 5] === 'negative' && (
+                  <path
+                    d="M2.25 2.25l7.5 7.5M9.75 2.25l-7.5 7.5"
+                    stroke="currentColor"
+                    stroke-width="1.75"
+                    stroke-linecap="round"
+                  />
+                )}
+              </svg>
+            </li>
+          ))}
+        </ul>
+      ))
+    }
+  </div>
+</div>
+
+<script>
+  // Scroll adds to the ticker's speed and sets its direction; it then eases back to a drift.
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.querySelectorAll<HTMLElement>('[data-ticker-track]').forEach((track) => {
+    if (still) return;
+    const anim = track.getAnimations()[0];
+    if (!anim) return;
+    // Start many loops in, so scrolling up can run it backwards without reaching the start.
+    anim.currentTime = 48_000 * 200;
+    let lastY = scrollY;
+    let boost = 0;
+    let dir = 1;
+    let raf = 0;
+    const settle = () => {
+      boost *= 0.92;
+      anim.playbackRate = dir * (1 + boost);
+      raf = boost > 0.02 ? requestAnimationFrame(settle) : 0;
+    };
+    addEventListener(
+      'scroll',
+      () => {
+        const dy = scrollY - lastY;
+        lastY = scrollY;
+        if (dy === 0) return;
+        dir = dy > 0 ? 1 : -1;
+        boost = Math.min(6, boost + Math.abs(dy) * 0.05);
+        if (!raf) raf = requestAnimationFrame(settle);
+      },
+      { passive: true },
+    );
+  });
+</script>
+
+<style>
+  .ticker {
+    overflow: hidden;
+    border-block: 1px solid var(--rule);
+    padding-block: 0.85rem;
+  }
+  .track {
+    display: flex;
+    width: max-content;
+  }
+  ul {
+    display: flex;
+    flex: none;
+    list-style: none;
+  }
+  li {
+    display: flex;
+    align-items: center;
+    gap: clamp(1.25rem, 2.5vw, 2.25rem);
+    padding-right: clamp(1.25rem, 2.5vw, 2.25rem);
+    font-size: clamp(1rem, 1.6vw, 1.3rem);
+    letter-spacing: -0.02em;
+    color: var(--ink-2);
+    white-space: nowrap;
+  }
+  .glyph {
+    flex: none;
+  }
+  .holds {
+    color: var(--v-holds);
+  }
+  .open {
+    color: var(--v-open);
+  }
+  .prototype {
+    color: var(--v-prototype);
+  }
+  .shipped {
+    color: var(--v-shipped);
+  }
+  .negative {
+    color: var(--v-negative);
+  }
+
+  @keyframes tick {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .track {
+      animation: tick 48s linear infinite;
+    }
+  }
+</style>

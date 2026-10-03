@@ -56,3 +56,23 @@ unavailable.
 
 Astro static build, MDX content collection for case studies, no UI framework. GitHub Actions
 publishes `dist/` to GitHub Pages.
+
+## Revision, 2026-10-03
+
+Changes requested after the first build was reviewed. Where this section disagrees with the text
+above, this section is current.
+
+- **Contact.** A contact page with a form (no email address anywhere), LinkedIn, and a résumé PDF
+  without the address.
+- **Contrast and colour.** Ink and paper pulled away from pure black and white in both themes. A teal
+  second colour and one hue per verdict glyph. Still no gradients, and the header is no longer a
+  blurred translucent bar.
+- **Motion.** The preloader and magnetic buttons that were first dropped are now in, kept short: an
+  intro of about 1.7 s on the first page of a visit only, never under reduced motion. Also a
+  scroll-following ticker, scroll-driven reveals, a reading-progress line and count-up figures.
+- **Interactive figures.** Four instead of one. The localization demo is a WebGL scene of translucent
+  range spheres; the other three explain AUROC, split leakage and a hit-rate edge in plain terms.
+- **Links.** Every named organisation, competition, school and tool links out.
+- **No repetition.** Education moved to About only. The "Also" list and the hackathons line are gone:
+  every recognition entry gets the same row.
+- **Verdicts** explain themselves on hover, focus or tap.

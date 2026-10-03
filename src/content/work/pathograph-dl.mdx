@@ -58,11 +58,11 @@ Three kinds of signal come together: international trade, climate, and reported 
   <Pipeline />
 </Figure>
 
-Getting heterogeneous public data into one consistent tensor is most of the work. Inputs are audited, stored as Zarr tensors, and guarded by strict data contracts so that a silent change in shape, units or coverage fails loudly instead of quietly changing a result.
+Getting heterogeneous public data into one consistent tensor is most of the work. Inputs are audited, stored as [Zarr](https://zarr.dev/) tensors, and guarded by strict data contracts so that a silent change in shape, units or coverage fails loudly instead of quietly changing a result.
 
 ## Model
 
-The model is a spatio-temporal multi-modal graph neural network (ST-MM-GNN), written in PyTorch and PyTorch Lightning. Experiments are driven by configuration files and trained on Vertex AI, with the code packaged so the same build runs locally and in the cloud.
+The model is a spatio-temporal multi-modal graph neural network (ST-MM-GNN), written in [PyTorch](https://pytorch.org/) and [PyTorch Lightning](https://lightning.ai/docs/pytorch/stable/). Experiments are driven by configuration files and trained on [Vertex AI](https://cloud.google.com/vertex-ai), with the code packaged so the same build runs locally and in the cloud.
 
 ## Evaluation
 

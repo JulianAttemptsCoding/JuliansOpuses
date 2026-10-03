@@ -1,8 +1,26 @@
 /** Everything on the home and About pages that is not a project case study. */
 
+/** A run of text, optionally linked. Lists of these render through `Rich.astro`. */
+export type Part = string | { text: string; href: string };
+
+export const links = {
+  academiaSinica: 'https://www.phys.sinica.edu.tw/',
+  lghs: 'https://www.lghs.net/',
+  westValley: 'https://www.westvalley.edu/',
+  westValleyHonors: 'https://www.westvalley.edu/learning-communities/honors/',
+  mission: 'https://missioncollege.edu/',
+  laney: 'https://laney.edu/',
+  lgsuhsd: 'https://www.lgsuhsd.org/',
+  leavey: 'https://www.scu.edu/business/',
+  stemBeyondBoundaries: 'https://stembeyondboundaries.org/',
+  lgHacks: 'https://www.losgatoshacks.com/',
+  lgHacksArchive: 'https://www.losgatoshacks.com/archive/',
+};
+
 export const experience = {
   role: 'Research Intern',
   org: 'Institute of Physics, Academia Sinica',
+  href: links.academiaSinica,
   place: 'Taipei, Taiwan',
   dates: 'Summers 2025–2026',
   summary:
@@ -24,55 +42,86 @@ export const experience = {
   ],
 };
 
-export const recognition = [
+/** Every entry gets the same weight on the page, and its name links to the organiser. */
+export const recognition: { name: string; href: string; result: string; note: Part[] }[] = [
   {
     name: 'HiMCM',
+    href: 'https://www.comap.com/contests/himcm-midmcm',
     result: 'Finalist',
-    note: 'Team lead. One of roughly seven U.S. finalist teams, from more than 1,200 teams worldwide.',
+    note: ['Team lead. One of roughly seven U.S. finalist teams, from more than 1,200 teams worldwide.'],
   },
   {
     name: 'IMMC',
+    href: 'https://immchallenge.org/',
     result: 'U.S. Candidate Round qualifier',
-    note: 'Advanced to the round that selects U.S. representation.',
+    note: [
+      'Advanced to the round that selects U.S. representation. Across the two contests: choosing sustainable host cities for major events, and allocating anti-poaching resources across national parks.',
+    ],
   },
   {
     name: 'Bay Area Data Science Competition',
+    href: 'https://www.amadorvalleytoday.org/61251/features/av-data-science-hosts-first-local-competition/',
     result: 'Absolute Winner',
-    note: 'Hosted by Santa Clara University’s Leavey School of Business. Optimization over public environmental and economic data to recommend an event location under real operating constraints.',
+    note: [
+      'Finals at ',
+      { text: 'Santa Clara University’s Leavey School of Business', href: links.leavey },
+      '. Public environmental and economic data plus optimization, to recommend an event location a nontechnical stakeholder could act on.',
+    ],
   },
   {
     name: 'Summer Science Program',
+    href: 'https://ssp.org/',
     result: 'Invitee',
-    note: '',
+    note: ['Invited to the selective summer research program for high-school students.'],
   },
   {
     name: 'Santa Clara Valley Science & Engineering Fair',
+    href: 'https://science-fair.org/',
     result: 'First Place · Honorable Mention',
-    note: 'Across science-fair research projects.',
+    note: ['Across science-fair research projects.'],
   },
   {
     name: 'California Science & Engineering Fair',
+    href: 'https://csef.usc.edu/',
     result: 'Qualifier',
-    note: '',
+    note: ['Qualified for the state fair from the regional one.'],
   },
   {
     name: 'Conrad Challenge',
+    href: 'https://conrad.spacecenter.org/',
     result: 'Innovator',
-    note: 'Firefighter Tracker.',
+    note: ['For the ', { text: 'Firefighter Tracker', href: '/work/firefighter-tracker/' }, '.'],
+  },
+  {
+    name: 'Global Quantum Mechanics Challenge',
+    href: 'https://glqmc.org/',
+    result: 'Semifinalist',
+    note: ['Reached the second of three rounds of the international quantum-mechanics contest.'],
+  },
+  {
+    name: 'Global Logic & Reasoning Competition',
+    href: 'https://gllrc.org/en/',
+    result: 'Semifinalist',
+    note: ['Submission recognized as outstanding work.'],
+  },
+  {
+    name: 'President’s Volunteer Service Award',
+    href: 'https://presidentialserviceawards.gov/',
+    result: 'Gold',
+    note: ['The highest annual level of the award.'],
   },
 ];
 
-/** Shorter entries, shown as one compact list under the main table. */
-export const alsoRecognized = [
-  { name: 'Global Quantum Mechanics Challenge', result: 'Semifinalist' },
-  { name: 'Global Logic & Reasoning Competition', result: 'Semifinalist, submission recognized as outstanding' },
-  { name: 'President’s Volunteer Service Award', result: 'Gold' },
-  { name: 'Hackathons', result: 'Sierra Hacks (Best UI/UX) · LG Hacks (3rd) · Google Mountain View Hackathon (3rd)' },
-];
-
-export const leadership = [
+export const leadership: {
+  title: string;
+  href?: string;
+  role: string;
+  figures: { value: string; label: string }[];
+  body: string;
+}[] = [
   {
     title: 'LGSUHSD Budget Advisory Committee',
+    href: links.lgsuhsd,
     role: 'Voting Student Member',
     figures: [
       { value: '$88M', label: 'annual district budget' },
@@ -88,9 +137,10 @@ export const leadership = [
   },
 ];
 
-export const activities = [
+export const activities: { title: string; href?: string; role: string; body: string }[] = [
   {
     title: 'STEM Beyond Boundaries',
+    href: links.stemBeyondBoundaries,
     role: 'Director of Outreach',
     body: 'Help lead STEM-access outreach. Taught about 80 children through interactive science lessons built to make topics like magnetism approachable.',
   },
@@ -106,24 +156,14 @@ export const activities = [
   },
 ];
 
-export const modeling = [
-  {
-    title: 'HiMCM / IMMC',
-    body: 'Led a mathematical-modeling team through extended applied problems: choosing sustainable host cities for major events, and allocating anti-poaching resources across national parks. The work is turning a broad question into explicit assumptions, a model, and a recommendation that can be revised.',
-  },
-  {
-    title: 'Bay Area Data Science Competition',
-    body: 'Combined public environmental and economic data with mathematical optimization to recommend an event location under practical operating constraints: analysis a nontechnical stakeholder could act on.',
-  },
-];
-
 export type Course = { code?: string; title: string; ongoing?: boolean };
-export type School = { school: string; dates: string; facts: string[]; courses: Course[] };
+export type School = { school: string; href: string; dates: string; facts: Part[]; courses: Course[] };
 
 export const highSchool: School = {
   school: 'Los Gatos High School',
+  href: links.lghs,
   dates: '2023 – 2027',
-  facts: ['Class of 2027', 'GPA 4.0 unweighted, 4.7 weighted'],
+  facts: ['Class of 2027 · 4.0 GPA'],
   courses: [
     { title: 'AP Calculus BC' },
     { title: 'AP Physics C: Mechanics and E&M' },
@@ -138,12 +178,13 @@ export const highSchool: School = {
 export const college = {
   heading: 'College coursework',
   mode: 'Dual and concurrent enrollment',
-  summary: '29 college units completed · 4.00 GPA · Dean’s List, Spring 2026',
+  summary: '29 college units completed · 4.0 GPA · Dean’s List, Spring 2026',
   schools: [
     {
       school: 'West Valley College',
+      href: links.westValley,
       dates: '2024 – present',
-      facts: ['Honors Program', 'Mathematics and data science'],
+      facts: [{ text: 'Honors Program', href: links.westValleyHonors }, ' · Mathematics and data science'],
       courses: [
         { code: 'MATH 004A', title: 'Multivariable Calculus' },
         { code: 'MATH 004B', title: 'Differential Equations' },
@@ -153,6 +194,7 @@ export const college = {
     },
     {
       school: 'Mission College',
+      href: links.mission,
       dates: '2026 – present',
       facts: [],
       courses: [
@@ -165,6 +207,7 @@ export const college = {
     },
     {
       school: 'Laney College',
+      href: links.laney,
       dates: '2026 – present',
       facts: [],
       courses: [{ code: 'MATH 11', title: 'Discrete Mathematics', ongoing: true }],
@@ -172,5 +215,33 @@ export const college = {
   ] satisfies School[],
 };
 
-export const tools =
-  'Python, C++, ROOT, PyTorch, scikit-learn, XGBoost, TypeScript, Next.js, FastAPI, Supabase, Git, LaTeX, Vertex AI, Zarr';
+export const tools: { label: string; href: string }[] = [
+  { label: 'Python', href: 'https://www.python.org/' },
+  { label: 'C++', href: 'https://isocpp.org/' },
+  { label: 'ROOT', href: 'https://root.cern/' },
+  { label: 'PyTorch', href: 'https://pytorch.org/' },
+  { label: 'scikit-learn', href: 'https://scikit-learn.org/' },
+  { label: 'XGBoost', href: 'https://xgboost.readthedocs.io/' },
+  { label: 'TypeScript', href: 'https://www.typescriptlang.org/' },
+  { label: 'Next.js', href: 'https://nextjs.org/' },
+  { label: 'FastAPI', href: 'https://fastapi.tiangolo.com/' },
+  { label: 'Supabase', href: 'https://supabase.com/' },
+  { label: 'Git', href: 'https://git-scm.com/' },
+  { label: 'LaTeX', href: 'https://www.latex-project.org/' },
+  { label: 'Vertex AI', href: 'https://cloud.google.com/vertex-ai' },
+  { label: 'Zarr', href: 'https://zarr.dev/' },
+];
+
+/**
+ * Not on the front page: a foldout at the end of About, for anyone who reads that far.
+ * Figures are the ones the organisation publishes on its archive page.
+ */
+export const treat = {
+  summary: 'Still reading? One more thing.',
+  body: [
+    'Away from research I am Director of Strategy at ',
+    { text: 'Los Gatos Hacks', href: links.lgHacks },
+    ', a nonprofit that runs a one-day hackathon for middle and high school students. It has grown every year: 50 hackers and 17 projects in 2023, 115 hackers and 39 projects in 2026.',
+  ] satisfies Part[],
+  link: { label: 'Browse every edition in the archive', href: links.lgHacksArchive },
+};

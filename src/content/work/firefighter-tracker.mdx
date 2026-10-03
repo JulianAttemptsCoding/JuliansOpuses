@@ -39,7 +39,7 @@ Inside a burning building, GPS is unreliable or gone, smoke removes visual conta
 
 ## Starting with practitioners
 
-The engineering started with a conversation. A battalion chief at the Fremont Fire Department described what crews actually deal with: heavy smoke, no way to see team members, indoor positioning that cannot be trusted, very little time to deploy anything, and hard limits on what hardware a firefighter can carry.
+The engineering started with a conversation. A battalion chief at the [Fremont Fire Department](https://www.fremont.gov/government/departments/fire) described what crews actually deal with: heavy smoke, no way to see team members, indoor positioning that cannot be trusted, very little time to deploy anything, and hard limits on what hardware a firefighter can carry.
 
 Those constraints set the design. A crew cannot count on infrastructure installed in advance, so the reference points have to arrive with them, and setting them up cannot cost minutes.
 
@@ -65,7 +65,7 @@ With exact ranges, the equations are a textbook exercise. The project is about e
 
 <Figure
   n={2}
-  caption="Illustrative 3D simulation with ideal Gaussian range noise, not measured project data. Rotate the building and move anything. Three things to try: stage every reference point on one side, block the path to A4, or switch the drone off and put the firefighter on floor 1."
+  caption="Illustrative 3D simulation with ideal Gaussian range noise, not measured project data. Each translucent bubble is one measured range. Build the fix one range at a time, then break it: stage every reference point on one side, block the path to A4, or put the firefighter on floor 1 with no drone overhead."
 >
   <Multilateration />
 </Figure>

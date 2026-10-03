@@ -1,51 +1,37 @@
 ---
-// Illustrative 3D multilateration sandbox: a four-storey building, ground reference
-// points, an optional drone overhead and a tag on one floor. Move things, add range
-// noise or a blocked path, and watch where the position estimates land.
-// This is a teaching simulation with ideal Gaussian noise, not measured project data.
+// Illustrative 3D multilateration sandbox, drawn with WebGL (three.js, loaded only when
+// the figure comes near the viewport). Every range is a translucent bubble around its
+// reference point: one bubble is a surface, two meet in a ring, three in two points,
+// four in one. Then the same scene can be broken with noise, a blocked path or bad
+// geometry. A teaching simulation with ideal Gaussian noise, not measured project data.
 const SAMPLES = 48;
-const anchors = [
-  { id: 'A1', name: 'Reference point A1' },
-  { id: 'A2', name: 'Reference point A2' },
-  { id: 'A3', name: 'Reference point A3' },
-  { id: 'A4', name: 'Reference point A4' },
-  { id: 'D1', name: 'Drone D1' },
-];
 const floors = [1, 2, 3, 4];
+const counts = [1, 2, 3, 4];
 ---
 
 <div class="fx mlat" data-mlat data-samples={SAMPLES}>
   <div class="fx-controls">
-    <div class="fx-group" role="group" aria-label="Reference points">
-      <span class="fx-label">Reference points</span>
+    <div class="fx-group" role="group" aria-label="Build the fix: ranges in use">
+      <span class="fx-label">1 · Build the fix: ranges in use</span>
       <div class="fx-row">
         <div class="fx-seg">
-          <button type="button" data-preset="spread" aria-pressed="true">Around the building</button>
-          <button type="button" data-preset="oneside" aria-pressed="false">All on one side</button>
+          {
+            counts.map((n) => (
+              <button type="button" data-ranges={n} aria-pressed={n === 4 ? 'true' : 'false'} aria-label={`${n} ground ranges`}>
+                {n}
+              </button>
+            ))
+          }
         </div>
-        <button type="button" class="fx-chip" data-toggle="drone" aria-pressed="true">Drone overhead</button>
+        <button type="button" class="fx-chip" data-toggle="drone" aria-pressed="false">Drone overhead</button>
       </div>
     </div>
 
-    <div class="fx-group" role="group" aria-label="Firefighter's floor">
-      <span class="fx-label">Firefighter's floor</span>
-      <div class="fx-seg">
-        {
-          floors.map((f) => (
-            <button type="button" data-floor={f} aria-pressed={f === 2 ? 'true' : 'false'} aria-label={`Floor ${f}`}>
-              {f}
-            </button>
-          ))
-        }
-      </div>
-    </div>
-
-    <div class="fx-group view" role="group" aria-label="View">
-      <span class="fx-label">View</span>
-      <div class="fx-seg">
-        <button type="button" data-view="iso" aria-pressed="true">3D</button>
-        <button type="button" data-view="top" aria-pressed="false">Top</button>
-        <button type="button" data-view="side" aria-pressed="false">Side</button>
+    <div class="fx-group" role="group" aria-label="Break it">
+      <span class="fx-label">2 · Break it</span>
+      <div class="fx-row">
+        <button type="button" class="fx-chip" data-toggle="oneside" aria-pressed="false">All on one side</button>
+        <button type="button" class="fx-chip" data-toggle="nlos" aria-pressed="false">Block the path to A4</button>
       </div>
     </div>
 
@@ -54,73 +40,45 @@ const floors = [1, 2, 3, 4];
       <input type="range" min="0" max="1.5" step="0.05" value="0.3" data-ctl="sigma" />
     </label>
 
-    <div class="fx-group" role="group" aria-label="Signal">
-      <span class="fx-label">Signal</span>
-      <button type="button" class="fx-chip" data-toggle="nlos" aria-pressed="false">Block the path to A4</button>
+    <div class="fx-group" role="group" aria-label="Firefighter's floor">
+      <span class="fx-label">Firefighter's floor</span>
+      <div class="fx-seg">
+        {
+          floors.map((f) => (
+            <button type="button" data-floor={f} aria-pressed={f === 3 ? 'true' : 'false'} aria-label={`Floor ${f}`}>
+              {f}
+            </button>
+          ))
+        }
+      </div>
+    </div>
+
+    <div class="fx-group" role="group" aria-label="View">
+      <span class="fx-label">View</span>
+      <div class="fx-seg">
+        <button type="button" data-view="iso" aria-pressed="true">3D</button>
+        <button type="button" data-view="top" aria-pressed="false">Top</button>
+        <button type="button" data-view="side" aria-pressed="false">Side</button>
+      </div>
     </div>
   </div>
 
-  <div class="stage-wrap">
-    <svg
-      data-stage
-      role="group"
-      aria-label="Rotatable view of a four-storey building with reference points outside, a drone above and a tag inside. The reference points, the drone and the tag can be dragged."
-    >
-      <path class="ground" data-ground></path>
-      <path class="grid" data-grid></path>
-      <path class="floor-fill" data-floorfill></path>
-      <path class="bldg thin" data-slabs></path>
-      <path class="bldg" data-frame></path>
-      <g>{floors.map((f) => <text class="t" data-floorlabel={f} text-anchor="end">F{f}</text>)}</g>
-
-      <g>{anchors.map((_, i) => <path class="ring" data-ring={i} />)}</g>
-      <g>{anchors.map((_, i) => <line class="sight" data-sight={i} />)}</g>
-      <g>{anchors.map((_, i) => <line class="drop" data-drop={i} />)}</g>
-      <line class="drop" data-drop="tag"></line>
-      <g>{anchors.map((_, i) => <circle class="foot" data-foot={i} r="2.5" />)}</g>
-      <circle class="foot" data-foot="tag" r="2.5"></circle>
-
-      {/* The true position is a small dot over the cloud, so a tight cloud still shows around it. */}
-      <g class="overlay">{Array.from({ length: SAMPLES }, () => <circle class="est" data-est r="2.4" />)}</g>
-      <g
-        class="handle tag"
-        data-handle="tag"
-        tabindex="0"
-        role="button"
-        aria-roledescription="draggable point"
-        aria-label="True position of the tag. Drag, or use the arrow keys, to move it across its floor. Page Up and Page Down change the floor."
-      >
-        <circle class="grab" r="20"></circle>
-        <circle class="dot" r="4.5"></circle>
-      </g>
-      <g class="overlay">
-        <line class="err" data-err></line>
-        <circle class="mean" data-mean r="9"></circle>
-      </g>
-
-      {
-        anchors.map((a, i) => (
-          <g
-            class:list={['handle', 'anchor', { drone: a.id === 'D1' }]}
-            data-handle={i}
-            tabindex="0"
-            role="button"
-            aria-roledescription="draggable point"
-            aria-label={`${a.name}. Drag, or use the arrow keys, to move it.`}
-          >
-            <circle class="grab" r="20" />
-            {a.id === 'D1' ? <path d="M0 -9L9 0L0 9L-9 0z" /> : <rect x="-7" y="-7" width="14" height="14" rx="2" />}
-            <text class="t strong" y="-14" text-anchor="middle">
-              {a.id}
-            </text>
-          </g>
-        ))
-      }
-      <text class="t" data-scale x="10" y="0">grid: 4 m · building 20 × 13 m, 4 floors</text>
-    </svg>
-    <noscript><p class="fx-note">This sandbox needs JavaScript to run.</p></noscript>
+  <div class="stage" data-stage>
+    <canvas
+      data-canvas
+      tabindex="0"
+      aria-label="3D view of a four-storey building. Each reference point outside carries a translucent sphere whose radius is its measured range; the spheres meet at the firefighter's tag. Drag to rotate. Drag a reference point, the drone or the tag to move it. With the view focused, arrow keys move the tag and Page Up or Page Down change its floor."
+    ></canvas>
+    <div class="labels" data-labels aria-hidden="true"></div>
+    <p class="fallback" data-fallback hidden>
+      This 3D view needs WebGL, which this browser has switched off. The controls and the numbers below still work.
+    </p>
+    <noscript><p class="fallback">This sandbox needs JavaScript to run.</p></noscript>
   </div>
-  <p class="fx-note">Drag the background to rotate. Drag a reference point, the drone or the tag to move it.</p>
+  <p class="fx-note">
+    Each bubble is one measured range. Drag the background to rotate; drag a reference point, the drone or the tag
+    to move it.
+  </p>
 
   <p class="fx-insight" data-out="insight" role="status" aria-live="polite"></p>
 
@@ -149,25 +107,28 @@ const floors = [1, 2, 3, 4];
     <li><span class="k k-true"></span>true position</li>
     <li><span class="k k-est"></span>{SAMPLES} estimates, one per noisy measurement</li>
     <li><span class="k k-mean"></span>their average</li>
-    <li><span class="k k-range"></span>one set of ranges, cut at the tag's height</li>
+    <li><span class="k k-range"></span>measured range</li>
+    <li><span class="k k-blocked"></span>blocked range, reads long</li>
   </ul>
 </div>
 
 <script>
+  import type * as T from 'three';
+
   type V3 = { x: number; y: number; z: number };
   type P2 = { x: number; y: number };
 
   // ---- Scene, in metres. x runs along the long wall, y along the short one, z is up. ----
   const BLDG = { w: 20, d: 13, floors: 4, floorH: 3 };
   const SITE = { x0: -8, x1: 28, y0: -7, y1: 21 }; // multiples of the 4 m grid from each origin
-  const CENTER: V3 = { x: 10, y: 6.5, z: 4.5 };
+  const CENTER: V3 = { x: 10, y: 6.5, z: 5 };
   const GROUND_UNIT_Z = 1.5; // reference point on a tripod
   const DRONE_Z = 18;
   const TAG_ABOVE_FLOOR = 1.2; // worn on the body
   const NLOS_BIAS_M = 3;
   const BLOCKED = 3; // A4
   const DRONE = 4;
-  const STEP_PX = 12;
+  const NAMES = ['A1', 'A2', 'A3', 'A4', 'D1'];
   // The estimate is kept between the ground and the roof: the one thing known in advance.
   const Z_MIN = 0;
   const Z_MAX = BLDG.floors * BLDG.floorH + 0.6;
@@ -188,10 +149,11 @@ const floors = [1, 2, 3, 4];
       { x: -5, y: 11.5 },
     ],
   };
-  const VIEWS: Record<string, { yaw: number; pitch: number }> = {
-    iso: { yaw: -0.55, pitch: 0.5 },
-    top: { yaw: 0, pitch: Math.PI / 2 },
-    side: { yaw: 0, pitch: 0 },
+  // Camera presets as angles around the building: azimuth, then angle down from vertical.
+  const VIEWS: Record<string, { theta: number; phi: number }> = {
+    iso: { theta: -0.62, phi: 1.02 },
+    top: { theta: 0, phi: 0.05 },
+    side: { theta: 0, phi: Math.PI / 2 - 0.03 },
   };
 
   // Deterministic noise, so moving things changes geometry without the cloud flickering.
@@ -212,14 +174,6 @@ const floors = [1, 2, 3, 4];
   }
 
   const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
-  /** Keep receiving this pointer's moves even when it leaves the element. */
-  const capture = (el: Element, pointerId: number) => {
-    try {
-      el.setPointerCapture(pointerId);
-    } catch {
-      /* the pointer was already released: the drag simply ends on the next event */
-    }
-  };
   const dist = (a: V3, b: V3) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
 
   /** Sum of squared range residuals at q. */
@@ -307,400 +261,159 @@ const floors = [1, 2, 3, 4];
     return { h: Math.sqrt(Math.max(qxx + qyy, 0)), v: Math.sqrt(Math.max(qzz, 0)) };
   }
 
+  /** Everything the drawing needs, recomputed whenever the scene changes. */
+  type Model = {
+    anchors: V3[];
+    active: boolean[];
+    tag: V3;
+    floor: number;
+    nlos: boolean;
+    /** One set of measured ranges per reference point (0 where unused). */
+    ranges: number[];
+    estimates: V3[];
+    mean: V3 | null;
+  };
+  type Scene = {
+    sync(model: Model): void;
+    flyTo(view: string): void;
+  };
+  type Hooks = {
+    /** Move a reference point (0–4) or the tag ('tag') to a spot on its horizontal plane. */
+    place(which: number | 'tag', x: number, y: number): void;
+    nudgeTag(dx: number, dy: number): void;
+    stepFloor(delta: number): void;
+    viewChanged(): void;
+  };
+
   document.querySelectorAll<HTMLElement>('[data-mlat]').forEach((root) => {
-    const stage = root.querySelector<SVGSVGElement>('[data-stage]')!;
     const samples = Number(root.dataset.samples);
     const q = <T extends Element>(sel: string) => root.querySelector<T>(sel)!;
     const qa = <T extends Element>(sel: string) => [...root.querySelectorAll<T>(sel)];
-    const anchorEls = qa<SVGGElement>('.handle.anchor');
-    const tagEl = q<SVGGElement>('.handle.tag');
-    const estEls = qa<SVGCircleElement>('[data-est]');
-    const ringEls = qa<SVGPathElement>('[data-ring]');
-    const sightEls = qa<SVGLineElement>('[data-sight]');
-    const dropEls = anchorEls.map((_, i) => q<SVGLineElement>(`[data-drop="${i}"]`));
-    const footEls = anchorEls.map((_, i) => q<SVGCircleElement>(`[data-foot="${i}"]`));
-    const tagDrop = q<SVGLineElement>('[data-drop="tag"]');
-    const tagFoot = q<SVGCircleElement>('[data-foot="tag"]');
-    const floorLabels = qa<SVGTextElement>('[data-floorlabel]');
     const out = (name: string) => q<HTMLElement>(`[data-out="${name}"]`);
     const sigmaCtl = q<HTMLInputElement>('[data-ctl="sigma"]');
-    const presetBtns = qa<HTMLButtonElement>('[data-preset]');
+    const rangeBtns = qa<HTMLButtonElement>('[data-ranges]');
     const floorBtns = qa<HTMLButtonElement>('[data-floor]');
     const viewBtns = qa<HTMLButtonElement>('[data-view]');
     const droneBtn = q<HTMLButtonElement>('[data-toggle="drone"]');
+    const sideBtn = q<HTMLButtonElement>('[data-toggle="oneside"]');
     const nlosBtn = q<HTMLButtonElement>('[data-toggle="nlos"]');
-    const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const stage = q<HTMLElement>('[data-stage]');
 
     // ---- State ----
-    const Z = standardNormals(samples * anchorEls.length, 20261002);
+    const Z = standardNormals(samples * NAMES.length, 20261002);
     const anchors: V3[] = [
       ...PRESETS.spread.map((p) => ({ ...p, z: GROUND_UNIT_Z })),
       { x: BLDG.w / 2, y: BLDG.d / 2, z: DRONE_Z },
     ];
     const tag: V3 = { x: 12.5, y: 5.5, z: 0 };
-    let floor = 2;
-    let drone = true;
+    let floor = 3;
+    let ground = 4; // ground ranges in use
+    let drone = false;
     let nlos = false;
-    const cam = { ...VIEWS.iso };
-    // Solver output, kept so that rotating the view only re-projects.
-    let estimates: V3[] = [];
-    let mean: V3 = { ...INIT };
-    let ranges0: number[] = [];
+    let scene: Scene | null = null;
 
-    const tagZ = () => (floor - 1) * BLDG.floorH + TAG_ABOVE_FLOOR;
-    const active = (i: number) => i !== DRONE || drone;
+    const isActive = (i: number) => (i === DRONE ? drone : i < ground);
+    const press = (btns: HTMLButtonElement[], on: (b: HTMLButtonElement) => boolean) =>
+      btns.forEach((b) => b.setAttribute('aria-pressed', String(on(b))));
 
-    // ---- Projection: orthographic, yaw about the vertical axis then tilt. ----
-    let W = 720;
-    let H = 460;
-    let scale = 13;
-    const project = (p: V3): P2 => {
-      const X = p.x - CENTER.x;
-      const Y = p.y - CENTER.y;
-      const cy = Math.cos(cam.yaw);
-      const sy = Math.sin(cam.yaw);
-      const xr = X * cy - Y * sy;
-      const yr = X * sy + Y * cy;
-      return {
-        x: W / 2 + scale * xr,
-        y: H / 2 - scale * (yr * Math.sin(cam.pitch) + (p.z - CENTER.z) * Math.cos(cam.pitch)),
-      };
-    };
-    /** Screen point back to the horizontal plane at height z. Edge-on, depth cannot be read, so it is kept. */
-    const unproject = (sx: number, sy: number, z: number, keep: V3): P2 => {
-      const cy = Math.cos(cam.yaw);
-      const sn = Math.sin(cam.yaw);
-      const sp = Math.sin(cam.pitch);
-      const xr = (sx - W / 2) / scale;
-      const yr =
-        sp > 0.25
-          ? ((H / 2 - sy) / scale - (z - CENTER.z) * Math.cos(cam.pitch)) / sp
-          : (keep.x - CENTER.x) * sn + (keep.y - CENTER.y) * cy;
-      return { x: CENTER.x + xr * cy + yr * sn, y: CENTER.y - xr * sn + yr * cy };
-    };
-    const path = (pts: V3[], close = true) =>
-      pts
-        .map((p, i) => {
-          const s = project(p);
-          return `${i ? 'L' : 'M'}${s.x.toFixed(1)} ${s.y.toFixed(1)}`;
-        })
-        .join('') + (close ? 'Z' : '');
-    const rect = (x0: number, y0: number, x1: number, y1: number, z: number): V3[] => [
-      { x: x0, y: y0, z },
-      { x: x1, y: y0, z },
-      { x: x1, y: y1, z },
-      { x: x0, y: y1, z },
-    ];
-    const setLine = (el: SVGLineElement, a: P2, b: P2) => {
-      el.setAttribute('x1', a.x.toFixed(1));
-      el.setAttribute('y1', a.y.toFixed(1));
-      el.setAttribute('x2', b.x.toFixed(1));
-      el.setAttribute('y2', b.y.toFixed(1));
-    };
-    const setDot = (el: SVGCircleElement, p: P2) => {
-      el.setAttribute('cx', p.x.toFixed(1));
-      el.setAttribute('cy', p.y.toFixed(1));
-    };
-
-    // ---- Model: ranges, estimates, statistics. Runs when the scene changes. ----
-    function compute() {
+    function update() {
       const sigma = Number(sigmaCtl.value);
-      tag.z = tagZ();
-      const idx = anchors.map((_, i) => i).filter(active);
+      tag.z = (floor - 1) * BLDG.floorH + TAG_ABOVE_FLOOR;
+      const idx = anchors.map((_, i) => i).filter(isActive);
       const A = idx.map((i) => anchors[i]);
       const trueDist = A.map((a) => dist(tag, a));
-
-      estimates = [];
-      let mx = 0;
-      let my = 0;
-      let mz = 0;
-      let sqH = 0;
-      let sqV = 0;
-      let floorOk = 0;
-      for (let s = 0; s < samples; s++) {
-        const ranges = trueDist.map((d, k) =>
-          Math.max(0.05, d + sigma * Z[s * anchors.length + idx[k]] + (nlos && idx[k] === BLOCKED ? NLOS_BIAS_M : 0)),
+      const blocked = nlos && isActive(BLOCKED);
+      const measure = (s: number) =>
+        trueDist.map((d, k) =>
+          Math.max(0.05, d + sigma * Z[s * NAMES.length + idx[k]] + (blocked && idx[k] === BLOCKED ? NLOS_BIAS_M : 0)),
         );
-        if (s === 0) {
-          ranges0 = anchors.map(() => 0);
-          idx.forEach((i, k) => (ranges0[i] = ranges[k]));
+
+      const ranges = anchors.map(() => 0);
+      measure(0).forEach((r, k) => (ranges[idx[k]] = r));
+
+      // Fewer than three ranges do not pin down a point, so there is nothing to estimate.
+      const solvable = A.length >= 3;
+      const estimates: V3[] = [];
+      let mean: V3 | null = null;
+      let hRms = 0;
+      let vRms = 0;
+      let floorOk = 0;
+      if (solvable) {
+        let mx = 0, my = 0, mz = 0, sqH = 0, sqV = 0; // prettier-ignore
+        for (let s = 0; s < samples; s++) {
+          const p = solve(A, measure(s), INIT);
+          estimates.push(p);
+          mx += p.x;
+          my += p.y;
+          mz += p.z;
+          sqH += (p.x - tag.x) ** 2 + (p.y - tag.y) ** 2;
+          sqV += (p.z - tag.z) ** 2;
+          if (clamp(Math.floor(p.z / BLDG.floorH) + 1, 1, BLDG.floors) === floor) floorOk++;
         }
-        const p = solve(A, ranges, INIT);
-        estimates.push(p);
-        mx += p.x;
-        my += p.y;
-        mz += p.z;
-        sqH += (p.x - tag.x) ** 2 + (p.y - tag.y) ** 2;
-        sqV += (p.z - tag.z) ** 2;
-        const f = clamp(Math.floor(p.z / BLDG.floorH) + 1, 1, BLDG.floors);
-        if (f === floor) floorOk++;
+        mean = { x: mx / samples, y: my / samples, z: mz / samples };
+        hRms = Math.sqrt(sqH / samples);
+        vRms = Math.sqrt(sqV / samples);
       }
-      mean = { x: mx / samples, y: my / samples, z: mz / samples };
-      const hRms = Math.sqrt(sqH / samples);
-      const vRms = Math.sqrt(sqV / samples);
-      const pull = Math.hypot(mean.x - tag.x, mean.y - tag.y);
-      const dop = dops(A, tag);
+      const dop = solvable ? dops(A, tag) : { h: Infinity, v: Infinity };
       const fmtDop = (v: number) => (Number.isFinite(v) && v < 99 ? `×${v.toFixed(1)}` : '>×99');
 
       out('sigma').textContent = `${sigma.toFixed(2)} m`;
-      out('hrms').textContent = `${hRms.toFixed(2)} m`;
-      out('vrms').textContent = `${vRms.toFixed(2)} m`;
-      out('floor').innerHTML = `${floorOk} <small>of ${samples}</small>`;
-      out('dop').innerHTML = `${fmtDop(dop.h)} <small>across</small> ${fmtDop(dop.v)} <small>up</small>`;
+      out('hrms').textContent = solvable ? `${hRms.toFixed(2)} m` : '–';
+      out('vrms').textContent = solvable ? `${vRms.toFixed(2)} m` : '–';
+      out('floor').innerHTML = solvable ? `${floorOk} <small>of ${samples}</small>` : '–';
+      out('dop').innerHTML = solvable
+        ? `${fmtDop(dop.h)} <small>across</small> ${fmtDop(dop.v)} <small>up</small>`
+        : '–';
 
       // One sentence on what the current settings show, most specific cause first.
+      const pull = mean ? Math.hypot(mean.x - tag.x, mean.y - tag.y) : 0;
       const wrongFloor = floorOk < samples * 0.9;
       const heightBlind = !(dop.v < 2);
       const sideways = !(dop.h < 1.8);
       const map = `${hRms.toFixed(1)} m`;
       let insight: string;
-      if (nlos && pull > 0.4) {
-        insight = `The blocked path makes A4 read ${NLOS_BIAS_M} m long, and every estimate is dragged about ${pull.toFixed(1)} m off the true position. Averaging more measurements does not remove it.`;
+      if (A.length === 0) {
+        insight = `No ranges at all. Switch one on.`;
+      } else if (A.length === 1) {
+        insight = `One range only says how far away the firefighter is: somewhere on the surface of this bubble.`;
+      } else if (A.length === 2) {
+        insight = `Two bubbles meet in a ring. The firefighter is somewhere on it, and nothing says where.`;
+      } else if (blocked && pull > 0.4) {
+        insight = `The blocked path makes A4 read ${NLOS_BIAS_M} m long, so its bubble is too big and every estimate is dragged about ${pull.toFixed(1)} m off the true position. Averaging more measurements does not remove it.`;
+      } else if (A.length === 3) {
+        insight = `Three bubbles meet in two points, and one is underground, so it can be ruled out. But there is no measurement to spare: the floor is right in ${floorOk} of ${samples} tries. A fourth range is what makes the answer checkable.`;
       } else if (sigma === 0) {
-        insight = `With perfect ranges every estimate lands exactly on the firefighter. Add noise to see what the layout does to it.`;
+        insight = `With perfect ranges every bubble passes exactly through the firefighter. Add noise to see what the layout does to it.`;
       } else if (wrongFloor && heightBlind) {
         insight = drone
           ? `The map position is within about ${map}, but the floor is right in only ${floorOk} of ${samples} tries. Height is the weak direction for this layout.`
-          : `The map position is within about ${map}, but the floor is right in only ${floorOk} of ${samples} tries. Every reference point sits near ground level, so none of them sees height well. Turn the drone back on.`;
+          : `The map position is within about ${map}, but the floor is right in only ${floorOk} of ${samples} tries. Every reference point sits near ground level, so the bubbles cross at a shallow angle in height. Put the drone overhead.`;
       } else if (sideways) {
-        insight = `Estimates smear across about ${map}. The reference points look at the firefighter from nearly the same direction, which multiplies the same range noise by ${fmtDop(dop.h).replace('×', '')}.`;
+        insight = `Estimates smear across about ${map}. The reference points look at the firefighter from nearly the same direction, so their bubbles are almost parallel where they cross, which multiplies the same range noise by ${fmtDop(dop.h).replace('×', '')}.`;
       } else if (wrongFloor || hRms > 1) {
         insight = `The layout is fine here; the ranges are not. This much noise scatters the estimates by about ${map}, and the floor is right in ${floorOk} of ${samples} tries.`;
       } else {
-        insight = `Good fix: within about ${map} on the map, and on the right floor in ${floorOk} of ${samples} tries.`;
+        insight = `Good fix: the bubbles cross steeply and from all sides. Within about ${map} on the map, and on the right floor in ${floorOk} of ${samples} tries.`;
       }
       out('insight').textContent = insight;
+      nlosBtn.disabled = !isActive(BLOCKED);
+
+      scene?.sync({ anchors, active: anchors.map((_, i) => isActive(i)), tag, floor, nlos: blocked, ranges, estimates, mean });
     }
-
-    // ---- Drawing: projects the current state. Runs on every change, including rotation. ----
-    function draw() {
-      const roof = BLDG.floors * BLDG.floorH;
-      q<SVGPathElement>('[data-ground]').setAttribute('d', path(rect(SITE.x0, SITE.y0, SITE.x1, SITE.y1, 0)));
-      let grid = '';
-      for (let x = SITE.x0; x <= SITE.x1; x += 4) grid += path([{ x, y: SITE.y0, z: 0 }, { x, y: SITE.y1, z: 0 }], false); // prettier-ignore
-      for (let y = SITE.y0; y <= SITE.y1; y += 4) grid += path([{ x: SITE.x0, y, z: 0 }, { x: SITE.x1, y, z: 0 }], false); // prettier-ignore
-      q<SVGPathElement>('[data-grid]').setAttribute('d', grid);
-
-      let slabs = '';
-      for (let f = 1; f < BLDG.floors; f++) slabs += path(rect(0, 0, BLDG.w, BLDG.d, f * BLDG.floorH));
-      q<SVGPathElement>('[data-slabs]').setAttribute('d', slabs);
-      let frame = path(rect(0, 0, BLDG.w, BLDG.d, 0)) + path(rect(0, 0, BLDG.w, BLDG.d, roof));
-      for (const c of rect(0, 0, BLDG.w, BLDG.d, 0)) frame += path([c, { ...c, z: roof }], false);
-      q<SVGPathElement>('[data-frame]').setAttribute('d', frame);
-      q<SVGPathElement>('[data-floorfill]').setAttribute(
-        'd',
-        path(rect(0, 0, BLDG.w, BLDG.d, (floor - 1) * BLDG.floorH)),
-      );
-
-      // Floor labels hang off whichever corner is leftmost on screen.
-      const corners = rect(0, 0, BLDG.w, BLDG.d, 0);
-      const left = corners.reduce((a, b) => (project(b).x < project(a).x ? b : a));
-      floorLabels.forEach((el, i) => {
-        const p = project({ ...left, z: (i + 0.5) * BLDG.floorH });
-        el.setAttribute('x', (p.x - 8).toFixed(1));
-        el.setAttribute('y', (p.y + 4).toFixed(1));
-        el.classList.toggle('strong', i + 1 === floor);
-        // Seen from straight above, the four labels would stack on one spot.
-        el.style.display = cam.pitch > 1.15 ? 'none' : '';
-      });
-
-      const T = project(tag);
-      anchors.forEach((a, i) => {
-        const on = active(i);
-        for (const el of [anchorEls[i], ringEls[i], sightEls[i], dropEls[i], footEls[i]]) {
-          el.toggleAttribute('hidden', !on);
-          (el as SVGElement).style.display = on ? '' : 'none';
-        }
-        if (!on) return;
-        const P = project(a);
-        anchorEls[i].setAttribute('transform', `translate(${P.x.toFixed(1)} ${P.y.toFixed(1)})`);
-        const ground = project({ ...a, z: 0 });
-        setLine(dropEls[i], P, ground);
-        setDot(footEls[i], ground);
-        setLine(sightEls[i], P, T);
-        const blocked = nlos && i === BLOCKED;
-        sightEls[i].classList.toggle('blocked', blocked);
-        ringEls[i].classList.toggle('blocked', blocked);
-
-        // Where this measured range meets the horizontal plane at the tag's height.
-        const r2 = ranges0[i] ** 2 - (a.z - tag.z) ** 2;
-        if (r2 <= 0) {
-          ringEls[i].setAttribute('d', '');
-        } else {
-          const r = Math.sqrt(r2);
-          const pts: V3[] = [];
-          for (let k = 0; k < 72; k++) {
-            const t = (k / 72) * 2 * Math.PI;
-            pts.push({ x: a.x + r * Math.cos(t), y: a.y + r * Math.sin(t), z: tag.z });
-          }
-          ringEls[i].setAttribute('d', path(pts));
-        }
-      });
-
-      tagEl.setAttribute('transform', `translate(${T.x.toFixed(1)} ${T.y.toFixed(1)})`);
-      const tagGround = project({ ...tag, z: 0 });
-      setLine(tagDrop, T, tagGround);
-      setDot(tagFoot, tagGround);
-
-      estimates.forEach((p, s) => setDot(estEls[s], project(p)));
-      const M = project(mean);
-      setDot(q<SVGCircleElement>('[data-mean]'), M);
-      setLine(q<SVGLineElement>('[data-err]'), T, M);
-      q<SVGTextElement>('[data-scale]').setAttribute('y', String(H - 10));
-    }
-
-    const update = () => {
-      compute();
-      draw();
-    };
-
-    // ---- Sizing: one SVG unit is one CSS pixel, so labels and handles keep their size. ----
-    const wrap = stage.parentElement!;
-    const resize = () => {
-      const w = wrap.clientWidth;
-      if (!w) return;
-      W = w;
-      H = Math.round(clamp(w * 0.7, 330, 520));
-      scale = Math.min(W / 43, H / 31);
-      stage.setAttribute('viewBox', `0 0 ${W} ${H}`);
-      stage.style.height = `${H}px`;
-      draw();
-    };
-
-    // ---- Camera ----
-    let camRaf = 0;
-    const pressView = (name: string | null) =>
-      viewBtns.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.view === name)));
-    function flyTo(target: { yaw: number; pitch: number }) {
-      cancelAnimationFrame(camRaf);
-      // Take the short way round.
-      const from = { ...cam };
-      const dyaw = Math.atan2(Math.sin(target.yaw - from.yaw), Math.cos(target.yaw - from.yaw));
-      // No animation frames arrive while the page is hidden, so jump instead of waiting.
-      if (reduceMotion || document.hidden) {
-        cam.yaw = target.yaw;
-        cam.pitch = target.pitch;
-        draw();
-        return;
-      }
-      const t0 = performance.now();
-      const step = (now: number) => {
-        const t = clamp((now - t0) / 450, 0, 1);
-        const e = 1 - (1 - t) ** 3;
-        cam.yaw = from.yaw + dyaw * e;
-        cam.pitch = from.pitch + (target.pitch - from.pitch) * e;
-        draw();
-        if (t < 1) camRaf = requestAnimationFrame(step);
-      };
-      camRaf = requestAnimationFrame(step);
-    }
-    viewBtns.forEach((btn) =>
-      btn.addEventListener('click', () => {
-        pressView(btn.dataset.view!);
-        flyTo(VIEWS[btn.dataset.view!]);
-      }),
-    );
-
-    const toStage = (e: PointerEvent): P2 => {
-      const box = stage.getBoundingClientRect();
-      return { x: ((e.clientX - box.left) / box.width) * W, y: ((e.clientY - box.top) / box.height) * H };
-    };
-
-    let orbit: { x: number; y: number; id: number } | null = null;
-    stage.addEventListener('pointerdown', (e) => {
-      if ((e.target as Element).closest('.handle')) return;
-      if (e.pointerType === 'mouse' && e.button !== 0) return;
-      cancelAnimationFrame(camRaf);
-      orbit = { x: e.clientX, y: e.clientY, id: e.pointerId };
-      capture(stage, e.pointerId);
-      stage.classList.add('orbiting');
-    });
-    stage.addEventListener('pointermove', (e) => {
-      if (!orbit || e.pointerId !== orbit.id) return;
-      cam.yaw += (e.clientX - orbit.x) * 0.008;
-      // A finger's vertical movement scrolls the page, so it only turns the scene.
-      if (e.pointerType !== 'touch') cam.pitch = clamp(cam.pitch + (e.clientY - orbit.y) * 0.006, 0, Math.PI / 2);
-      orbit.x = e.clientX;
-      orbit.y = e.clientY;
-      pressView(null);
-      draw();
-    });
-    const endOrbit = (e: PointerEvent) => {
-      if (!orbit || e.pointerId !== orbit.id) return;
-      orbit = null;
-      stage.classList.remove('orbiting');
-    };
-    stage.addEventListener('pointerup', endOrbit);
-    stage.addEventListener('pointercancel', endOrbit);
-
-    // ---- Draggable points ----
-    const clearPreset = () => presetBtns.forEach((b) => b.setAttribute('aria-pressed', 'false'));
-    function place(target: V3, isTag: boolean, sx: number, sy: number) {
-      const p = unproject(sx, sy, target.z, target);
-      if (isTag) {
-        target.x = clamp(p.x, 0.5, BLDG.w - 0.5);
-        target.y = clamp(p.y, 0.5, BLDG.d - 0.5);
-      } else {
-        target.x = clamp(p.x, SITE.x0, SITE.x1);
-        target.y = clamp(p.y, SITE.y0, SITE.y1);
-        clearPreset();
-      }
-      update();
-    }
-    function bind(el: SVGGElement, target: V3, isTag: boolean) {
-      let dragging = false;
-      let grab: P2 = { x: 0, y: 0 };
-      el.addEventListener('pointerdown', (e) => {
-        if (e.pointerType === 'mouse' && e.button !== 0) return;
-        dragging = true;
-        // Keep the offset between the pointer and the point, so it does not jump on grab.
-        const at = toStage(e);
-        const now = project(target);
-        grab = { x: now.x - at.x, y: now.y - at.y };
-        capture(el, e.pointerId);
-        el.classList.add('dragging');
-        e.preventDefault();
-        el.focus({ preventScroll: true });
-      });
-      el.addEventListener('pointermove', (e) => {
-        if (!dragging) return;
-        const at = toStage(e);
-        place(target, isTag, at.x + grab.x, at.y + grab.y);
-      });
-      const end = () => {
-        dragging = false;
-        el.classList.remove('dragging');
-      };
-      el.addEventListener('pointerup', end);
-      el.addEventListener('pointercancel', end);
-      el.addEventListener('keydown', (e) => {
-        if (isTag && (e.key === 'PageUp' || e.key === 'PageDown')) {
-          e.preventDefault();
-          setFloor(clamp(floor + (e.key === 'PageUp' ? 1 : -1), 1, BLDG.floors));
-          return;
-        }
-        const moves: Record<string, [number, number]> = {
-          ArrowLeft: [-STEP_PX, 0],
-          ArrowRight: [STEP_PX, 0],
-          ArrowUp: [0, -STEP_PX],
-          ArrowDown: [0, STEP_PX],
-        };
-        const move = moves[e.key];
-        if (!move) return;
-        e.preventDefault();
-        const now = project(target);
-        place(target, isTag, now.x + move[0], now.y + move[1]);
-      });
-    }
-    anchorEls.forEach((el, i) => bind(el, anchors[i], false));
-    bind(tagEl, tag, true);
 
     // ---- Controls ----
-    function setFloor(f: number) {
-      floor = f;
-      floorBtns.forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.floor) === f)));
+    const setFloor = (f: number) => {
+      floor = clamp(f, 1, BLDG.floors);
+      press(floorBtns, (b) => Number(b.dataset.floor) === floor);
       update();
-    }
+    };
+    rangeBtns.forEach((btn) =>
+      btn.addEventListener('click', () => {
+        ground = Number(btn.dataset.ranges);
+        press(rangeBtns, (b) => b === btn);
+        update();
+      }),
+    );
     floorBtns.forEach((btn) => btn.addEventListener('click', () => setFloor(Number(btn.dataset.floor))));
     sigmaCtl.addEventListener('input', update);
     droneBtn.addEventListener('click', () => {
@@ -713,156 +426,760 @@ const floors = [1, 2, 3, 4];
       nlosBtn.setAttribute('aria-pressed', String(nlos));
       update();
     });
-    presetBtns.forEach((btn) =>
+    sideBtn.addEventListener('click', () => {
+      const on = sideBtn.getAttribute('aria-pressed') !== 'true';
+      sideBtn.setAttribute('aria-pressed', String(on));
+      PRESETS[on ? 'oneside' : 'spread'].forEach((p, i) => Object.assign(anchors[i], p));
+      update();
+    });
+    viewBtns.forEach((btn) =>
       btn.addEventListener('click', () => {
-        PRESETS[btn.dataset.preset!].forEach((p, i) => Object.assign(anchors[i], p));
-        presetBtns.forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
-        update();
+        press(viewBtns, (b) => b === btn);
+        scene?.flyTo(btn.dataset.view!);
       }),
     );
 
-    compute();
-    new ResizeObserver(resize).observe(wrap);
-    resize();
+    const hooks: Hooks = {
+      place(which, x, y) {
+        if (which === 'tag') {
+          tag.x = clamp(x, 0.5, BLDG.w - 0.5);
+          tag.y = clamp(y, 0.5, BLDG.d - 0.5);
+        } else {
+          anchors[which].x = clamp(x, SITE.x0, SITE.x1);
+          anchors[which].y = clamp(y, SITE.y0, SITE.y1);
+          // A hand-placed layout is no longer the "one side" preset.
+          if (which !== DRONE) sideBtn.setAttribute('aria-pressed', 'false');
+        }
+        update();
+      },
+      nudgeTag(dx, dy) {
+        hooks.place('tag', tag.x + dx, tag.y + dy);
+      },
+      stepFloor(delta) {
+        setFloor(floor + delta);
+      },
+      viewChanged() {
+        press(viewBtns, () => false);
+      },
+    };
+
+    update();
+
+    // ---- Load the 3D scene when the figure is close to the viewport. ----
+    const start = async () => {
+      try {
+        scene = await createScene(stage, hooks);
+        update();
+      } catch (err) {
+        console.warn('3D view unavailable:', err);
+        // Kept on the element so the cause can be read without opening the console.
+        q<HTMLElement>('[data-fallback]').dataset.reason = String(err);
+        q<HTMLElement>('[data-fallback]').hidden = false;
+        q<HTMLCanvasElement>('[data-canvas]').hidden = true;
+      }
+    };
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver(
+        (entries) => {
+          if (entries.some((e) => e.isIntersecting)) {
+            io.disconnect();
+            start();
+          }
+        },
+        { rootMargin: '600px 0px' },
+      );
+      io.observe(stage);
+    } else {
+      start();
+    }
   });
+
+  // =====================================================================================
+  // Drawing. Kept apart from the model above: it only ever reads a Model and calls Hooks.
+  // =====================================================================================
+  async function createScene(stage: HTMLElement, hooks: Hooks): Promise<Scene> {
+    const THREE = await import('three');
+    const { OrbitControls } = await import('three/examples/jsm/controls/OrbitControls.js');
+
+    const canvas = stage.querySelector<HTMLCanvasElement>('[data-canvas]')!;
+    const labelBox = stage.querySelector<HTMLElement>('[data-labels]')!;
+    const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // Frame-loop state, declared first because resizing and syncing both ask for a redraw.
+    let ready = false;
+    let visible = false;
+    let raf = 0;
+
+    // Colours come from the figure tokens, so the scene matches the rest of the page.
+    const css = getComputedStyle(stage);
+    const token = (name: string) => new THREE.Color(css.getPropertyValue(name).trim() || '#000');
+    const INK = token('--fig-ink');
+    const INK3 = token('--fig-ink-3');
+    const RULE = token('--fig-rule');
+    const PAPER = token('--fig');
+    const ACCENT = token('--fig-accent');
+    const TEAL = token('--fig-accent-2');
+    // The bubbles use a lighter, more saturated cut of the same hue so overlaps stay clear.
+    const BUBBLE = TEAL.clone().offsetHSL(0, 0.18, 0.1);
+    const SHADE = token('--fig-shade');
+
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+    renderer.setClearColor(0x000000, 0);
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(30, 1, 1, 600);
+    /** Model coordinates (x, y, z-up) to three.js (x, y-up, z toward the viewer). */
+    const at = (p: V3) => new THREE.Vector3(p.x, p.z, -p.y);
+    const target = at(CENTER);
+
+    // ---- Static set: ground, grid, building ----
+    const siteW = SITE.x1 - SITE.x0;
+    const siteD = SITE.y1 - SITE.y0;
+    const groundMesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(siteW, siteD),
+      new THREE.MeshBasicMaterial({ color: PAPER }),
+    );
+    groundMesh.rotation.x = -Math.PI / 2;
+    groundMesh.position.copy(at({ x: (SITE.x0 + SITE.x1) / 2, y: (SITE.y0 + SITE.y1) / 2, z: -0.02 }));
+    scene.add(groundMesh);
+    const farGround = new THREE.Mesh(new THREE.PlaneGeometry(600, 600), new THREE.MeshBasicMaterial({ color: SHADE }));
+    farGround.rotation.x = -Math.PI / 2;
+    farGround.position.set(target.x, -0.06, target.z);
+    scene.add(farGround);
+
+    const gridPts: number[] = [];
+    for (let x = SITE.x0; x <= SITE.x1; x += 4) gridPts.push(x, 0, -SITE.y0, x, 0, -SITE.y1);
+    for (let y = SITE.y0; y <= SITE.y1; y += 4) gridPts.push(SITE.x0, 0, -y, SITE.x1, 0, -y);
+    const grid = new THREE.LineSegments(
+      new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(gridPts, 3)),
+      new THREE.LineBasicMaterial({ color: RULE }),
+    );
+    scene.add(grid);
+
+    const roof = BLDG.floors * BLDG.floorH;
+    const box = new THREE.BoxGeometry(BLDG.w, roof, BLDG.d);
+    const bldgPos = at({ x: BLDG.w / 2, y: BLDG.d / 2, z: roof / 2 });
+    const walls = new THREE.Mesh(
+      box,
+      new THREE.MeshBasicMaterial({ color: INK, transparent: true, opacity: 0.045, depthWrite: false }),
+    );
+    walls.position.copy(bldgPos);
+    scene.add(walls);
+    const frame = new THREE.LineSegments(new THREE.EdgesGeometry(box), new THREE.LineBasicMaterial({ color: INK }));
+    frame.position.copy(bldgPos);
+    scene.add(frame);
+
+    const slabOutline = (z: number, color: T.Color, opacity: number) => {
+      const pts = [
+        at({ x: 0, y: 0, z }),
+        at({ x: BLDG.w, y: 0, z }),
+        at({ x: BLDG.w, y: BLDG.d, z }),
+        at({ x: 0, y: BLDG.d, z }),
+      ];
+      return new THREE.LineLoop(
+        new THREE.BufferGeometry().setFromPoints(pts),
+        new THREE.LineBasicMaterial({ color, transparent: true, opacity }),
+      );
+    };
+    for (let f = 1; f < BLDG.floors; f++) scene.add(slabOutline(f * BLDG.floorH, INK, 0.35));
+    // The firefighter's floor is tinted.
+    const floorFill = new THREE.Mesh(
+      new THREE.PlaneGeometry(BLDG.w, BLDG.d),
+      new THREE.MeshBasicMaterial({
+        color: ACCENT,
+        transparent: true,
+        opacity: 0.16,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+      }),
+    );
+    floorFill.rotation.x = -Math.PI / 2;
+    scene.add(floorFill);
+    const floorEdge = slabOutline(0, ACCENT, 1);
+    scene.add(floorEdge);
+
+    // ---- Range bubbles: translucent, brighter at the rim, cut off at the ground. ----
+    const bubbleMaterial = (color: T.Color, base: number, rim: number) =>
+      new THREE.ShaderMaterial({
+        uniforms: {
+          uColor: { value: color.clone() },
+          uBase: { value: base },
+          uRim: { value: rim },
+          uFade: { value: 1 },
+        },
+        vertexShader: /* glsl */ `
+          varying vec3 vNormal;
+          varying vec3 vView;
+          varying float vHeight;
+          void main() {
+            vec4 world = modelMatrix * vec4(position, 1.0);
+            vec4 mv = viewMatrix * world;
+            vHeight = world.y;
+            vNormal = normalize(normalMatrix * normal);
+            vView = normalize(-mv.xyz);
+            gl_Position = projectionMatrix * mv;
+          }`,
+        fragmentShader: /* glsl */ `
+          uniform vec3 uColor;
+          uniform float uBase;
+          uniform float uRim;
+          uniform float uFade;
+          varying vec3 vNormal;
+          varying vec3 vView;
+          varying float vHeight;
+          void main() {
+            if (vHeight < 0.0) discard;
+            float edge = pow(1.0 - abs(dot(normalize(vNormal), normalize(vView))), 2.4);
+            gl_FragColor = vec4(uColor, (uBase + uRim * edge) * uFade);
+          }`,
+        transparent: true,
+        depthWrite: false,
+      });
+    const unitSphere = new THREE.SphereGeometry(1, 64, 40);
+    const unitCircle = new THREE.BufferGeometry().setFromPoints(
+      Array.from({ length: 96 }, (_, k) => {
+        const t = (k / 96) * Math.PI * 2;
+        return new THREE.Vector3(Math.cos(t), 0, Math.sin(t));
+      }),
+    );
+
+    type Rig = {
+      marker: T.Mesh;
+      hit: T.Mesh;
+      pole: T.Line;
+      bubble: T.Mesh;
+      pulse: T.Mesh;
+      footprint: T.LineLoop;
+      ring: T.LineLoop;
+      sight: T.Line;
+      label: HTMLElement;
+      radius: number;
+      shown: number;
+    };
+    const makeLabel = (text: string, cls = '') => {
+      const el = document.createElement('span');
+      el.textContent = text;
+      el.className = `tag-label ${cls}`;
+      labelBox.append(el);
+      return el;
+    };
+    const twoPoint = () => new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
+    const hitMaterial = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false });
+
+    const rigs: Rig[] = NAMES.map((name, i) => {
+      const isDrone = i === DRONE;
+      const marker = new THREE.Mesh(
+        isDrone ? new THREE.OctahedronGeometry(0.85) : new THREE.BoxGeometry(1, 1, 1),
+        new THREE.MeshBasicMaterial({ color: INK }),
+      );
+      const hit = new THREE.Mesh(new THREE.SphereGeometry(2.1, 12, 8), hitMaterial);
+      hit.userData.which = i;
+      const pole = new THREE.Line(twoPoint(), new THREE.LineBasicMaterial({ color: INK, transparent: true, opacity: 0.4 }));
+      const bubble = new THREE.Mesh(unitSphere, bubbleMaterial(BUBBLE, 0.05, 0.5));
+      const pulse = new THREE.Mesh(unitSphere, bubbleMaterial(BUBBLE, 0, 0.26));
+      const lineMat = () => new THREE.LineBasicMaterial({ color: TEAL, transparent: true, opacity: 0.75 });
+      const footprint = new THREE.LineLoop(unitCircle, lineMat());
+      const ring = new THREE.LineLoop(unitCircle, lineMat());
+      const sight = new THREE.Line(
+        twoPoint(),
+        new THREE.LineDashedMaterial({ color: INK3, dashSize: 0.5, gapSize: 0.5, transparent: true, opacity: 0.7 }),
+      );
+      // Bubbles draw after the solid things, far ones first.
+      bubble.renderOrder = 2;
+      pulse.renderOrder = 3;
+      scene.add(marker, hit, pole, bubble, pulse, footprint, ring, sight);
+      return { marker, hit, pole, bubble, pulse, footprint, ring, sight, label: makeLabel(name), radius: 0, shown: 0 };
+    });
+
+    // ---- Tag, estimates, their average ----
+    const tagMesh = new THREE.Mesh(new THREE.SphereGeometry(0.42, 20, 14), new THREE.MeshBasicMaterial({ color: INK }));
+    const tagHalo = new THREE.Mesh(
+      new THREE.SphereGeometry(0.6, 20, 14),
+      new THREE.MeshBasicMaterial({ color: PAPER, side: THREE.BackSide }),
+    );
+    const tagHit = new THREE.Mesh(new THREE.SphereGeometry(2.1, 12, 8), hitMaterial);
+    tagHit.userData.which = 'tag';
+    const tagPole = new THREE.Line(twoPoint(), new THREE.LineBasicMaterial({ color: INK, transparent: true, opacity: 0.4 }));
+    tagMesh.renderOrder = 6;
+    tagHalo.renderOrder = 5;
+    scene.add(tagHalo, tagMesh, tagHit, tagPole);
+
+    const dotGeo = new THREE.SphereGeometry(0.2, 10, 8);
+    const cloud = new THREE.InstancedMesh(
+      dotGeo,
+      new THREE.MeshBasicMaterial({ color: ACCENT, transparent: true, opacity: 0.85 }),
+      64,
+    );
+    cloud.renderOrder = 4;
+    scene.add(cloud);
+    const meanRing = new THREE.LineLoop(unitCircle, new THREE.LineBasicMaterial({ color: ACCENT }));
+    meanRing.renderOrder = 7;
+    const errLine = new THREE.Line(twoPoint(), new THREE.LineBasicMaterial({ color: ACCENT }));
+    scene.add(meanRing, errLine);
+
+    // With two ranges the answer is a ring; with three, two points.
+    const meetRing = new THREE.Mesh(
+      new THREE.TorusGeometry(1, 0.018, 8, 160),
+      new THREE.MeshBasicMaterial({ color: INK }),
+    );
+    meetRing.renderOrder = 6;
+    const meetDots = [0, 1].map((k) => {
+      const m = new THREE.Mesh(
+        new THREE.SphereGeometry(0.5, 16, 12),
+        new THREE.MeshBasicMaterial({ color: INK, transparent: true, opacity: k === 0 ? 1 : 0.45, depthTest: k === 0 }),
+      );
+      m.renderOrder = 6;
+      return m;
+    });
+    scene.add(meetRing, ...meetDots);
+
+    const floorLabels = Array.from({ length: BLDG.floors }, (_, f) => makeLabel(`F${f + 1}`, 'floor'));
+    const scaleLabel = makeLabel('grid 4 m · building 20 × 13 m', 'scale');
+
+    // ---- Camera ----
+    const controls = new OrbitControls(camera, canvas);
+    controls.target.copy(target);
+    controls.enablePan = false;
+    controls.enableZoom = false;
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.08;
+    controls.rotateSpeed = 0.7;
+    controls.minPolarAngle = 0.04;
+    controls.maxPolarAngle = Math.PI / 2 - 0.02;
+    // The scene turns slowly until someone takes hold of it.
+    controls.autoRotate = !calm;
+    controls.autoRotateSpeed = 0.55;
+    // A sideways drag turns the scene; a vertical swipe still scrolls the page.
+    canvas.style.touchAction = 'pan-y';
+
+    const spherical = new THREE.Spherical(100, VIEWS.iso.phi, VIEWS.iso.theta);
+    const placeCamera = () => {
+      camera.position.setFromSpherical(spherical).add(target);
+      camera.lookAt(target);
+    };
+    let fly: { from: { theta: number; phi: number }; to: { theta: number; phi: number }; t0: number } | null = null;
+
+    // Radius, in metres, that must fit in view: the site plus most of each bubble.
+    const FIT_RADIUS = 31;
+    let width = 0;
+    let height = 0;
+    const resize = () => {
+      const w = stage.clientWidth;
+      if (!w) return;
+      width = w;
+      height = Math.round(clamp(w * 0.72, 340, 580));
+      canvas.style.height = `${height}px`;
+      renderer.setSize(width, height, false);
+      camera.aspect = width / height;
+      // Stand far enough back that the whole site fits whichever way the frame is shaped.
+      const vFov = (camera.fov * Math.PI) / 180;
+      const hFov = 2 * Math.atan(Math.tan(vFov / 2) * camera.aspect);
+      camera.updateProjectionMatrix();
+      spherical.setFromVector3(camera.position.clone().sub(target));
+      spherical.radius = FIT_RADIUS / Math.sin(Math.min(vFov, hFov) / 2);
+      placeCamera();
+      controls.update();
+      draw();
+    };
+    placeCamera();
+    new ResizeObserver(resize).observe(stage);
+    resize();
+
+    // ---- Picking and dragging ----
+    const ray = new THREE.Raycaster();
+    const ndc = new THREE.Vector2();
+    const hits = [...rigs.map((r) => r.hit), tagHit];
+    const aim = (clientX: number, clientY: number) => {
+      const r = canvas.getBoundingClientRect();
+      ndc.set(((clientX - r.left) / r.width) * 2 - 1, -((clientY - r.top) / r.height) * 2 + 1);
+      ray.setFromCamera(ndc, camera);
+    };
+    const pick = (clientX: number, clientY: number): number | 'tag' | null => {
+      aim(clientX, clientY);
+      const found = ray.intersectObjects(hits.filter((h) => h.visible))[0];
+      return found ? (found.object.userData.which as number | 'tag') : null;
+    };
+    let dragging: { which: number | 'tag'; plane: T.Plane; id: number } | null = null;
+    let model: Model | null = null;
+    const takeControl = () => {
+      controls.autoRotate = false;
+      // A camera move in progress is abandoned, and the controls it had paused come back.
+      if (fly) controls.enabled = true;
+      fly = null;
+    };
+
+    // Registered before OrbitControls sees the event, so a grab on a point is not an orbit.
+    canvas.addEventListener(
+      'pointerdown',
+      (e) => {
+        if (e.pointerType === 'mouse' && e.button !== 0) return;
+        takeControl();
+        const which = pick(e.clientX, e.clientY);
+        if (which === null || !model) return;
+        const z = which === 'tag' ? model.tag.z : model.anchors[which].z;
+        dragging = { which, plane: new THREE.Plane(new THREE.Vector3(0, 1, 0), -z), id: e.pointerId };
+        controls.enabled = false;
+        try {
+          canvas.setPointerCapture(e.pointerId);
+        } catch {
+          /* pointer already released */
+        }
+        canvas.classList.add('dragging');
+      },
+      { capture: true },
+    );
+    const spot = new THREE.Vector3();
+    canvas.addEventListener('pointermove', (e) => {
+      if (!dragging) {
+        if (e.pointerType === 'mouse') canvas.classList.toggle('over', pick(e.clientX, e.clientY) !== null);
+        return;
+      }
+      if (e.pointerId !== dragging.id) return;
+      aim(e.clientX, e.clientY);
+      if (ray.ray.intersectPlane(dragging.plane, spot)) hooks.place(dragging.which, spot.x, -spot.z);
+    });
+    const release = (e: PointerEvent) => {
+      if (!dragging || e.pointerId !== dragging.id) return;
+      dragging = null;
+      controls.enabled = true;
+      canvas.classList.remove('dragging');
+    };
+    canvas.addEventListener('pointerup', release);
+    canvas.addEventListener('pointercancel', release);
+    // A finger that lands on a point is a drag, not a page scroll.
+    canvas.addEventListener(
+      'touchstart',
+      (e) => {
+        const t = e.touches[0];
+        if (t && pick(t.clientX, t.clientY) !== null) e.preventDefault();
+      },
+      { passive: false },
+    );
+    controls.addEventListener('start', () => {
+      takeControl();
+      hooks.viewChanged();
+    });
+    canvas.addEventListener('keydown', (e) => {
+      if (e.key === 'PageUp' || e.key === 'PageDown') {
+        e.preventDefault();
+        hooks.stepFloor(e.key === 'PageUp' ? 1 : -1);
+        return;
+      }
+      const dirs: Record<string, [number, number]> = {
+        ArrowLeft: [-1, 0],
+        ArrowRight: [1, 0],
+        ArrowUp: [0, 1],
+        ArrowDown: [0, -1],
+      };
+      const d = dirs[e.key];
+      if (!d) return;
+      e.preventDefault();
+      takeControl();
+      // Arrow keys follow the screen: "right" is the camera's right, "up" is away from it.
+      const right = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 0);
+      const away = new THREE.Vector3().crossVectors(new THREE.Vector3(0, 1, 0), right);
+      const step = right.multiplyScalar(d[0] * 0.5).add(away.multiplyScalar(d[1] * 0.5));
+      hooks.nudgeTag(step.x, -step.z);
+    });
+
+    // One frame on demand: after a change while the loop is idle (off screen, hidden tab).
+    function draw() {
+      if (ready && !raf) paint(performance.now());
+    }
+
+    // ---- Sync: write a Model into the scene ----
+    const setLine = (line: T.Line, a: T.Vector3, b: T.Vector3) => {
+      const pos = line.geometry.getAttribute('position');
+      pos.setXYZ(0, a.x, a.y, a.z);
+      pos.setXYZ(1, b.x, b.y, b.z);
+      pos.needsUpdate = true;
+      line.geometry.computeBoundingSphere();
+    };
+    const matrix = new THREE.Matrix4();
+    const up = new THREE.Vector3(0, 1, 0);
+    // The unit circle lies flat; this turns it to stand facing the camera.
+    const faceCamera = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI / 2);
+
+    function sync(m: Model) {
+      model = m;
+      const T = at(m.tag);
+      tagMesh.position.copy(T);
+      tagHalo.position.copy(T);
+      tagHit.position.copy(T);
+      setLine(tagPole, T, at({ ...m.tag, z: 0 }));
+
+      const slabZ = (m.floor - 1) * BLDG.floorH;
+      floorFill.position.copy(at({ x: BLDG.w / 2, y: BLDG.d / 2, z: slabZ + 0.01 }));
+      floorEdge.position.set(0, slabZ + 0.01, 0);
+
+      rigs.forEach((rig, i) => {
+        const on = m.active[i];
+        for (const o of [rig.marker, rig.hit, rig.pole, rig.bubble, rig.pulse, rig.footprint, rig.ring, rig.sight]) o.visible = on;
+        rig.label.hidden = !on;
+        if (!on) {
+          rig.shown = 0;
+          return;
+        }
+        const a = m.anchors[i];
+        const P = at(a);
+        rig.marker.position.copy(P);
+        rig.hit.position.copy(P);
+        setLine(rig.pole, P, at({ ...a, z: 0 }));
+        setLine(rig.sight, P, T);
+        rig.sight.computeLineDistances();
+
+        const blocked = m.nlos && i === BLOCKED;
+        const color = blocked ? ACCENT : TEAL;
+        for (const mesh of [rig.bubble, rig.pulse]) {
+          (mesh.material as T.ShaderMaterial).uniforms.uColor.value.copy(blocked ? ACCENT : BUBBLE);
+          mesh.position.copy(P);
+        }
+        for (const line of [rig.footprint, rig.ring]) {
+          (line.material as T.LineBasicMaterial).color.copy(color);
+        }
+        rig.radius = m.ranges[i];
+        // Where the bubble meets the ground, and where it meets the tag's height.
+        const foot = Math.sqrt(Math.max(rig.radius ** 2 - a.z ** 2, 0));
+        rig.footprint.position.copy(at({ ...a, z: 0.03 }));
+        rig.footprint.scale.setScalar(Math.max(foot, 1e-3));
+        rig.footprint.visible = foot > 0.05;
+        const cut = Math.sqrt(Math.max(rig.radius ** 2 - (a.z - m.tag.z) ** 2, 0));
+        rig.ring.position.copy(at({ ...a, z: m.tag.z }));
+        rig.ring.scale.setScalar(Math.max(cut, 1e-3));
+        rig.ring.visible = cut > 0.05;
+      });
+
+      // Estimates and their average.
+      cloud.count = m.estimates.length;
+      m.estimates.forEach((p, s) => {
+        matrix.makeTranslation(p.x, p.z, -p.y);
+        cloud.setMatrixAt(s, matrix);
+      });
+      cloud.instanceMatrix.needsUpdate = true;
+      cloud.visible = m.estimates.length > 0;
+      meanRing.visible = errLine.visible = m.mean !== null;
+      if (m.mean) {
+        meanRing.position.copy(at(m.mean));
+        setLine(errLine, T, at(m.mean));
+      }
+
+      // The set of points that fit the ranges in use: a ring for two, two points for three.
+      const used = m.anchors.map((a, i) => ({ c: at(a), r: m.ranges[i] })).filter((_, i) => m.active[i]);
+      meetRing.visible = false;
+      meetDots.forEach((d) => (d.visible = false));
+      if (used.length === 2 || used.length === 3) {
+        const [s1, s2] = used;
+        const axis = s2.c.clone().sub(s1.c);
+        const d = axis.length();
+        axis.normalize();
+        const along = (s1.r ** 2 - s2.r ** 2 + d ** 2) / (2 * d);
+        const h2 = s1.r ** 2 - along ** 2;
+        if (h2 > 0) {
+          const h = Math.sqrt(h2);
+          const centre = s1.c.clone().addScaledVector(axis, along);
+          if (used.length === 2) {
+            meetRing.visible = true;
+            meetRing.position.copy(centre);
+            meetRing.scale.setScalar(h);
+            meetRing.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), axis);
+          } else {
+            // Points on that ring that are also the right distance from the third reference point.
+            const u = new THREE.Vector3().crossVectors(axis, up).normalize();
+            const v = new THREE.Vector3().crossVectors(axis, u);
+            const w = centre.clone().sub(used[2].c);
+            const A = 2 * h * w.dot(u);
+            const B = 2 * h * w.dot(v);
+            const K = used[2].r ** 2 - w.lengthSq() - h2;
+            const R = Math.hypot(A, B) || 1e-9;
+            const base = Math.atan2(B, A);
+            const spread = Math.acos(clamp(K / R, -1, 1));
+            const pts = [base + spread, base - spread].map((t) =>
+              centre.clone().addScaledVector(u, h * Math.cos(t)).addScaledVector(v, h * Math.sin(t)),
+            );
+            // The upper point is the real candidate; the other is its mirror below ground.
+            pts.sort((p, q) => q.y - p.y);
+            meetDots.forEach((dot, k) => {
+              dot.visible = true;
+              dot.position.copy(pts[k]);
+            });
+          }
+        }
+      }
+      draw();
+    }
+
+    // ---- Labels follow their points on screen ----
+    const proj = new THREE.Vector3();
+    const stick = (el: HTMLElement, p: T.Vector3, dx = 0, dy = 0) => {
+      proj.copy(p).project(camera);
+      const x = (proj.x * 0.5 + 0.5) * width + dx;
+      const y = (-proj.y * 0.5 + 0.5) * height + dy;
+      el.style.transform = `translate(-50%, -50%) translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
+    };
+    const corners = [
+      { x: 0, y: 0 },
+      { x: BLDG.w, y: 0 },
+      { x: BLDG.w, y: BLDG.d },
+      { x: 0, y: BLDG.d },
+    ];
+
+    // ---- Frame loop: runs only while the figure is on screen ----
+    const t0 = performance.now();
+    const frame_ = (now: number) => {
+      raf = visible ? requestAnimationFrame(frame_) : 0;
+      paint(now);
+    };
+    const paint = (now: number) => {
+      if (fly) {
+        const t = clamp((now - fly.t0) / 650, 0, 1);
+        const e = t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
+        spherical.theta = fly.from.theta + (fly.to.theta - fly.from.theta) * e;
+        spherical.phi = fly.from.phi + (fly.to.phi - fly.from.phi) * e;
+        placeCamera();
+        if (t >= 1) {
+          fly = null;
+          controls.enabled = true;
+        }
+      } else {
+        controls.update();
+      }
+
+      const time = (now - t0) / 1000;
+      rigs.forEach((rig, i) => {
+        if (!rig.bubble.visible) return;
+        // Bubbles ease to their radius, so a change reads as the range growing or shrinking.
+        rig.shown += (rig.radius - rig.shown) * (calm ? 1 : 0.16);
+        rig.bubble.scale.setScalar(Math.max(rig.shown, 1e-3));
+        // A pulse travels out to the measured range, like the radio exchange it stands for.
+        const phase = calm ? 1 : (time / 2.8 + i * 0.21) % 1;
+        rig.pulse.visible = !calm;
+        rig.pulse.scale.setScalar(Math.max(rig.shown * phase, 1e-3));
+        (rig.pulse.material as T.ShaderMaterial).uniforms.uFade.value = (1 - phase) ** 1.5;
+        if (i === DRONE && !calm) rig.marker.position.y = (model?.anchors[i].z ?? DRONE_Z) + Math.sin(time * 1.6) * 0.18;
+      });
+      meanRing.quaternion.copy(camera.quaternion).multiply(faceCamera);
+      meanRing.scale.setScalar(0.75);
+
+      renderer.render(scene, camera);
+
+      rigs.forEach((rig, i) => {
+        if (!rig.label.hidden && model) stick(rig.label, at(model.anchors[i]), 0, -17);
+      });
+      // Floor labels hang off whichever corner is leftmost on screen.
+      let left = corners[0];
+      let leftX = Infinity;
+      for (const c of corners) {
+        proj.copy(at({ ...c, z: 0 })).project(camera);
+        if (proj.x < leftX) {
+          leftX = proj.x;
+          left = c;
+        }
+      }
+      const fromAbove = spherical.setFromVector3(camera.position.clone().sub(target)).phi < 0.35;
+      floorLabels.forEach((el, f) => {
+        el.hidden = fromAbove;
+        el.classList.toggle('on', model?.floor === f + 1);
+        stick(el, at({ ...left, z: (f + 0.5) * BLDG.floorH }), -14, 0);
+      });
+    };
+    const io = new IntersectionObserver((entries) => {
+      visible = entries.some((e) => e.isIntersecting);
+      if (visible && !raf) raf = requestAnimationFrame(frame_);
+    });
+    io.observe(stage);
+    void scaleLabel;
+    ready = true;
+    draw();
+
+    return {
+      sync,
+      flyTo(view) {
+        const to = VIEWS[view];
+        if (!to) return;
+        controls.autoRotate = false;
+        spherical.setFromVector3(camera.position.clone().sub(target));
+        // Take the short way round.
+        const dTheta = Math.atan2(Math.sin(to.theta - spherical.theta), Math.cos(to.theta - spherical.theta));
+        const goal = { theta: spherical.theta + dTheta, phi: to.phi };
+        if (calm || document.hidden) {
+          spherical.theta = goal.theta;
+          spherical.phi = goal.phi;
+          placeCamera();
+          controls.update();
+          return;
+        }
+        controls.enabled = false;
+        fly = { from: { theta: spherical.theta, phi: spherical.phi }, to: goal, t0: performance.now() };
+      },
+    };
+  }
 </script>
 
 <style>
   .slider {
     flex: 1 1 170px;
-    max-width: 260px;
+    max-width: 240px;
   }
-  .stage-wrap {
+
+  .stage {
+    position: relative;
     background: var(--fig-shade);
     border-radius: 6px;
     overflow: hidden;
   }
-  svg {
+  canvas {
     display: block;
     width: 100%;
-    height: 460px;
-    user-select: none;
-    -webkit-user-select: none;
-    font-family: var(--font-mono);
+    height: 420px;
     cursor: grab;
-    /* A sideways drag turns the scene; a vertical swipe still scrolls the page. */
-    touch-action: pan-y;
+    outline-offset: -3px;
   }
-  svg.orbiting {
+  canvas[hidden] {
+    display: none;
+  }
+  canvas.over {
+    cursor: move;
+  }
+  canvas.dragging {
     cursor: grabbing;
   }
-  .ground {
-    fill: var(--fig);
-    fill-opacity: 0.55;
-  }
-  .grid {
-    fill: none;
-    stroke: var(--fig-rule);
-    stroke-width: 1;
-  }
-  .bldg {
-    fill: none;
-    stroke: var(--fig-ink);
-    stroke-width: 2;
-    stroke-linejoin: round;
-  }
-  .bldg.thin {
-    stroke-width: 1;
-    stroke-opacity: 0.45;
-  }
-  .floor-fill {
-    fill: var(--fig-accent);
-    fill-opacity: 0.1;
-    stroke: var(--fig-accent);
-    stroke-width: 1.25;
-  }
-  .t {
-    font-size: 10.5px;
-    fill: var(--fig-ink-3);
-  }
-  .t.strong {
-    fill: var(--fig-ink);
-    font-weight: 600;
-  }
-  .ring {
-    fill: none;
-    stroke: var(--fig-ink-3);
-    stroke-width: 1;
-    stroke-opacity: 0.6;
-  }
-  .ring.blocked {
-    stroke: var(--fig-accent);
-    stroke-opacity: 1;
-    stroke-dasharray: 5 4;
-  }
-  .sight {
-    stroke: var(--fig-ink-3);
-    stroke-width: 1;
-    stroke-opacity: 0.45;
-    stroke-dasharray: 2 4;
-  }
-  .sight.blocked {
-    stroke: var(--fig-accent);
-    stroke-opacity: 1;
-  }
-  .drop {
-    stroke: var(--fig-ink);
-    stroke-width: 1;
-    stroke-opacity: 0.35;
-  }
-  .foot {
-    fill: var(--fig-ink);
-    fill-opacity: 0.35;
-  }
-  .overlay {
-    pointer-events: none;
-  }
-  .est {
-    fill: var(--fig-accent);
-    fill-opacity: 0.6;
-  }
-  .mean {
-    fill: none;
-    stroke: var(--fig-accent);
-    stroke-width: 2;
-  }
-  .err {
-    stroke: var(--fig-accent);
-    stroke-width: 1.5;
+  .fallback {
+    padding: 2rem 1.25rem;
+    color: var(--fig-ink-2);
   }
 
-  /* Only the handles capture touch fully, so the page still scrolls past the stage. */
-  .handle {
-    cursor: grab;
-    touch-action: none;
+  /* Text labels are HTML laid over the canvas, so they stay sharp at any size. */
+  .labels {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    color: var(--fig-ink);
   }
-  .handle.dragging {
-    cursor: grabbing;
+  .labels :global(.tag-label) {
+    position: absolute;
+    top: 0;
+    left: 0;
+    font-weight: 600;
+    white-space: nowrap;
+    will-change: transform;
   }
-  .handle:focus-visible {
-    outline: none;
+  .labels :global(.tag-label.floor) {
+    font-weight: 400;
+    color: var(--fig-ink-3);
   }
-  .grab {
-    fill: transparent;
-    stroke: transparent;
-    stroke-width: 2;
-    transition: fill 0.15s;
+  .labels :global(.tag-label.floor.on) {
+    font-weight: 600;
+    color: var(--fig-accent);
   }
-  .handle:hover .grab,
-  .handle.dragging .grab {
-    fill: color-mix(in srgb, var(--fig-accent) 12%, transparent);
-  }
-  .handle:focus-visible .grab {
-    stroke: var(--fig-accent);
-  }
-  .anchor rect,
-  .anchor path {
-    fill: var(--fig-ink);
-  }
-  .tag .dot {
-    fill: var(--fig-ink);
-    stroke: var(--fig);
-    stroke-width: 1.5;
+  .labels :global(.tag-label.scale) {
+    top: auto;
+    bottom: 0.6rem;
+    left: 0.75rem;
+    font-weight: 400;
+    color: var(--fig-ink-3);
   }
 
   /* Two factors on one line: smaller than the other readouts so it never wraps. */
@@ -884,13 +1201,17 @@ const floors = [1, 2, 3, 4];
     width: 6px;
     height: 6px;
     background: var(--fig-accent);
-    opacity: 0.6;
   }
   .k-mean {
     border: 2px solid var(--fig-accent);
   }
   .k-range {
-    border: 1px solid var(--fig-ink-3);
+    background: color-mix(in srgb, var(--fig-accent-2) 22%, transparent);
+    border: 1.5px solid var(--fig-accent-2);
+  }
+  .k-blocked {
+    background: color-mix(in srgb, var(--fig-accent) 22%, transparent);
+    border: 1.5px solid var(--fig-accent);
   }
 
   @media (max-width: 560px) {

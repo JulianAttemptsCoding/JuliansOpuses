@@ -40,7 +40,7 @@ import AuthFlow from '../../assets/work/latex/auth-flow.svg';
 
 ## Problem
 
-LaTeXRenderer is a free collaborative LaTeX environment for a team of up to ten people, delivered from GitHub Pages. That choice of host creates the interesting problem.
+LaTeXRenderer is a free collaborative LaTeX environment for a team of up to ten people, delivered from [GitHub Pages](https://pages.github.com/). That choice of host creates the interesting problem.
 
 GitHub Pages is static file hosting. It cannot authenticate anyone, it cannot keep a secret, and nothing shipped from it is hidden. A "password-protected" static site that checks the password in JavaScript protects nothing: the check, and whatever it guards, is already in the visitor's browser.
 
@@ -60,11 +60,11 @@ The public repository is deliberately small, and explicit about its own limits.
   <AuthFlow />
 </Figure>
 
-Sign-in uses Supabase Auth with Google OAuth and PKCE, verified server-side. The shared password is checked in an Edge Function with PBKDF2, a constant-time comparison and rate limiting, and a success writes a grant row that expires. The editor bundle sits in a private storage bucket and is reachable only through five-minute signed URLs, issued after the grant is checked again. Before running anything, the shell hashes every downloaded asset and compares it with the manifest.
+Sign-in uses [Supabase](https://supabase.com/) Auth with Google OAuth and PKCE, verified server-side. The shared password is checked in an Edge Function with PBKDF2, a constant-time comparison and rate limiting, and a success writes a grant row that expires. The editor bundle sits in a private storage bucket and is reachable only through five-minute signed URLs, issued after the grant is checked again. Before running anything, the shell hashes every downloaded asset and compares it with the manifest.
 
 ## Testing the attacks
 
-A security claim is only as good as the attempt to break it. The Playwright suite asserts each obvious bypass individually: deleting the password form in DevTools, setting a local-storage flag, calling shell functions from the console, and requesting the private bucket directly. All of them fail, and not because the shell resists them. The shell was never the thing standing in the way.
+A security claim is only as good as the attempt to break it. The [Playwright](https://playwright.dev/) suite asserts each obvious bypass individually: deleting the password form in DevTools, setting a local-storage flag, calling shell functions from the console, and requesting the private bucket directly. All of them fail, and not because the shell resists them. The shell was never the thing standing in the way.
 
 Around that sit Vitest unit tests for integrity verification, lint rules that ban `innerHTML` and `eval` in the shell, a build that refuses to start if it is handed a service-role key, and a CI step that scans the built output for credential material before publishing.
 

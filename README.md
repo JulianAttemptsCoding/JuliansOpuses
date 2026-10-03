@@ -31,19 +31,37 @@ Open http://localhost:4321.
 | `src/pages/contact.astro` | Contact form |
 | `src/pages/work/[id].astro` | Case-study template: pinned rail on the left, evidence on the right |
 | `src/components/` | Page furniture and the interactive figures (see below) |
-| `src/styles/global.css` | Colour, type and spacing tokens for both themes, shared figure controls |
+| `src/styles/global.css` | Colour, type and spacing tokens for both themes, shared figure controls, motion |
+| `resume/` (git-ignored) | Résumé generator and the copies that carry a personal email address |
 
 ### Interactive figures
 
-Each is a self-contained Astro component with no dependencies. All of them are labelled as
-illustrations: only the numbers quoted from a project are project data.
+Each is a self-contained Astro component. Only the tracker has a dependency: it draws with
+[three.js](https://threejs.org/), which is loaded on demand when that figure nears the viewport. All of
+them are labelled as illustrations: only the numbers quoted from a project are project data.
 
 | Component | Page | Shows |
 | --- | --- | --- |
-| `Multilateration.astro` | Firefighter Tracker | 3D range-based positioning: geometry, noise, a blocked path, height |
+| `Multilateration.astro` | Firefighter Tracker | 3D range bubbles (WebGL): one range, two, three, four; then noise, a blocked path, bad geometry, height |
 | `FidelityJudge.astro` | Fast-MC-CBSC | What an AUROC of 0.50, 0.65 or 0.84 means for a generator |
 | `SplitLeak.astro` | PathoGraph-DL | Why a random split leaks the future and a split by date cannot |
 | `HitRateChart.astro` | QTA0 | Hit rate per validation design, and the edge on a full 0–100% scale |
+
+## Look and motion
+
+- **Colour.** Soft charcoal on warm paper, never pure black on white. One vermilion accent, a teal
+  second colour in a few small places, and one hue per verdict glyph. Flat colour only: no gradients,
+  no translucent "glass" surfaces.
+- **Links.** Every named school, organiser, competition and tool links to its own site. The link
+  targets live with the data in `src/data/profile.ts`.
+- **Verdicts.** Pointing at, focusing or tapping a verdict explains what it means.
+- **Motion.** A short intro on the first page of a visit, a headline that rises word by word, a ticker
+  that drifts and follows the scroll, rules and rows that reveal on scroll, numbers that count up, a
+  reading-progress line on case studies, and a 3D scene that turns until it is touched. All of it is
+  an enhancement: with reduced motion, without JavaScript, or without scroll-driven animations the
+  content is simply in place.
+- **One home per fact.** Education lives on About; recognition and leadership live on the home page.
+  Nothing is repeated across pages except the navigation and the footer.
 
 ## Contact form
 

@@ -1,12 +1,13 @@
 ---
 import Base from '../layouts/Base.astro';
 import Education from '../components/Education.astro';
+import Rich from '../components/Rich.astro';
 import { href } from '../lib/url';
 import { site } from '../data/site';
-import { activities, modeling, tools } from '../data/profile';
+import { activities, tools, treat } from '../data/profile';
 ---
 
-<Base title="About" description="Background, interests and activities outside research.">
+<Base title="About" description="Background, education and activities outside research.">
   <section class="intro wrap">
     <p class="label">About</p>
     <h1>I like finding out how systems work, and whether the numbers actually add up.</h1>
@@ -26,9 +27,7 @@ import { activities, modeling, tools } from '../data/profile';
         <a href={href('/contact/')}>Get in touch →</a>
         {
           site.linkedin && (
-            <a class="ext" href={site.linkedin} rel="noopener">
-              LinkedIn
-            </a>
+            <a class="ext" href={site.linkedin} rel="noopener">LinkedIn</a>
           )
         }
         <a class="ext" href={site.github} rel="noopener">GitHub</a>
@@ -36,14 +35,25 @@ import { activities, modeling, tools } from '../data/profile';
     </div>
   </section>
 
-  <section class="section wrap ledger">
-    <h2 class="label ledger-label">Outside research</h2>
+  <section class="section wrap ledger" id="education" data-rule>
+    <h2 class="label marked ledger-label">Education</h2>
+    <Education open />
+  </section>
+
+  <section class="section wrap ledger" id="outside" data-rule>
+    <h2 class="label marked ledger-label">Outside research</h2>
     <ul class="items">
       {
         activities.map((a) => (
           <li>
             <div class="item-head">
-              <h3>{a.title}</h3>
+              <h3>
+                {a.href ? (
+                  <a class="ext quiet" href={a.href} rel="noopener">{a.title}</a>
+                ) : (
+                  a.title
+                )}
+              </h3>
               <span class="mono">{a.role}</span>
             </div>
             <p>{a.body}</p>
@@ -53,33 +63,36 @@ import { activities, modeling, tools } from '../data/profile';
     </ul>
   </section>
 
-  <section class="section wrap ledger">
-    <h2 class="label ledger-label">Mathematical modeling</h2>
-    <ul class="items">
-      {
-        modeling.map((m) => (
-          <li>
-            <div class="item-head">
-              <h3>{m.title}</h3>
-            </div>
-            <p>{m.body}</p>
-          </li>
-        ))
-      }
-    </ul>
-  </section>
-
-  <section class="section wrap ledger">
-    <h2 class="label ledger-label">Education</h2>
-    <Education open />
-  </section>
-
-  <section class="section wrap ledger">
-    <h2 class="label ledger-label">Tools</h2>
+  <section class="section wrap ledger" id="tools" data-rule>
+    <h2 class="label marked ledger-label">Tools</h2>
     <div>
-      <p class="tools mono">{tools}</p>
+      <ul class="tools mono">
+        {
+          tools.map((t) => (
+            <li>
+              <a class="quiet" href={t.href} rel="noopener">{t.label}</a>
+            </li>
+          ))
+        }
+      </ul>
       <p class="tools-note">The projects show how these get used better than a list does.</p>
     </div>
+  </section>
+
+  <!-- Not signposted anywhere else: a small extra for anyone who reads to the end. -->
+  <section class="wrap treat-wrap">
+    <details class="treat">
+      <summary>
+        <span class="plus" aria-hidden="true"></span>
+        {treat.summary}
+      </summary>
+      <div class="treat-body">
+        <p><Rich parts={treat.body} /></p>
+        <p>
+          <a class="ext" href={treat.link.href} rel="noopener">{treat.link.label}</a>
+        </p>
+      </div>
+    </details>
   </section>
 </Base>
 
@@ -110,6 +123,15 @@ import { activities, modeling, tools } from '../data/profile';
     gap: 0.5rem 1.75rem;
     color: var(--ink);
     font-size: 1rem;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    :global(html.js) .intro h1,
+    :global(html.js) .intro .lede {
+      animation: fade-up 0.8s var(--ease) both;
+    }
+    :global(html.js) .intro .lede {
+      animation-delay: 0.15s;
+    }
   }
 
   .section {
@@ -161,14 +183,85 @@ import { activities, modeling, tools } from '../data/profile';
     color: var(--ink-2);
   }
   .tools {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
     max-width: 60ch;
-    font-size: 0.85rem;
-    line-height: 1.9;
+    list-style: none;
+    font-size: 0.82rem;
+  }
+  .tools a {
+    display: inline-block;
+    padding: 0.3em 0.8em;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    text-decoration: none;
+    transition:
+      border-color 0.2s,
+      color 0.2s;
+  }
+  .tools a:hover {
+    border-color: var(--accent);
   }
   .tools-note {
-    margin-top: 0.75rem;
+    margin-top: 0.9rem;
     color: var(--ink-3);
     font-size: 0.95rem;
+  }
+
+  /* The foldout at the very end. */
+  .treat-wrap {
+    padding-top: clamp(3rem, 7vw, 5.5rem);
+  }
+  .treat summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    list-style: none;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    letter-spacing: 0.02em;
+    color: var(--ink-3);
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+  .treat summary::-webkit-details-marker {
+    display: none;
+  }
+  .treat summary:hover,
+  .treat[open] summary {
+    color: var(--ink);
+  }
+  .plus {
+    position: relative;
+    flex: none;
+    width: 11px;
+    height: 11px;
+    color: var(--accent-2);
+  }
+  .plus::before,
+  .plus::after {
+    content: '';
+    position: absolute;
+    inset: 5px 0 auto 0;
+    height: 1.5px;
+    background: currentColor;
+    transition: transform 0.3s var(--ease);
+  }
+  .plus::after {
+    transform: rotate(90deg);
+  }
+  .treat[open] .plus::after {
+    transform: rotate(0deg);
+  }
+  .treat-body {
+    display: grid;
+    gap: 0.75rem;
+    max-width: 62ch;
+    margin-top: 1rem;
+    padding-left: 1rem;
+    border-left: 2px solid var(--accent-2);
+    color: var(--ink-2);
   }
 
   @media (max-width: 720px) {

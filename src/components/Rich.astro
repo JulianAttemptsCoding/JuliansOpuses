@@ -1,0 +1,25 @@
+---
+// Renders a list of text runs, some of them linked. Internal paths get the site base;
+// anything else opens as an external link. Each anchor stays on one line so no stray
+// whitespace ends up inside the link text.
+import type { Part } from '../data/profile';
+import { href as withBase } from '../lib/url';
+
+interface Props {
+  parts: Part[];
+}
+const { parts } = Astro.props;
+const isInternal = (url: string) => url.startsWith('/');
+---
+
+{
+  parts.map((p) =>
+    typeof p === 'string' ? (
+      p
+    ) : isInternal(p.href) ? (
+      <a href={withBase(p.href)}>{p.text}</a>
+    ) : (
+      <a class="ext" href={p.href} rel="noopener">{p.text}</a>
+    ),
+  )
+}

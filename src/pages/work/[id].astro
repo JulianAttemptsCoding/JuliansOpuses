@@ -23,7 +23,7 @@ const sections = [
 const num = (n: number) => String(n).padStart(2, '0');
 ---
 
-<Base title={data.heading ?? data.title} description={data.claim}>
+<Base title={data.heading ?? data.title} description={data.claim} progress>
   <article class="case wrap">
     <aside class="rail">
       <div class="rail-top mono">
@@ -328,6 +328,12 @@ const num = (n: number) => String(n).padStart(2, '0');
     max-width: 66ch;
     margin-top: 1rem;
     color: var(--ink-2);
+  }
+  /* Links out of the site carry the same arrow as everywhere else. */
+  .prose :global(a[href^='http']:not(figure *))::after {
+    content: '\2060\202f\2197';
+    font-family: var(--font-mono);
+    font-size: 0.85em;
   }
   .prose :global(strong:not(figure *)) {
     color: var(--ink);

@@ -47,7 +47,7 @@ import response from '../../assets/work/fast-mc/total-response.png';
 
 ## Problem
 
-Simulating a particle shower inside a calorimeter with Geant4 is accurate and slow: every secondary particle is tracked through the detector material. An analysis that needs millions of events pays that cost millions of times.
+Simulating a particle shower inside a calorimeter with [Geant4](https://geant4.web.cern.ch/) is accurate and slow: every secondary particle is tracked through the detector material. An analysis that needs millions of events pays that cost millions of times.
 
 Fast-MC-CBSC is a learned surrogate. Given only the four-momentum of an incoming neutron, it generates the energy deposited in every readout channel directly. Showing that this is fast is the easy part. The real question is whether the generated showers are close enough to Geant4 that downstream physics would not notice the difference.
 

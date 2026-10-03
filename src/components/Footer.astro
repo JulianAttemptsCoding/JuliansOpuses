@@ -21,7 +21,7 @@ const year = new Date().getFullYear();
 
           <ul class="links">
             <li>
-              <a class="pill primary" href={href('/contact/')}>
+              <a class="pill primary" href={href('/contact/')} data-magnetic>
                 Send a message
                 <span class="pill-arrow" aria-hidden="true">
                   →
@@ -96,6 +96,22 @@ const year = new Date().getFullYear();
     line-height: 1;
     letter-spacing: -0.04em;
   }
+  /* The heading slides into place as the footer scrolls up into view. */
+  @keyframes cta-in {
+    from {
+      opacity: 0.25;
+      transform: translateX(-7%);
+    }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    @supports (animation-timeline: view()) {
+      .cta {
+        animation: cta-in linear both;
+        animation-timeline: view();
+        animation-range: entry 10% cover 32%;
+      }
+    }
+  }
   .links {
     display: flex;
     flex-wrap: wrap;
@@ -115,7 +131,8 @@ const year = new Date().getFullYear();
     transition:
       background-color 0.25s var(--ease),
       border-color 0.25s var(--ease),
-      color 0.25s var(--ease);
+      color 0.25s var(--ease),
+      transform 0.45s cubic-bezier(0.2, 1.5, 0.4, 1);
   }
   .pill:hover {
     border-color: var(--footer-ink);
@@ -129,7 +146,7 @@ const year = new Date().getFullYear();
   .pill.primary:hover {
     background: var(--accent-fill);
     border-color: var(--accent-fill);
-    color: #fff;
+    color: var(--on-accent);
   }
   .pill-arrow {
     transition: transform 0.35s var(--ease);

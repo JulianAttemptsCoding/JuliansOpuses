@@ -1,29 +1,42 @@
-/* ---------- Tokens ---------- */
+/* ---------- Tokens ----------
+   Paper and ink are both pulled in from pure white and pure black, so the page
+   reads as soft charcoal on warm paper rather than hard black on white. Colour is
+   flat everywhere: no gradients and no translucent "glass" surfaces. */
 :root {
   color-scheme: light;
-  --paper: #f6f5f1;
-  --paper-2: #edece6;
-  --ink: #15161a;
-  --ink-2: #4a4c54;
-  --ink-3: #6a6c74;
-  --rule: #d9d7cf;
-  --accent: #c2410c;
-  --accent-fill: #d9480f;
+  --paper: #f2f0e9;
+  --paper-2: #e8e5db;
+  --ink: #22262b;
+  --ink-2: #4c5058;
+  --ink-3: #646871;
+  --rule: #d6d3c8;
+  --accent: #b8430f;
+  --accent-fill: #cf4d12;
   --on-accent: #ffffff;
+  /* Second colour, used in a few small places: markers, range spheres, live dots. */
+  --accent-2: #1f6677;
+
+  /* One hue per verdict. Only the glyph is coloured; the label always says the state. */
+  --v-holds: #2c7a4f;
+  --v-open: #a5670b;
+  --v-prototype: #2a62a8;
+  --v-shipped: #6a48b0;
+  --v-negative: #b8430f;
 
   /* Figures keep a light "printed page" surface in both themes. */
-  --fig: #ffffff;
-  --fig-ink: #15161a;
-  --fig-ink-2: #4a4c54;
-  --fig-ink-3: #6a6c74;
-  --fig-rule: #d9d7cf;
-  --fig-accent: #c2410c;
-  --fig-shade: #f3f2ee;
+  --fig: #fbfaf6;
+  --fig-ink: #22262b;
+  --fig-ink-2: #4c5058;
+  --fig-ink-3: #646871;
+  --fig-rule: #d6d3c8;
+  --fig-accent: #b8430f;
+  --fig-accent-2: #1f6677;
+  --fig-shade: #efede5;
 
-  --footer-bg: #15161a;
-  --footer-ink: #f1f0ec;
-  --footer-ink-2: #a4a5ab;
-  --footer-rule: #33353b;
+  --footer-bg: #22262b;
+  --footer-ink: #efede6;
+  --footer-ink-2: #a9abb0;
+  --footer-rule: #3b4047;
 
   --font-sans: 'Geist Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: 'Geist Mono Variable', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
@@ -32,37 +45,52 @@
   --max: 1320px;
   --header-h: 64px;
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease-inout: cubic-bezier(0.76, 0, 0.24, 1);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
     color-scheme: dark;
-    --paper: #101113;
-    --paper-2: #1a1b1f;
-    --ink: #edece8;
-    --ink-2: #b6b7bc;
-    --ink-3: #8f9198;
-    --rule: #2b2c31;
-    --accent: #ff8552;
-    --accent-fill: #f26a35;
-    --on-accent: #15161a;
-    --fig: #f4f3ef;
-    --footer-bg: #18191c;
+    --paper: #181b1f;
+    --paper-2: #21252b;
+    --ink: #e5e3dc;
+    --ink-2: #b4b6ba;
+    --ink-3: #8d9198;
+    --rule: #30353c;
+    --accent: #f08a5d;
+    --accent-fill: #e2703f;
+    --on-accent: #181b1f;
+    --accent-2: #74c0d0;
+    --v-holds: #76c893;
+    --v-open: #e0b354;
+    --v-prototype: #86b4e8;
+    --v-shipped: #b7a1e6;
+    --v-negative: #f08a5d;
+    --fig: #edebe4;
+    --fig-shade: #e2dfd6;
+    --footer-bg: #21252b;
   }
 }
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --paper: #101113;
-  --paper-2: #1a1b1f;
-  --ink: #edece8;
-  --ink-2: #b6b7bc;
-  --ink-3: #8f9198;
-  --rule: #2b2c31;
-  --accent: #ff8552;
-  --accent-fill: #f26a35;
-  --on-accent: #15161a;
-  --fig: #f4f3ef;
-  --footer-bg: #18191c;
+  --paper: #181b1f;
+  --paper-2: #21252b;
+  --ink: #e5e3dc;
+  --ink-2: #b4b6ba;
+  --ink-3: #8d9198;
+  --rule: #30353c;
+  --accent: #f08a5d;
+  --accent-fill: #e2703f;
+  --on-accent: #181b1f;
+  --accent-2: #74c0d0;
+  --v-holds: #76c893;
+  --v-open: #e0b354;
+  --v-prototype: #86b4e8;
+  --v-shipped: #b7a1e6;
+  --v-negative: #f08a5d;
+  --fig: #edebe4;
+  --fig-shade: #e2dfd6;
+  --footer-bg: #21252b;
 }
 
 /* ---------- Base ---------- */
@@ -126,6 +154,7 @@ a {
   color: inherit;
   text-decoration-thickness: 1px;
   text-underline-offset: 0.2em;
+  transition: color 0.2s;
 }
 a:hover {
   color: var(--accent);
@@ -164,6 +193,15 @@ button {
   text-transform: uppercase;
   color: var(--ink-3);
 }
+/* Section labels carry a small square in the second colour. */
+.label.marked::before {
+  content: '';
+  display: inline-block;
+  width: 0.55em;
+  height: 0.55em;
+  margin-right: 0.7em;
+  background: var(--accent-2);
+}
 .sr-only {
   position: absolute;
   width: 1px;
@@ -175,16 +213,32 @@ button {
   white-space: nowrap;
   border: 0;
 }
+/* The arrow stays inline, glued to the last word, so it can never wrap onto a line alone. */
 .ext::after {
-  content: '\2197';
-  display: inline-block;
-  margin-left: 0.25em;
+  content: '\2060\202f\2197';
+  position: relative;
+  top: 0;
+  left: 0;
   font-family: var(--font-mono);
   font-size: 0.85em;
-  transition: transform 0.25s var(--ease);
+  transition:
+    top 0.25s var(--ease),
+    left 0.25s var(--ease);
 }
 a.ext:hover::after {
-  transform: translate(2px, -2px);
+  top: -2px;
+  left: 2px;
+}
+/* A link that should read as plain text until it is pointed at. */
+.quiet {
+  text-decoration-color: transparent;
+  transition:
+    color 0.2s,
+    text-decoration-color 0.2s;
+}
+.quiet:hover,
+.quiet:focus-visible {
+  text-decoration-color: currentColor;
 }
 
 /* Dev-only placeholder chip: never rendered in production builds. */
@@ -262,7 +316,8 @@ a.ext:hover::after {
   cursor: pointer;
   transition:
     background-color 0.2s,
-    color 0.2s;
+    color 0.2s,
+    opacity 0.2s;
 }
 .fx-seg button {
   flex: 1 1 auto;
@@ -300,6 +355,10 @@ a.ext:hover::after {
 .fx-chip[aria-pressed='true']::before {
   background: var(--fig-accent);
   border-color: var(--fig-accent);
+}
+.fx-chip:disabled {
+  opacity: 0.4;
+  cursor: default;
 }
 .fx input[type='range'] {
   width: 100%;
@@ -367,21 +426,70 @@ a.ext:hover::after {
   color: var(--fig-ink-3);
 }
 
-/* ---------- Scroll reveal ----------
-   CSS scroll-driven, so content is never hidden behind JavaScript: browsers
-   without support, and readers who prefer reduced motion, see it in place. */
+/* ---------- Motion ----------
+   Everything here is an enhancement. Content is in place without JavaScript, in
+   browsers without scroll-driven animations, and for readers who prefer reduced
+   motion. `html.js` is set by an inline script before first paint. */
 @keyframes reveal {
   from {
     opacity: 0;
     transform: translateY(14px);
   }
 }
+@keyframes draw-rule {
+  from {
+    transform: scaleX(0);
+  }
+}
+@keyframes rise {
+  from {
+    transform: translateY(108%);
+  }
+}
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.35;
+    transform: scale(0.7);
+  }
+}
+
+/* A small breathing dot: "this is current". */
+.live-dot {
+  display: inline-block;
+  width: 0.5em;
+  height: 0.5em;
+  border-radius: 50%;
+  background: var(--accent-2);
+}
+
 @media (prefers-reduced-motion: no-preference) {
+  .live-dot {
+    animation: pulse-dot 2.4s ease-in-out infinite;
+  }
+
   @supports (animation-timeline: view()) {
     [data-reveal] {
       animation: reveal linear both;
       animation-timeline: view();
       animation-range: entry 0% entry 30%;
+    }
+    /* Section rules draw themselves from the left as they come into view. */
+    [data-rule]::before {
+      transform-origin: left center;
+      animation: draw-rule linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 70%;
     }
   }
 

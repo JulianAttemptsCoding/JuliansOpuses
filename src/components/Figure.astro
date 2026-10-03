@@ -61,6 +61,10 @@ const full = src ? await getImage({ src, width: src.width }) : null;
     width: 100%;
     height: auto;
   }
+  /* Plots are exported on white: multiplying lets the card's own tone show through. */
+  .frame :global(img) {
+    mix-blend-mode: multiply;
+  }
   figcaption {
     display: grid;
     grid-template-columns: 3.75rem minmax(0, 1fr);
