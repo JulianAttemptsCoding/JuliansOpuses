@@ -27,7 +27,7 @@ const sections = [
 const num = (n: number) => String(n).padStart(2, '0');
 ---
 
-<Base title={data.heading ?? data.title} description={data.claim} progress status={data.status}>
+<Base title={data.heading ?? data.title} description={data.claim} progress>
   <article class="case wrap">
     <header class="case-head g12">
       <div class="crumbs mono">
@@ -137,7 +137,7 @@ const num = (n: number) => String(n).padStart(2, '0');
 
         <a class="next" href={href(`/work/${next.id}/`)}>
           <span class="label">Next</span>
-          <span class="next-title" data-reveal="mask">{next.data.title}</span>
+          <span class="next-title" data-reveal="mask-in">{next.data.title}</span>
           <span class="next-arrow" aria-hidden="true">→</span>
         </a>
       </div>
@@ -384,15 +384,13 @@ const num = (n: number) => String(n).padStart(2, '0');
   }
   @media (prefers-reduced-motion: no-preference) {
     @supports (animation-timeline: view()) {
+      /* They only arrive. The list of sections jumps to them, and a departure timed by
+         the scroll would leave the one just jumped to half faded under the header. */
       .prose :global(h2),
       .outcome h2 {
-        animation:
-          unmask linear both,
-          leave linear forwards;
-        animation-timeline: view(block 60px 0px), view(block 60px 0px);
-        animation-range:
-          entry 20px entry 220px,
-          exit calc(100% - 150px) exit 100%;
+        animation: unmask linear both;
+        animation-timeline: view(block 60px 0px);
+        animation-range: entry 20px entry 220px;
       }
     }
   }

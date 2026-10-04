@@ -3,7 +3,7 @@ order: 1
 tier: flagship
 title: Fast-MC-CBSC
 question: Does a simulation that runs far faster still preserve the detector physics?
-summary: Simulating a particle shower with Geant4, the standard detector simulator, is accurate and slow. I’m building a machine-learning model that generates the same showers directly. An early prototype ran about 200× faster in benchmarks. What I’m testing now is whether its showers are close enough to Geant4’s to use.
+summary: I’m building a machine-learning model that generates particle showers directly, in place of Geant4, the standard detector simulator. An early prototype ran about 200× faster in benchmarks. What I’m testing now is whether its showers are close enough to Geant4’s to use.
 claim: A conditional generative surrogate for Geant4 simulation of single-neutron showers in a 65-layer, 6,790-channel calorimeter.
 domain: Scientific ML
 status: open
@@ -118,7 +118,7 @@ Averaged quantities agree reasonably well.
   src={response}
   alt="Four histograms of total detector response for Geant4 and Fast-MC in energy bins from 50 to 250 GeV."
   caption="Total response in four energy bins. Means and widths agree within about 3%, but the shape near the peak does not."
-  source="Archived evaluation snapshot, 2026-07-28."
+  source="Archived evaluation snapshot, 28 July 2026."
 />
 
 Matching averages is not the same as matching the distribution. The stricter test is a classifier two-sample test: train a classifier to tell generated showers from Geant4 showers. If the generator were faithful, the classifier could do no better than chance, an AUROC of 0.5. For a generator, a lower score is the better one.

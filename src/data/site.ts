@@ -8,7 +8,7 @@ export const site = {
   name: 'Julian Juan',
   title: 'Julian Juan | Machine-learning research for particle physics',
   description:
-    'Julian Juan is a high-school senior who does machine-learning research for particle physics. Projects, research and how each result held up when tested.',
+    'Julian Juan is a high-school senior who does machine-learning research for particle physics. Projects, research and the results so far.',
   github: 'https://github.com/JulianAttemptsCoding',
   linkedin: 'https://www.linkedin.com/in/4a4a75616e/',
   resume: '/resume.pdf', // public/resume.pdf: the copy without a personal email address

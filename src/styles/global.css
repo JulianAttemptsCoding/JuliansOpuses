@@ -199,6 +199,12 @@ h1,
 }
 p {
   margin: 0;
+}
+/* Running text of every kind avoids ending on a line of one short word. */
+p,
+li,
+dd,
+figcaption {
   text-wrap: pretty;
 }
 ul,
@@ -309,6 +315,11 @@ button {
   font-weight: 500;
   line-height: 1.2;
   letter-spacing: -0.015em;
+}
+/* The part of a name that is revealed is one box, however many lines the name runs to:
+   a mask on text that wraps would otherwise show only its first line. */
+.sec-title > [data-reveal] {
+  display: inline-block;
 }
 /* It carries a small square, hung in the gutter so the name itself keeps the left edge.
    It is an outline until the section is the one being read, and then it fills. */

@@ -90,6 +90,12 @@ const rows = await Promise.all(
   .row:hover {
     color: inherit;
   }
+  /* The focus ring stands clear of the number on the left and the arrow on the right,
+     which moves a little further out while the row has focus. */
+  .row:focus-visible {
+    outline-offset: 12px;
+    border-radius: 4px;
+  }
   .row[data-dim] {
     opacity: 0.3;
   }

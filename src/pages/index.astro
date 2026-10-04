@@ -25,16 +25,18 @@ const sections = [
   { id: 'awards', label: 'Awards' },
   { id: 'beyond', label: 'Outside the lab' },
 ];
-// The headline is split into words at build time so each can rise out of its own mask.
-// `b` marks the name, the one thing in the sentence set heavier; `tail` is punctuation
-// that follows a word without taking its weight.
+// The headline is split into pieces at build time so each can rise out of its own mask.
+// A piece is usually one word. Words joined by `_` stay together as one piece, so a name
+// is never split across two lines and "I" never dangles at the end of one. `b` marks the
+// name, the one thing in the sentence set heavier; `tail` is punctuation that follows a
+// word without taking its weight.
 const headline: { t: string; b?: boolean; tail?: string }[] = [
   { t: 'I’m' },
   { t: 'Julian', b: true },
   { t: 'Juan', b: true, tail: ',' },
-  ...'a senior at Los Gatos High School. I do machine-learning research for particle physics.'
+  ...'a senior at Los_Gatos High School. I_do machine-learning research for particle_physics.'
     .split(' ')
-    .map((t) => ({ t })),
+    .map((t) => ({ t: t.replace(/_/g, '\u00a0') })),
 ];
 ---
 
@@ -248,6 +250,9 @@ const headline: { t: string; b?: boolean; tail?: string }[] = [
   }
   .facts dt {
     color: var(--ink-3);
+  }
+  .facts dd {
+    text-wrap: balance;
   }
   .hero-fig {
     margin-top: clamp(2.25rem, 5vw, 4rem);
