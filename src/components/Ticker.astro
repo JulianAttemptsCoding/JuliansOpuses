@@ -1,7 +1,8 @@
 ---
 // A slow band of the fields the work sits in, separated by the five verdict glyphs.
-// It drifts at one steady speed and pauses under the pointer. Decorative: everything in
-// it is stated elsewhere on the page, so it is hidden from assistive tech.
+// It drifts at one steady speed, pauses under the pointer, and stops with everything
+// else when the reader presses Pause. Decorative: everything in it is stated elsewhere on
+// the page, so it is hidden from assistive tech.
 import { STATUS_ORDER } from '../data/verdicts';
 
 const fields = [
@@ -26,7 +27,7 @@ const copies = Array.from({ length: COPIES }, (_, i) => i);
           {fields.map((f, i) => (
             <li>
               <span>{f}</span>
-              <svg class:list={['glyph', STATUS_ORDER[i % STATUS_ORDER.length]]} viewBox="0 0 12 12" width="12" height="12">
+              <svg class="glyph" viewBox="0 0 12 12" width="11" height="11">
                 {STATUS_ORDER[i % 5] === 'holds' && <circle cx="6" cy="6" r="5" fill="currentColor" />}
                 {STATUS_ORDER[i % 5] === 'open' && (
                   <>
@@ -57,12 +58,16 @@ const copies = Array.from({ length: COPIES }, (_, i) => i);
   </div>
 </div>
 
-
 <style>
+  /* The band runs the full width of the window. It has the page's own surface and sits
+     above the section ticks, so they pass under it instead of over its words. */
   .ticker {
+    position: relative;
+    z-index: 31;
     overflow: hidden;
     border-block: 1px solid var(--rule);
-    padding-block: 0.85rem;
+    padding-block: 0.8rem;
+    background: var(--paper);
   }
   .track {
     display: flex;
@@ -76,30 +81,16 @@ const copies = Array.from({ length: COPIES }, (_, i) => i);
   li {
     display: flex;
     align-items: center;
-    gap: clamp(1.25rem, 2.5vw, 2.25rem);
-    padding-right: clamp(1.25rem, 2.5vw, 2.25rem);
-    font-size: clamp(1rem, 1.6vw, 1.3rem);
-    letter-spacing: -0.02em;
+    gap: clamp(1.25rem, 2.5vw, 2rem);
+    padding-right: clamp(1.25rem, 2.5vw, 2rem);
+    font-size: var(--t-lg);
+    letter-spacing: -0.01em;
     color: var(--ink-2);
     white-space: nowrap;
   }
   .glyph {
     flex: none;
-  }
-  .holds {
-    color: var(--v-holds);
-  }
-  .open {
-    color: var(--v-open);
-  }
-  .prototype {
-    color: var(--v-prototype);
-  }
-  .shipped {
-    color: var(--v-shipped);
-  }
-  .negative {
-    color: var(--v-negative);
+    color: var(--ink);
   }
 
   @keyframes tick {
@@ -111,7 +102,8 @@ const copies = Array.from({ length: COPIES }, (_, i) => i);
     .track {
       animation: tick 38s linear infinite;
     }
-    .ticker:hover .track {
+    .ticker:hover .track,
+    :global(html[data-motion='paused']) .track {
       animation-play-state: paused;
     }
   }

@@ -3,6 +3,7 @@ order: 1
 tier: flagship
 title: Fast-MC-CBSC
 question: Does a simulation that runs far faster still preserve the detector physics?
+summary: Simulating a particle shower with Geant4, the standard detector simulator, is accurate and slow. I’m building a machine-learning model that generates the same showers directly. An early prototype ran about 200× faster in benchmarks. What I’m testing now is whether its showers are close enough to Geant4’s to use.
 claim: A conditional generative surrogate for Geant4 simulation of single-neutron showers in a 65-layer, 6,790-channel calorimeter.
 domain: Scientific ML
 status: open
@@ -21,6 +22,9 @@ metrics:
     value: 0.84 ± 0.01
     note: target ≤ 0.65 · ideal 0.50
 links:
+  - label: Manuscript (PDF)
+    href: /fast-mc-zdc-manuscript.pdf
+    note: 15 pages
   - label: Repository
     href: https://github.com/JulianAttemptsCoding/Fast-MC-CBSC
   - label: Visual QA site
@@ -126,4 +130,4 @@ Matching averages is not the same as matching the distribution. The stricter tes
   <FidelityJudge />
 </Figure>
 
-It does much better than chance. On the accepted best checkpoint the classifier reaches **AUROC 0.84 ± 0.01**, with per-energy-bin values from 0.77 to 0.92, against a target of 0.65. I have never gotten close to it. Validation loss kept improving during training and that number did not move, so I report a lower loss as progress in training and nothing more.
+It does much better than chance. On the accepted best checkpoint the classifier reaches **AUROC 0.84 ± 0.01**, with per-energy-bin values from 0.77 to 0.92, against a target of 0.65 or lower. Validation loss kept improving during training and that number did not move, so I report a lower loss as progress in training only.

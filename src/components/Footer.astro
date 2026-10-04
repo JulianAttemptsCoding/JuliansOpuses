@@ -8,7 +8,10 @@ interface Props {
 }
 const { cta = true } = Astro.props;
 const dev = import.meta.env.DEV;
-const year = new Date().getFullYear();
+const now = new Date();
+const year = now.getFullYear();
+// When the site was last built, so a reader can tell it is kept up to date.
+const updated = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(now);
 // The button only promises a message form when one is actually connected.
 const contactLabel = contact.accessKey || dev ? 'Send a message' : 'Ways to reach me';
 ---
@@ -17,54 +20,58 @@ const contactLabel = contact.accessKey || dev ? 'Send a message' : 'Ways to reac
   <div class="wrap">
     {
       cta && (
-        <>
-          <h2 class="cta">
+        <section class="reach" aria-labelledby="reach-h">
+          <h2 class="cta" id="reach-h">
             <span class="cta-line">Get in touch.</span>
           </h2>
-
-          <ul class="links">
-            <li>
-              <a class="pill primary" href={href('/contact/')} data-magnetic>
-                {contactLabel}
-                <span class="pill-arrow" aria-hidden="true">
-                  →
-                </span>
-              </a>
-            </li>
-            {site.linkedin && (
+          <div class="reach-body">
+            <p class="reach-text">
+              Questions about a project, research, an internship or working together are welcome.
+            </p>
+            <ul class="links">
               <li>
-                <a class="pill fill ext" href={site.linkedin} rel="noopener">LinkedIn</a>
-              </li>
-            )}
-            <li>
-              <a class="pill fill ext" href={site.github} rel="noopener">GitHub</a>
-            </li>
-            {site.resume ? (
-              <li>
-                <a class="pill fill" href={href(site.resume)} target="_blank" rel="noopener">
-                  Résumé (PDF)
+                <a class="pill primary" href={href('/contact/')} data-magnetic>
+                  {contactLabel}
+                  <span class="pill-arrow" aria-hidden="true">
+                    →
+                  </span>
                 </a>
               </li>
-            ) : (
-              dev && (
+              {site.linkedin && (
                 <li>
-                  <span class="placeholder">Résumé: not set</span>
+                  <a class="pill fill ext" href={site.linkedin} rel="noopener">
+                    LinkedIn
+                  </a>
                 </li>
-              )
-            )}
-          </ul>
-          {dev && !site.resume && (
-            <p class="dev-note mono">
-              Dashed items are placeholders from src/data/site.ts and are hidden in the production build.
-            </p>
-          )}
-        </>
+              )}
+              <li>
+                <a class="pill fill ext" href={site.github} rel="noopener">
+                  GitHub
+                </a>
+              </li>
+              {site.resume ? (
+                <li>
+                  <a class="pill fill" href={href(site.resume)} target="_blank" rel="noopener">
+                    Résumé (PDF)
+                  </a>
+                </li>
+              ) : (
+                dev && (
+                  <li>
+                    <span class="placeholder">Résumé: not set</span>
+                  </li>
+                )
+              )}
+            </ul>
+          </div>
+        </section>
       )
     }
 
     <div class="base">
       <span class="mono meta">
         <span>© {year} {site.name}</span>
+        <span>Updated {updated}</span>
         <span class="local">
           <span class="live-dot" aria-hidden="true"></span>
           Local time <span data-clock>in California</span>
@@ -81,8 +88,9 @@ const contactLabel = contact.accessKey || dev ? 'Send a message' : 'Ways to reac
 </footer>
 
 <style>
+  /* The one dark surface. The page above is a sheet that lifts off it. */
   .site-footer {
-    padding-block: clamp(3.5rem, 8vw, 7rem) 2rem;
+    padding-block: clamp(3.5rem, 7vw, 6rem) 1.75rem;
     background: var(--footer-bg);
     color: var(--footer-ink);
   }
@@ -99,12 +107,10 @@ const contactLabel = contact.accessKey || dev ? 'Send a message' : 'Ways to reac
       z-index: 0;
     }
   }
-  .label {
-    color: var(--footer-ink-2);
-  }
   .cta {
-    font-size: clamp(2.4rem, 7vw, 6rem);
-    line-height: 1;
+    font-size: clamp(2.4rem, 6.5vw, 5rem);
+    font-weight: 400;
+    line-height: 1.05;
     letter-spacing: -0.02em;
     overflow: hidden;
     padding-bottom: 0.14em;
@@ -113,7 +119,20 @@ const contactLabel = contact.accessKey || dev ? 'Send a message' : 'Ways to reac
   .cta-line {
     display: inline-block;
   }
-  /* The heading rises out of its mask over the last stretch of the page's scroll. */
+  .reach-body {
+    display: grid;
+    gap: 1.25rem;
+    margin-top: clamp(1.25rem, 2.5vw, 2rem);
+  }
+  .reach-text {
+    max-width: 34rem;
+    font-family: var(--font-display);
+    font-size: var(--t-lg);
+    line-height: 1.6;
+    color: var(--footer-ink-2);
+  }
+  /* The heading rises out of its mask over the last stretch of the page's scroll, and
+     what is under it follows. */
   @keyframes cta-rise {
     from {
       transform: translateY(105%);
@@ -132,7 +151,7 @@ const contactLabel = contact.accessKey || dev ? 'Send a message' : 'Ways to reac
         animation-timeline: scroll(root block);
         animation-range: calc(100% - 420px) calc(100% - 120px);
       }
-      .links {
+      .reach-body {
         animation: links-in linear both;
         animation-timeline: scroll(root block);
         animation-range: calc(100% - 260px) calc(100% - 40px);
@@ -143,8 +162,7 @@ const contactLabel = contact.accessKey || dev ? 'Send a message' : 'Ways to reac
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.75rem;
-    margin-top: clamp(2rem, 4vw, 3.5rem);
+    gap: 0.6rem;
     list-style: none;
   }
   .pill {
@@ -153,9 +171,10 @@ const contactLabel = contact.accessKey || dev ? 'Send a message' : 'Ways to reac
     display: inline-flex;
     align-items: center;
     gap: 0.6em;
-    padding: 0.85em 1.5em;
+    padding: 0.75em 1.4em;
     border: 1px solid var(--footer-rule);
     border-radius: 999px;
+    font-size: var(--t-sm);
     text-decoration: none;
     transition:
       background-color 0.25s var(--ease),
@@ -165,6 +184,11 @@ const contactLabel = contact.accessKey || dev ? 'Send a message' : 'Ways to reac
   }
   .pill:hover {
     border-color: var(--footer-ink);
+    color: var(--footer-ink);
+  }
+  .pill.fill:hover,
+  .pill.fill:focus-visible {
+    color: var(--footer-bg);
   }
   .pill.primary {
     background: var(--footer-ink);
@@ -185,20 +209,17 @@ const contactLabel = contact.accessKey || dev ? 'Send a message' : 'Ways to reac
   .site-footer :focus-visible {
     outline-color: var(--footer-ink);
   }
-  .placeholder,
-  .dev-note {
+  .placeholder {
     color: var(--footer-ink-2);
-  }
-  .dev-note {
-    margin-top: 1rem;
   }
   .base {
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
-    gap: 1rem 2rem;
-    margin-top: clamp(3rem, 7vw, 6rem);
-    padding-top: 1.25rem;
+    align-items: baseline;
+    gap: 0.75rem 2rem;
+    margin-top: clamp(3rem, 6vw, 5rem);
+    padding-top: 1.1rem;
     border-top: 1px solid var(--footer-rule);
     color: var(--footer-ink-2);
   }
@@ -216,26 +237,15 @@ const contactLabel = contact.accessKey || dev ? 'Send a message' : 'Ways to reac
     align-items: center;
     gap: 0.6em;
   }
-  .local :global(.colon) {
-    animation: blink 2s steps(1) infinite;
-  }
-  @keyframes blink {
-    50% {
-      opacity: 0.25;
-    }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .local :global(.colon) {
-      animation: none;
-    }
-  }
   .base nav {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem 1.5rem;
-    font-size: 0.9rem;
+    gap: 0.25rem 1.5rem;
+    font-size: var(--t-sm);
   }
+  /* Each link is tall enough to press. */
   .base a {
+    padding-block: 0.15rem;
     text-decoration: none;
   }
   .base a:hover {

@@ -1,110 +1,284 @@
 ---
-// Projects: the full list. Four main projects, then the smaller study that ended in a negative result.
+// Projects: one highlighted project set out in full, the other main projects as a list
+// the full width of the column, then the smaller study that ended in a negative result.
 import { getCollection } from 'astro:content';
+import { getImage } from 'astro:assets';
 import Base from '../../layouts/Base.astro';
 import Verdict from '../../components/Verdict.astro';
 import WorkRows from '../../components/WorkRows.astro';
 import RowPreview from '../../components/RowPreview.astro';
+import { href } from '../../lib/url';
 import { STATUS_ORDER } from '../../data/verdicts';
 
 const all = (await getCollection('work')).sort((a, b) => a.data.order - b.data.order);
 const main = all.filter((w) => w.data.tier === 'flagship');
 const notes = all.filter((w) => w.data.tier === 'note');
+const [lead, ...selected] = main;
+const cover = await getImage({ src: lead.data.cover, width: 1200 });
+const num = (n: number) => String(n).padStart(2, '0');
+const sections = [
+  { id: 'highlighted', label: 'Highlighted' },
+  { id: 'selected', label: 'Selected' },
+  { id: 'negative', label: 'Negative result' },
+];
 ---
 
-<Base title="Projects" description="Five projects by Julian Juan, each with how it did when it was tested.">
-  <section class="intro wrap">
+<Base
+  title="Projects"
+  description="Five projects by Julian Juan: research, software and a prototype, each with its result so far."
+  sections={sections}
+>
+  <section class="page-intro wrap g12">
     <h1>Projects</h1>
-    <p class="lede">
-      Five things I built, and how each one did when I tested it. One of them failed, and it’s written up the same
-      way as the others.
-    </p>
+    <div class="lede">
+      <p class="claim">Research, software and a prototype.</p>
+      <p>Five projects. Each write-up covers what I built, the result so far, and what is still open.</p>
+    </div>
+    <ul class="legend side" aria-label="What the labels mean. Point at or focus one to read it.">
+      {
+        STATUS_ORDER.map((s) => (
+          <li>
+            <Verdict status={s} bare />
+          </li>
+        ))
+      }
+    </ul>
   </section>
 
-  <section class="wrap list">
-    <header class="sec-head">
-      <p class="sec-intro">Point at a label to see what it means.</p>
-      <ul class="legend" aria-label="What the labels mean. Point at or focus one to read it.">
-        {
-          STATUS_ORDER.map((s) => (
-            <li>
-              <Verdict status={s} bare />
-            </li>
-          ))
-        }
-      </ul>
-    </header>
-    <WorkRows items={main} />
+  <section class="section wrap ledger" id="highlighted" data-rule>
+    <h2 class="sec-title marked"><span data-reveal="mask-in">Highlighted project</span></h2>
+    <article class="lead g9">
+      <div class="lead-text">
+        <h3 class="lead-title display" style={`view-transition-name: work-${lead.id}`} data-reveal>
+          <span class="num mono">{num(lead.data.order)}</span>
+          <a class="quiet" href={href(`/work/${lead.id}/`)}>{lead.data.title}</a>
+        </h3>
+        <p class="lead-question" data-reveal>{lead.data.question}</p>
+        <p class="lead-claim read" data-reveal>{lead.data.summary}</p>
+        <div class="lead-result" data-reveal>
+          <Verdict status={lead.data.status} />
+          <span>{lead.data.evidence}</span>
+        </div>
+        <ul class="lead-links" data-reveal>
+          <li>
+            <a href={href(`/work/${lead.id}/`)}>Read the write-up&nbsp;→</a>
+          </li>
+          {
+            lead.data.links.map((l) => {
+              const local = l.href.startsWith('/');
+              return (
+                <li>
+                  <a
+                    class:list={{ ext: !local }}
+                    href={local ? href(l.href) : l.href}
+                    target={local ? '_blank' : undefined}
+                    rel="noopener"
+                  >
+                    {l.label}
+                  </a>
+                  {l.note && <span class="link-note mono">{l.note}</span>}
+                </li>
+              );
+            })
+          }
+        </ul>
+      </div>
+      <div class="lead-side">
+        <figure class="lead-fig" data-reveal="scale">
+          <a class="frame" href={href(`/work/${lead.id}/`)} tabindex="-1" aria-hidden="true">
+            <img
+              src={cover.src}
+              alt=""
+              loading="eager"
+              decoding="async"
+              width={cover.attributes.width}
+              height={cover.attributes.height}
+            />
+          </a>
+          <figcaption>{lead.data.coverAlt}</figcaption>
+        </figure>
+        <dl class="lead-facts" data-stagger>
+          {
+            lead.data.metrics.map((m) => (
+              <div>
+                <dt>{m.label}</dt>
+                <dd class="mono">{m.value}</dd>
+              </div>
+            ))
+          }
+        </dl>
+      </div>
+    </article>
+  </section>
 
-    <div class="sub-head">
-      <h2 class="label marked">A smaller study</h2>
-      <p>The one where the result went away under harder testing.</p>
-    </div>
+  <section class="section wrap" id="selected">
+    <header class="sec-head" data-rule>
+      <div>
+        <h2 class="sec-title marked"><span data-reveal="mask">Selected projects</span></h2>
+      </div>
+    </header>
+    <WorkRows items={selected} />
+  </section>
+
+  <section class="section wrap" id="negative">
+    <header class="sec-head" data-rule>
+      <div>
+        <h2 class="sec-title marked"><span data-reveal="mask">Negative result</span></h2>
+        <p class="sec-intro" data-reveal>A smaller study, where the result went away under harder testing.</p>
+      </div>
+    </header>
     <WorkRows items={notes} small />
   </section>
 
-  <RowPreview items={all} />
+  <RowPreview items={[...selected, ...notes]} />
 </Base>
 
 <style>
-  .intro {
-    padding-top: clamp(3rem, 9vw, 7rem);
+  /* The introduction: one plain claim, the detail under it, and the key to the labels
+     beside them. */
+  .page-intro {
+    align-items: first baseline;
   }
-  h1 {
-    font-size: clamp(2.6rem, 6.4vw, 5.2rem);
-    line-height: 1;
-    letter-spacing: -0.025em;
+  .page-intro .lede {
+    display: grid;
+    gap: 0.4rem;
   }
-  .lede {
-    max-width: 52ch;
-    margin-top: 1.5rem;
-    font-size: clamp(1.08rem, 1.45vw, 1.3rem);
-    line-height: 1.5;
-    color: var(--ink-2);
-  }
-  @media (prefers-reduced-motion: no-preference) {
-    :global(html.js) .intro h1,
-    :global(html.js) .intro .lede {
-      animation: fade-up 0.8s var(--ease) both;
-    }
-    :global(html.js) .intro .lede {
-      animation-delay: 0.12s;
-    }
-  }
-  .list {
-    padding-top: clamp(2.5rem, 6vw, 4.5rem);
-  }
-  .sec-head {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: end;
-    justify-content: space-between;
-    gap: 0.75rem 2rem;
-    padding-bottom: 1.1rem;
-    border-bottom: 1px solid var(--ink);
-  }
-  .sec-intro {
-    color: var(--ink-3);
-    font-size: 0.95rem;
+  .claim {
+    color: var(--ink);
   }
   .legend {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.25rem 1.25rem;
+    gap: 0.1rem 1.1rem;
     list-style: none;
     color: var(--ink-2);
   }
-  .sub-head {
+
+  /* ---------- Highlighted: the text on the left, its figure and numbers beside it ---------- */
+  .lead {
+    row-gap: 2rem;
+    align-items: start;
+  }
+  .lead-text {
+    grid-column: 1 / span 5;
+    display: grid;
+    justify-items: start;
+  }
+  .lead-title {
+    font-size: var(--t-row);
+    font-weight: 500;
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+  }
+  .lead-title a {
+    text-decoration-thickness: 1px;
+  }
+  .num {
+    display: inline-block;
+    width: var(--hang);
+    margin-left: calc(var(--hang) * -1);
+    color: var(--ink-3);
+    font-weight: 400;
+    letter-spacing: 0;
+    vertical-align: 0.45em;
+  }
+  .lead-question {
+    margin-top: 0.7rem;
+    font-family: var(--font-display);
+    font-size: var(--t-xl);
+    line-height: 1.4;
+  }
+  .lead-claim {
+    margin-top: 0.8rem;
+    color: var(--ink-2);
+  }
+  .lead-result {
+    display: grid;
+    justify-items: start;
+    gap: 0.35rem;
+    width: 100%;
+    margin-top: 1.25rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid var(--rule);
+    color: var(--ink-2);
+    font-size: var(--t-sm);
+    line-height: 1.5;
+  }
+  .lead-result span:last-child {
+    max-width: 32rem;
+  }
+  .lead-links {
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
     gap: 0.4rem 1.5rem;
-    margin-top: clamp(2.5rem, 5vw, 4rem);
-    padding-bottom: 1rem;
-    border-bottom: 1px solid var(--ink);
+    margin-top: 1.25rem;
+    list-style: none;
+    font-size: var(--t-sm);
   }
-  .sub-head p {
-    color: var(--ink-2);
-    font-size: 0.95rem;
+  .link-note {
+    margin-left: 0.5em;
+    color: var(--ink-3);
+  }
+  .lead-side {
+    grid-column: 6 / -1;
+  }
+  .lead-fig {
+    margin: 0;
+  }
+  .frame {
+    display: block;
+    padding: clamp(0.6rem, 1.2vw, 1rem);
+    background: var(--thumb);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    isolation: isolate;
+  }
+  .frame img {
+    width: 100%;
+    height: auto;
+    filter: var(--thumb-filter);
+    mix-blend-mode: var(--thumb-blend);
+  }
+  .lead-fig figcaption {
+    margin-top: 0.55rem;
+    color: var(--ink-3);
+    font-size: var(--t-sm);
+    line-height: 1.5;
+  }
+  .lead-facts {
+    margin-top: 1.25rem;
+    border-top: 1px solid var(--rule);
+    font-size: var(--t-sm);
+  }
+  .lead-facts div {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    padding-block: 0.45rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  .lead-facts dt {
+    color: var(--ink-3);
+  }
+  .lead-facts dd {
+    text-align: right;
+  }
+
+  @media (max-width: 1000px) {
+    .lead-text,
+    .lead-side {
+      grid-column: 1 / -1;
+    }
+    .lead-side {
+      max-width: 34rem;
+    }
+  }
+  @media (max-width: 900px) {
+    .num {
+      width: auto;
+      margin: 0 0.6rem 0 0;
+    }
   }
 </style>

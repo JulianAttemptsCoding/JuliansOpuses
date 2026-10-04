@@ -1,41 +1,96 @@
 ---
-// Experience: the research, every award, and the two leadership roles, in full.
+// Experience: the research, every award, and every role outside the lab, in full.
+import { getCollection } from 'astro:content';
+import { getImage } from 'astro:assets';
 import Base from '../layouts/Base.astro';
 import Awards from '../components/Awards.astro';
 import { href } from '../lib/url';
-import { experience, leadership } from '../data/profile';
+import { experience, leadership, activities } from '../data/profile';
+
+const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+// Everything I have a role in: the two with a budget or a curriculum behind them first.
+const roles = [...leadership, ...activities];
+
+// A piece of work that became a project on this site is shown with that project's figure.
+const work = await getCollection('work');
+const strands = await Promise.all(
+  experience.strands.map(async (s) => {
+    const entry = s.link && work.find((w) => s.link!.path === `/work/${w.id}/`);
+    return {
+      ...s,
+      fig: entry ? { img: await getImage({ src: entry.data.cover, width: 720 }), caption: entry.data.coverAlt } : null,
+    };
+  }),
+);
 ---
 
-<Base title="Experience" description="Julian Juan’s research at Academia Sinica, awards, and leadership roles.">
-  <section class="intro wrap">
+<Base
+  title="Experience"
+  description="Julian Juan’s research at Academia Sinica, awards, leadership and activities."
+  sections={[
+    { id: 'research', label: 'Research' },
+    { id: 'awards', label: 'Awards' },
+    { id: 'leadership', label: 'Leadership' },
+  ]}
+>
+  <section class="page-intro wrap g12">
     <h1>Experience</h1>
-    <p class="lede">The research I’ve done, the awards, and the two roles where other people were counting on me.</p>
+    <p class="lede">Research, awards, and what I do outside the lab.</p>
   </section>
 
   <section class="section wrap ledger" id="research" data-rule>
-    <h2 class="label marked ledger-label">Research</h2>
+    <h2 class="sec-title marked"><span data-reveal="mask-in">Research</span></h2>
     <div>
-      <p class="exp-org display" data-reveal="mask">
-        <a class="ext quiet" href={experience.href} rel="noopener">{experience.org}</a>
-      </p>
-      <p class="exp-meta" data-reveal>
-        {experience.role} in {experience.place}, {experience.dates}
-      </p>
-      <p class="exp-summary" data-reveal>{experience.summary} Three pieces of work came out of it.</p>
+      <div class="g9 org">
+        <div class="org-text">
+          <h3 class="exp-org display" data-reveal="mask">
+            <a class="ext quiet" href={experience.href} rel="noopener">{experience.org}</a>
+          </h3>
+          <p class="exp-summary read" data-reveal>{experience.summary} Three pieces of work came out of it.</p>
+        </div>
+        <dl class="facts" data-stagger>
+          <div>
+            <dt>Role</dt>
+            <dd>{experience.role}</dd>
+          </div>
+          <div>
+            <dt>Where</dt>
+            <dd>{experience.place}</dd>
+          </div>
+          <div>
+            <dt>When</dt>
+            <dd class="when">{experience.dates}</dd>
+          </div>
+        </dl>
+      </div>
       <ol class="strands" data-stagger>
         {
-          experience.strands.map((s, i) => (
-            <li>
-              <span class="strand-n">{i + 1}</span>
-              <div>
-                <h3>{s.title}</h3>
-                <p>{s.body}</p>
+          strands.map((s) => (
+            <li class="g9" id={slug(s.title)}>
+              <div class="strand-text">
+                <h4>{s.title}</h4>
+                <p class="read">{s.body}</p>
                 {s.link && (
-                  <a class="more" href={href(s.link.path)}>
-                    {s.link.label} →
-                  </a>
+                  <p class="more">
+                    <a href={href(s.link.path)}>{s.link.label}&nbsp;→</a>
+                  </p>
                 )}
               </div>
+              {s.link && s.fig && (
+                <figure class="strand-fig">
+                  <a class="frame" href={href(s.link.path)} tabindex="-1" aria-hidden="true">
+                    <img
+                      src={s.fig.img.src}
+                      alt=""
+                      loading="lazy"
+                      decoding="async"
+                      width={s.fig.img.attributes.width}
+                      height={s.fig.img.attributes.height}
+                    />
+                  </a>
+                  <figcaption>{s.fig.caption}</figcaption>
+                </figure>
+              )}
             </li>
           ))
         }
@@ -44,18 +99,17 @@ import { experience, leadership } from '../data/profile';
   </section>
 
   <section class="section wrap ledger" id="awards" data-rule>
-    <h2 class="label marked ledger-label">Awards</h2>
+    <h2 class="sec-title marked"><span data-reveal="mask-in">Awards</span></h2>
     <Awards />
   </section>
 
   <section class="section wrap ledger" id="leadership" data-rule>
-    <h2 class="label marked ledger-label">Leadership</h2>
-    <div>
-      <div class="lead-grid" data-stagger>
-        {
-          leadership.map((l) => (
-            <article class="lead">
-              <p class="lead-role">{l.role}</p>
+    <h2 class="sec-title marked"><span data-reveal="mask-in">Leadership and activities</span></h2>
+    <div class="roles">
+      {
+        roles.map((l) => (
+          <article class="role g9" data-reveal>
+            <div class="role-text">
               <h3>
                 {l.href ? (
                   <a class="ext quiet" href={l.href} rel="noopener">{l.title}</a>
@@ -63,6 +117,15 @@ import { experience, leadership } from '../data/profile';
                   l.title
                 )}
               </h3>
+              <p class="role-name">{l.role}</p>
+              <p class="read">{l.body}</p>
+              {'link' in l && l.link && (
+                <p class="role-link">
+                  <a class="ext" href={l.link.href} rel="noopener">{l.link.label}</a>
+                </p>
+              )}
+            </div>
+            {l.figures && l.figures.length > 0 && (
               <dl class="figures">
                 {l.figures.map((f) => (
                   <div>
@@ -71,117 +134,143 @@ import { experience, leadership } from '../data/profile';
                   </div>
                 ))}
               </dl>
-              <p>{l.body}</p>
-            </article>
-          ))
-        }
-      </div>
-      <p class="onward" data-reveal>
-        <a href={href('/about/#outside')}>Los Gatos Hacks, outreach and tutoring are on the About page →</a>
-      </p>
+            )}
+          </article>
+        ))
+      }
     </div>
   </section>
 </Base>
 
 <style>
-  .intro {
-    padding-top: clamp(3rem, 9vw, 7rem);
+  /* ---------- Research: where it was, with the plain facts beside it ---------- */
+  .org {
+    align-items: first baseline;
+    row-gap: 1.25rem;
   }
-  h1 {
-    font-size: clamp(2.6rem, 6.4vw, 5.2rem);
-    line-height: 1;
-    letter-spacing: -0.025em;
+  .org-text {
+    grid-column: 1 / span 6;
   }
-  .lede {
-    max-width: 52ch;
-    margin-top: 1.5rem;
-    font-size: clamp(1.08rem, 1.45vw, 1.3rem);
-    line-height: 1.5;
-    color: var(--ink-2);
-  }
-  @media (prefers-reduced-motion: no-preference) {
-    :global(html.js) .intro h1,
-    :global(html.js) .intro .lede {
-      animation: fade-up 0.8s var(--ease) both;
-    }
-    :global(html.js) .intro .lede {
-      animation-delay: 0.12s;
-    }
-  }
-
   .exp-org {
-    font-size: clamp(1.7rem, 3vw, 2.5rem);
-    line-height: 1.1;
-  }
-  .exp-meta {
-    margin-top: 0.6rem;
-    color: var(--ink-3);
+    font-size: var(--t-org);
+    font-weight: 400;
+    line-height: 1.12;
+    letter-spacing: -0.018em;
   }
   .exp-summary {
-    max-width: 58ch;
-    margin-top: 1.1rem;
-    color: var(--ink-2);
-    font-size: 1.08rem;
+    margin-top: 1rem;
   }
+  .facts {
+    grid-column: 7 / -1;
+    font-size: var(--t-sm);
+  }
+  .facts div {
+    display: grid;
+    grid-template-columns: 3.75rem minmax(0, 1fr);
+    gap: 1rem;
+    padding-block: 0.5rem;
+    border-top: 1px solid var(--rule);
+  }
+  .facts div:last-child {
+    border-bottom: 1px solid var(--rule);
+  }
+  .facts dt {
+    color: var(--ink-3);
+  }
+  /* The data says "summers of ...": as a value it reads better with a capital. */
+  .when::first-letter {
+    text-transform: uppercase;
+  }
+
+  /* Each piece of work: its name, then what it was. */
   .strands {
+    margin-top: clamp(1.75rem, 3vw, 2.5rem);
     list-style: none;
-    margin-top: 2rem;
     border-top: 1px solid var(--rule);
   }
   .strands li {
-    display: grid;
-    grid-template-columns: 2.25rem minmax(0, 1fr);
-    padding-block: 1.25rem;
+    row-gap: 0.9rem;
+    align-items: start;
+    padding-block: 1.1rem 1.25rem;
     border-bottom: 1px solid var(--rule);
   }
-  .strand-n {
-    color: var(--accent-2);
-    font-family: var(--font-display);
-    font-size: 1.15rem;
-    line-height: 1.25;
+  .strand-text {
+    grid-column: 1 / span 6;
   }
-  .strands h3 {
-    font-size: 1.2rem;
+  .strands h4 {
+    font-size: var(--t-lg);
+    font-weight: 600;
+    line-height: 1.4;
   }
   .strands p {
-    max-width: 62ch;
-    margin-top: 0.4rem;
-    color: var(--ink-2);
+    margin-top: 0.3rem;
   }
-  .more {
-    display: inline-block;
+  .strands .more {
     margin-top: 0.6rem;
-    font-size: 0.95rem;
+    font-family: var(--font-sans);
+    font-size: var(--t-sm);
+  }
+  /* The figure of the project that piece of work became, beside it. */
+  .strand-fig {
+    grid-column: 7 / -1;
+    margin: 0;
+  }
+  .frame {
+    display: block;
+    padding: 0.6rem;
+    background: var(--thumb);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    isolation: isolate;
+  }
+  .frame img {
+    width: 100%;
+    height: auto;
+    filter: var(--thumb-filter);
+    mix-blend-mode: var(--thumb-blend);
+  }
+  .strand-fig figcaption {
+    margin-top: 0.5rem;
+    color: var(--ink-3);
+    font-size: var(--t-sm);
+    line-height: 1.5;
   }
 
-  .lead-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0 clamp(1.5rem, 4vw, 3.5rem);
+  /* ---------- Leadership: what I did, with its numbers beside it ---------- */
+  .role {
+    row-gap: 0.9rem;
+    align-items: first baseline;
+    padding-block: 1.2rem 1.4rem;
+    border-bottom: 1px solid var(--rule);
   }
-  /* Each card shares the grid's rows, so titles, figures and text line up across cards. */
-  .lead {
-    display: grid;
-    grid-template-rows: subgrid;
-    grid-row: span 4;
-    gap: 0;
+  .role:first-child {
+    padding-top: 0;
   }
-  .lead-role {
+  .role-text {
+    grid-column: 1 / span 6;
+  }
+  .role h3 {
+    font-size: var(--t-h3);
+    line-height: 1.25;
+  }
+  .role-name {
+    margin-top: 0.3rem;
     color: var(--ink-3);
-    font-size: 0.92rem;
+    font-size: var(--t-sm);
   }
-  .lead h3 {
-    margin-top: 0.4rem;
-    font-size: clamp(1.4rem, 2.1vw, 1.8rem);
+  .role .read {
+    margin-top: 0.9rem;
+  }
+  .role-link {
+    margin-top: 0.5rem;
+    font-size: var(--t-sm);
   }
   .figures {
+    grid-column: 7 / -1;
     display: flex;
     flex-wrap: wrap;
     align-items: end;
-    gap: 0.75rem 2rem;
-    margin-block: 1.25rem;
-    padding-block: 1rem;
-    border-block: 1px solid var(--rule);
+    gap: 0.6rem 2rem;
   }
   .figures div {
     display: flex;
@@ -189,27 +278,27 @@ import { experience, leadership } from '../data/profile';
   }
   .figures dd {
     font-family: var(--font-display);
-    font-size: 1.9rem;
-    line-height: 1.1;
+    font-size: var(--t-h2);
+    line-height: 1.2;
     font-variant-numeric: tabular-nums;
   }
   .figures dt {
-    margin-top: 0.2rem;
-    font-size: 0.82rem;
+    font-size: var(--t-xs);
     color: var(--ink-3);
   }
-  .lead > p:last-child {
-    color: var(--ink-2);
-    font-size: 0.98rem;
-  }
 
-  @media (max-width: 720px) {
-    .lead-grid {
-      grid-template-columns: minmax(0, 1fr);
+  @media (max-width: 1000px) {
+    .org-text,
+    .facts,
+    .strand-text,
+    .strand-fig,
+    .role-text,
+    .figures {
+      grid-column: 1 / -1;
     }
-    /* Stacked cards need their own breathing room. */
-    .lead + .lead {
-      margin-top: 2.25rem;
+    .facts,
+    .strand-fig {
+      max-width: 26rem;
     }
   }
 </style>

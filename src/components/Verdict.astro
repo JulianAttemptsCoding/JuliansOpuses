@@ -12,7 +12,7 @@ const { status, bare = false } = Astro.props;
 const Tag = bare ? 'button' : 'span';
 ---
 
-<Tag class:list={['verdict', status, { bare }]} type={bare ? 'button' : undefined} data-verdict>
+<Tag class:list={['verdict', status, { bare }]} type={bare ? 'button' : undefined} data-verdict={status}>
   <svg class="glyph" viewBox="0 0 12 12" width="11" height="11" aria-hidden="true">
     {status === 'holds' && <circle cx="6" cy="6" r="5" fill="currentColor" />}
     {
@@ -53,9 +53,21 @@ const Tag = bare ? 'button' : 'span';
 <script>
   // Keep each explanation inside the viewport: nudge it sideways if it would spill out.
   const EDGE = 12;
-  document.querySelectorAll<HTMLElement>('[data-verdict]').forEach((el) => {
+  const verdicts = document.querySelectorAll<HTMLElement>('[data-verdict]');
+  // Escape puts an open explanation away without moving the pointer or the focus. It
+  // comes back the next time the label is pointed at or focused.
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    verdicts.forEach((el) => {
+      if (el.matches(':hover, :focus')) el.setAttribute('data-tip-off', '');
+    });
+  });
+  verdicts.forEach((el) => {
     const tip = el.querySelector<HTMLElement>('.tip');
     if (!tip) return;
+    const back = () => el.removeAttribute('data-tip-off');
+    el.addEventListener('pointerleave', back);
+    el.addEventListener('blur', back);
     const fit = () => {
       tip.style.setProperty('--shift', '0px');
       const r = tip.getBoundingClientRect();
@@ -77,11 +89,12 @@ const Tag = bare ? 'button' : 'span';
     display: inline-flex;
     align-items: center;
     gap: 0.45em;
-    padding: 0.2em 0;
+    /* Tall enough to press: 24px with the line of text. */
+    padding: 0.27em 0;
     border: 0;
     background: none;
     font-family: var(--font-sans);
-    font-size: 0.86rem;
+    font-size: var(--t-sm);
     font-weight: 500;
     line-height: 1.2;
     white-space: nowrap;
@@ -146,10 +159,23 @@ const Tag = bare ? 'button' : 'span';
     left: auto;
     right: 0;
   }
+  /* The gap between the label and its explanation counts as part of the explanation, so
+     the pointer can move onto it without it closing. */
+  .tip::before {
+    content: '';
+    position: absolute;
+    inset: -10px 0 100% 0;
+  }
   .verdict:hover .tip,
   .verdict:focus .tip {
     opacity: 1;
     visibility: visible;
+    pointer-events: auto;
     translate: var(--shift, 0px) 0;
+  }
+  .verdict[data-tip-off] .tip {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
   }
 </style>

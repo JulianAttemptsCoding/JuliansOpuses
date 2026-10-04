@@ -141,6 +141,8 @@ export const activities: {
   title: string;
   href?: string;
   role: string;
+  /** Numbers already stated in the body, set beside it. */
+  figures?: { value: string; label: string }[];
   body: string;
   link?: { label: string; href: string };
 }[] = [
@@ -149,6 +151,10 @@ export const activities: {
     title: 'Los Gatos Hacks',
     href: links.lgHacks,
     role: 'Director of Strategy',
+    figures: [
+      { value: '115', label: 'hackers in 2026' },
+      { value: '39', label: 'projects in 2026' },
+    ],
     body: 'I’m on the leadership team of this nonprofit, which runs a one-day hackathon for middle and high school students. It has grown each year, from 50 hackers and 17 projects in 2023 to 115 hackers and 39 projects in 2026.',
     link: { label: 'See every year in the archive', href: links.lgHacksArchive },
   },
@@ -156,6 +162,7 @@ export const activities: {
     title: 'STEM Beyond Boundaries',
     href: links.stemBeyondBoundaries,
     role: 'Director of Outreach',
+    figures: [{ value: '~80', label: 'children taught' }],
     body: 'I help run outreach for a group that brings science lessons to kids. So far I’ve taught about 80 children, with hands-on lessons on topics like magnetism.',
   },
   {
@@ -198,7 +205,7 @@ export const college = {
       school: 'West Valley College',
       href: links.westValley,
       dates: '2024 – present',
-      facts: [{ text: 'Honors Program', href: links.westValleyHonors }, ', mathematics and data science'],
+      facts: [{ text: 'Honors Program', href: links.westValleyHonors }],
       courses: [
         { code: 'MATH 004A', title: 'Multivariable Calculus' },
         { code: 'MATH 004B', title: 'Differential Equations' },
@@ -229,6 +236,7 @@ export const college = {
   ] satisfies School[],
 };
 
+/** The About page lists these by name. */
 export const tools: { label: string; href: string }[] = [
   { label: 'Python', href: 'https://www.python.org/' },
   { label: 'C++', href: 'https://isocpp.org/' },

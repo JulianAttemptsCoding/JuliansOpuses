@@ -1,5 +1,6 @@
 ---
-import '@fontsource-variable/source-serif-4';
+// The serif is loaded with its optical-size axis, so headings get the display cut.
+import '@fontsource-variable/source-serif-4/opsz.css';
 import '@fontsource-variable/geist';
 import '@fontsource-variable/geist-mono';
 import 'lenis/dist/lenis.css';
@@ -17,12 +18,35 @@ interface Props {
   cta?: boolean;
   /** Show a reading-progress line under the header (case studies). */
   progress?: boolean;
+  /** A project's verdict: its colour is used for that page's accents. */
+  status?: string;
+  /** The page's sections, by element id, for the column of ticks in the right gutter. */
+  sections?: { id: string; label: string }[];
 }
-const { title, description = site.description, cta = true, progress = false } = Astro.props;
+const {
+  title,
+  description = site.description,
+  cta = true,
+  progress = false,
+  status,
+  sections = [],
+} = Astro.props;
+// Set on <body>, so the header, the page and the footer all follow.
+const bodyVars = status ? `--hue: var(--v-${status})` : undefined;
 const fullTitle = title ? `${title} | ${site.name}` : site.title;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 // The card shown when a link to the site is shared.
 const preview = new URL(href('/og.png'), Astro.site);
+// Who the site is about, in the form search engines read. Only on the home page.
+const isHome = Astro.url.pathname === href('/');
+const person = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: site.name,
+  url: new URL(href('/'), Astro.site).href,
+  description: site.description,
+  sameAs: [site.github, site.linkedin].filter(Boolean),
+};
 ---
 
 <!doctype html>
@@ -34,6 +58,7 @@ const preview = new URL(href('/og.png'), Astro.site);
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
     <link rel="icon" type="image/svg+xml" href={href('/favicon.svg')} />
+    <link rel="sitemap" href={href('/sitemap.xml')} />
     <meta property="og:type" content="website" />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
@@ -46,15 +71,18 @@ const preview = new URL(href('/og.png'), Astro.site);
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="theme-color" content="#f2f0e9" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#181b1f" media="(prefers-color-scheme: dark)" />
+    {isHome && <script type="application/ld+json" is:inline set:html={JSON.stringify(person)} />}
     <script is:inline>
-      // Runs before first paint: mark that scripts work, apply a saved theme, and decide
-      // whether this is the first page of the visit (which gets the short intro).
+      // Runs before first paint: mark that scripts work, apply a saved theme and a saved
+      // "paused" choice, and decide whether this is the first page of the visit (which
+      // gets the short intro).
       (function () {
         var d = document.documentElement;
         d.classList.add('js');
         try {
           var t = localStorage.getItem('theme');
           if (t === 'light' || t === 'dark') d.dataset.theme = t;
+          if (localStorage.getItem('motion') === 'paused') d.dataset.motion = 'paused';
         } catch (e) {}
         try {
           var calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -66,15 +94,15 @@ const preview = new URL(href('/og.png'), Astro.site);
       })();
     </script>
   </head>
-  <body id="top">
-    <!-- First-visit intro: the five verdicts flick past, then the curtain lifts. It only
+  <body id="top" style={bodyVars}>
+    <!-- First-visit intro: the five labels flick past, then the curtain lifts. It only
          appears when the inline script above adds `intro`, so it never blocks a reader
          without JavaScript or one who prefers reduced motion. -->
     <div class="intro-screen" aria-hidden="true" data-intro>
       <div class="intro-stack">
         {
           STATUS_ORDER.map((s, i) => (
-            <span class="intro-word mono" style={`--k:${i}`}>
+            <span class="intro-word" style={`--k:${i}`}>
               {VERDICTS[s].label}
             </span>
           ))
@@ -86,6 +114,24 @@ const preview = new URL(href('/og.png'), Astro.site);
     <a class="skip" href="#main">Skip to content</a>
     <Header progress={progress} />
     <main id="main">
+      {
+        sections.length > 0 && (
+          <div class="ticks-anchor">
+            <nav class="ticks" aria-label="Sections of this page">
+              <ol>
+                {sections.map((s) => (
+                  <li>
+                    <a href={`#${s.id}`} data-tick={s.id}>
+                      <span class="ticks-name">{s.label}</span>
+                      <span class="ticks-mark" />
+                    </a>
+                  </li>
+                ))}
+              </ol>
+            </nav>
+          </div>
+        )
+      }
       <slot />
     </main>
     <Footer cta={cta} />
@@ -144,14 +190,62 @@ const preview = new URL(href('/og.png'), Astro.site);
     });
   }
 
+  // ---- Pause: one switch for everything that moves on its own (the detector drawing,
+  // the band of fields, the live dots). Any [data-pause] button flips it, and the choice
+  // is remembered.
+  const pauses = document.querySelectorAll<HTMLButtonElement>('[data-pause]');
+  const showPaused = () => {
+    const paused = root.dataset.motion === 'paused';
+    pauses.forEach((b) => {
+      b.textContent = paused ? 'Play' : 'Pause';
+      b.setAttribute('aria-label', paused ? 'Play the animations' : 'Pause the animations');
+    });
+  };
+  showPaused();
+  pauses.forEach((b) =>
+    b.addEventListener('click', () => {
+      const paused = root.dataset.motion !== 'paused';
+      if (paused) root.dataset.motion = 'paused';
+      else delete root.dataset.motion;
+      try {
+        localStorage.setItem('motion', paused ? 'paused' : 'playing');
+      } catch {
+        /* the choice still holds for this page */
+      }
+      showPaused();
+    }),
+  );
+
+  // ---- The section being read: its marker fills, and its tick in the gutter lengthens. ----
+  // A section is "being read" while it crosses a thin band a little above the middle of
+  // the window, so exactly one is current at a time.
+  const marked = document.querySelectorAll<HTMLElement>('main section[id]:has(.marked)');
+  if (marked.length && 'IntersectionObserver' in window) {
+    const ticks = new Map<string, HTMLElement>();
+    document.querySelectorAll<HTMLElement>('[data-tick]').forEach((a) => ticks.set(a.dataset.tick!, a));
+    const spy = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const el = entry.target as HTMLElement;
+          el.toggleAttribute('data-current', entry.isIntersecting);
+          const tick = ticks.get(el.id);
+          if (entry.isIntersecting) tick?.setAttribute('aria-current', 'location');
+          else tick?.removeAttribute('aria-current');
+        }
+      },
+      { rootMargin: '-38% 0px -60% 0px' },
+    );
+    marked.forEach((s) => spy.observe(s));
+  }
+
   // ---- Numbers count up, slowly enough to watch, once they are well inside the window. ----
   const counters = document.querySelectorAll<HTMLElement>('[data-count]');
   if (counters.length && !calm && 'IntersectionObserver' in window) {
-    const DURATION = 2600;
+    const DURATION = 2200;
     const plans = new Map<Element, { pre: string; target: number; post: string }>();
     counters.forEach((el) => {
       // Only plain quantities count up: "$88M" does, a range like "9th–10th" stays as written.
-      const m = el.textContent!.trim().match(/^([$€£]?)(\d+)([A-Za-z%+]{0,3})$/);
+      const m = el.textContent!.trim().match(/^([$€£~]?)(\d+)([A-Za-z%+]{0,3})$/);
       if (!m) return;
       plans.set(el, { pre: m[1], target: Number(m[2]), post: m[3] });
       // Hold the width of the final value so nothing shifts while it counts.
@@ -227,7 +321,7 @@ const preview = new URL(href('/og.png'), Astro.site);
     const tick = () => {
       const parts = fmt.formatToParts(new Date());
       const get = (type: string) => parts.find((p) => p.type === type)?.value ?? '';
-      clock.innerHTML = `${get('hour')}<span class="colon">:</span>${get('minute')} ${get('dayPeriod')} ${get('timeZoneName')}`;
+      clock.textContent = `${get('hour')}:${get('minute')} ${get('dayPeriod')} ${get('timeZoneName')}`;
     };
     tick();
     setInterval(tick, 15_000);
@@ -247,11 +341,6 @@ const preview = new URL(href('/og.png'), Astro.site);
   }
   .skip:focus {
     top: 0;
-  }
-
-  [data-magnetic] {
-    transition: transform 0.45s cubic-bezier(0.2, 1.5, 0.4, 1);
-    will-change: transform;
   }
 
   /* ---------- Intro ---------- */

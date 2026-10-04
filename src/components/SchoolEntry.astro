@@ -69,14 +69,19 @@ const count = `${total} ${total === 1 ? 'course' : 'courses'}${ongoing > 0 ? `, 
     justify-content: space-between;
     gap: 0.25rem 1.5rem;
   }
+  /* A school's name is set like every other item's name on the site; a college under
+     the shared heading is one step down. */
   .name {
-    font-size: 1.2rem;
+    font-size: var(--t-h3);
     font-weight: 500;
-    letter-spacing: -0.02em;
+    line-height: 1.25;
   }
   h4.name {
-    font-size: 1.08rem;
-    letter-spacing: -0.01em;
+    font-size: var(--t-lg);
+  }
+  .name a {
+    display: inline-block;
+    padding-block: 0.2rem;
   }
   .dates,
   .count {
@@ -85,7 +90,7 @@ const count = `${total} ${total === 1 ? 'course' : 'courses'}${ongoing > 0 ? `, 
   .facts {
     margin-top: 0.3rem;
     color: var(--ink-2);
-    font-size: 0.98rem;
+    font-size: var(--t-md);
   }
 
   details {
@@ -97,7 +102,7 @@ const count = `${total} ${total === 1 ? 'course' : 'courses'}${ongoing > 0 ? `, 
     gap: 0.6rem;
     padding-block: 0.25rem;
     list-style: none;
-    font-size: 0.95rem;
+    font-size: var(--t-sm);
     cursor: pointer;
     user-select: none;
     transition: color 0.2s;
@@ -136,14 +141,14 @@ const count = `${total} ${total === 1 ? 'course' : 'courses'}${ongoing > 0 ? `, 
     gap: 0 2rem;
     margin-top: 0.4rem;
     list-style: none;
-    font-size: 0.95rem;
+    font-size: 0.875rem;
     color: var(--ink-2);
   }
   .courses li {
     display: flex;
     align-items: baseline;
     gap: 0.9rem;
-    padding-block: 0.4rem;
+    padding-block: 0.35rem;
     border-top: 1px solid var(--rule);
   }
   .code {

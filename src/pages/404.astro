@@ -7,18 +7,21 @@ import { href } from '../lib/url';
   <section class="wrap nf">
     <p class="label">404</p>
     <h1>Nothing at this address.</h1>
-    <p><a href={href('/')}>Back to the index →</a></p>
+    <p><a href={href('/')}>Back home&nbsp;→</a></p>
   </section>
 </Base>
 
 <style>
   .nf {
-    padding-block: clamp(4rem, 14vw, 11rem) 2rem;
+    padding-block: clamp(4rem, 12vw, 9rem) 2rem;
   }
   h1 {
-    margin-block: 1.25rem 2rem;
-    font-size: clamp(2.4rem, 7vw, 6rem);
-    line-height: 1;
+    margin-block: 0.9rem 1.25rem;
+    font-size: var(--t-h1);
+    line-height: 1.18;
     letter-spacing: -0.02em;
+  }
+  .nf p:last-child {
+    font-size: var(--t-sm);
   }
 </style>

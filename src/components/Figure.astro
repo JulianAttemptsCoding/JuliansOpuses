@@ -20,7 +20,7 @@ const full = src ? await getImage({ src, width: src.width }) : null;
     {
       src && full ? (
         <a href={full.src} target="_blank" rel="noopener" aria-label={`Open figure ${n} at full size`}>
-          <Image src={src} alt={alt} widths={[640, 960, 1440]} sizes="(min-width: 1100px) 820px, 94vw" />
+          <Image src={src} alt={alt} widths={[640, 960, 1440]} sizes="(min-width: 1640px) 55vw, (min-width: 1180px) 62vw, 94vw" />
         </a>
       ) : (
         <slot />
@@ -45,7 +45,7 @@ const full = src ? await getImage({ src, width: src.width }) : null;
     background: var(--fig);
     color: var(--fig-ink);
     border: 1px solid var(--rule);
-    border-radius: 10px;
+    border-radius: 3px;
     overflow-x: auto;
   }
   /* Diagrams keep a readable size on phones and scroll inside the frame instead. */
@@ -65,17 +65,19 @@ const full = src ? await getImage({ src, width: src.width }) : null;
   .frame :global(img) {
     mix-blend-mode: multiply;
   }
+  /* The caption keeps to a readable line however wide its figure is. */
   figcaption {
     display: grid;
     grid-template-columns: 3.75rem minmax(0, 1fr);
     gap: 0.75rem;
+    max-width: 36rem;
     margin-top: 0.75rem;
     color: var(--ink-2);
-    font-size: 0.9rem;
+    font-size: var(--t-sm);
     line-height: 1.5;
   }
   .n {
-    color: var(--accent);
+    color: var(--ink-3);
     padding-top: 0.15em;
   }
   .src {

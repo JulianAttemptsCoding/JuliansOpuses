@@ -1,0 +1,341 @@
+---
+// A drawing of what the research is about: a particle enters a detector from the left and
+// its energy spreads through the layers. Three showers take turns, each lighting cells
+// layer by layer and fading. It is an illustration, generated here at build time from a
+// rough shower shape, not detector data.
+//
+// It is drawn straight onto the page, in the page's own ink, the way a figure sits in a
+// paper. Only the hottest cells take the accent colour.
+//
+// The drawing is also a button: pressing it sends one more particle in at the height
+// that was pressed, drawn from the same shape in the browser. Pointing at it names the
+// layer under the pointer. The Pause in the caption stops the showers taking turns, along
+// with everything else on the site that moves on its own.
+const COLS = 65; // the calorimeter in the Fast-MC-CBSC project has 65 layers
+const ROWS = 11;
+const CELL = 12;
+const GAP = 4;
+const STEP = CELL + GAP;
+const PERIOD = 4.8; // seconds each shower has the stage
+const CROSS = 0.028; // seconds the shower front takes to cross one layer
+// A phone is too narrow for 65 layers at a size that can be seen, so it shows the first
+// of them, where the shower is, at twice the size.
+const NEAR = 32;
+
+function mulberry32(seed: number) {
+  return () => {
+    seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/** Cells hit by one shower: energy rises to a peak some layers in, then tails off, and spreads sideways with depth. */
+function shower(seed: number) {
+  const rand = mulberry32(seed);
+  const centre = (ROWS - 1) / 2 + (rand() - 0.5) * 4;
+  const peak = 9 + rand() * 7;
+  const hits: { c: number; r: number; o: number; hot: boolean }[] = [];
+  for (let c = 0; c < COLS; c++) {
+    const t = (c + 0.5) / peak;
+    const along = t * t * Math.exp(2 * (1 - t));
+    const width = 0.6 + c * 0.085;
+    for (let r = 0; r < ROWS; r++) {
+      const d = (r - centre) / width;
+      const energy = along * Math.exp(-0.5 * d * d) * (0.5 + rand());
+      if (energy > 0.17) hits.push({ c, r, o: Number(Math.min(0.85, energy).toFixed(2)), hot: energy > 0.85 });
+    }
+  }
+  return hits;
+}
+const events = [11, 29, 47].map(shower);
+const W = COLS * STEP - GAP;
+const H = ROWS * STEP - GAP;
+const NEAR_W = NEAR * STEP - GAP;
+---
+
+<figure
+  class="shower"
+  data-shower
+  data-cols={COLS}
+  data-rows={ROWS}
+  data-step={STEP}
+  data-cell={CELL}
+  data-cross={CROSS}
+  style={`--near: ${NEAR_W} / ${H}`}
+>
+  <button class="screen" type="button" data-fire aria-label="Send another particle through the detector">
+    <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMinYMid slice" aria-hidden="true">
+      <defs>
+        <pattern id="shower-cell" width={STEP} height={STEP} patternUnits="userSpaceOnUse">
+          <rect width={CELL} height={CELL} rx="2"></rect>
+        </pattern>
+      </defs>
+      <rect class="grid" width={W} height={H} fill="url(#shower-cell)"></rect>
+      {
+        events.map((hits, k) => (
+          <g class:list={['event', { first: k === 0 }]} style={`--t:${(k * PERIOD).toFixed(1)}s`}>
+            {hits.map((h) => (
+              <rect
+                class:list={['hit', { hot: h.hot }]}
+                x={h.c * STEP}
+                y={h.r * STEP}
+                width={CELL}
+                height={CELL}
+                rx="2"
+                style={`--o:${h.hot ? 1 : h.o};--d:${(h.c * CROSS).toFixed(2)}s`}
+              />
+            ))}
+          </g>
+        ))
+      }
+    </svg>
+    <span class="axis" aria-hidden="true">
+      <span data-layer>layer 1</span>
+      <span class="far">{COLS}</span>
+      <span class="near">{NEAR} of {COLS}</span>
+    </span>
+  </button>
+  <figcaption>
+    <span class="n mono">Fig. 1</span>
+    <span>
+      A particle hits the detector on the left and its energy spreads through the layers. Drawn, not measured.
+      <span class="hint" data-hint role="status">Press the detector to send another.</span>
+      <button class="pause" type="button" data-pause aria-label="Pause the animations">Pause</button>
+    </span>
+  </figcaption>
+</figure>
+
+<script>
+  const NS = 'http://www.w3.org/2000/svg';
+  document.querySelectorAll<HTMLElement>('[data-shower]').forEach((root) => {
+    const button = root.querySelector<HTMLButtonElement>('[data-fire]')!;
+    const svg = root.querySelector<SVGSVGElement>('svg')!;
+    const hint = root.querySelector<HTMLElement>('[data-hint]')!;
+    const layer = root.querySelector<HTMLElement>('[data-layer]')!;
+    const COLS = Number(root.dataset.cols);
+    const ROWS = Number(root.dataset.rows);
+    const STEP = Number(root.dataset.step);
+    const CELL = Number(root.dataset.cell);
+    const CROSS = Number(root.dataset.cross);
+    const H = ROWS * STEP - (STEP - CELL);
+    const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let sent = 0;
+    let timer = 0;
+
+    // Which layer is under the pointer. The drawing keeps its height and is cut off at
+    // the right on a narrow window, so the scale comes from the height.
+    svg.addEventListener('pointermove', (e) => {
+      if (e.pointerType !== 'mouse') return;
+      const box = svg.getBoundingClientRect();
+      const col = Math.floor(((e.clientX - box.left) * (H / box.height)) / STEP);
+      layer.textContent = `layer ${Math.min(COLS, Math.max(1, col + 1))}`;
+    });
+    svg.addEventListener('pointerleave', () => (layer.textContent = 'layer 1'));
+
+    button.addEventListener('click', (e) => {
+      // Aim: the row that was pressed. From the keyboard there is no position, so any row.
+      const box = svg.getBoundingClientRect();
+      const aim = e.detail === 0 ? Math.random() : (e.clientY - box.top) / box.height;
+      const centre = Math.min(ROWS - 2.5, Math.max(1.5, aim * ROWS - 0.5));
+      const peak = 9 + Math.random() * 7;
+
+      const g = document.createElementNS(NS, 'g');
+      g.setAttribute('class', 'event live');
+      let lit = 0;
+      for (let c = 0; c < COLS; c++) {
+        const t = (c + 0.5) / peak;
+        const along = t * t * Math.exp(2 * (1 - t));
+        const width = 0.6 + c * 0.085;
+        for (let r = 0; r < ROWS; r++) {
+          const d = (r - centre) / width;
+          const energy = along * Math.exp(-0.5 * d * d) * (0.5 + Math.random());
+          if (energy <= 0.17) continue;
+          const hot = energy > 0.85;
+          const cell = document.createElementNS(NS, 'rect');
+          cell.setAttribute('class', hot ? 'hit hot' : 'hit');
+          cell.setAttribute('x', String(c * STEP));
+          cell.setAttribute('y', String(r * STEP));
+          cell.setAttribute('width', String(CELL));
+          cell.setAttribute('height', String(CELL));
+          cell.setAttribute('rx', '2');
+          cell.style.setProperty('--o', hot ? '1' : Math.min(0.85, energy).toFixed(2));
+          cell.style.setProperty('--d', `${(c * CROSS).toFixed(2)}s`);
+          g.append(cell);
+          lit++;
+        }
+      }
+
+      // The showers that take turns step aside while this one is on.
+      svg.querySelector('.live')?.remove();
+      svg.append(g);
+      svg.classList.add('manual');
+      sent++;
+      hint.textContent = `${sent} sent. This one lit ${lit} of ${COLS * ROWS} cells.`;
+
+      clearTimeout(timer);
+      if (!calm) {
+        timer = window.setTimeout(() => {
+          g.remove();
+          svg.classList.remove('manual');
+        }, 5000);
+      }
+    });
+  });
+</script>
+
+<style>
+  .shower {
+    margin: 0;
+  }
+  /* No frame and no surface of its own: the cells are drawn on the page. */
+  .screen {
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--ink);
+    cursor: crosshair;
+    -webkit-tap-highlight-color: transparent;
+  }
+  svg {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  pattern rect {
+    fill: currentColor;
+  }
+  .grid {
+    opacity: 0.075;
+  }
+  /* Cells are also made in the browser, so these rules are not tied to this file's markup. */
+  .screen :global(.hit) {
+    fill: currentColor;
+    opacity: 0;
+  }
+  /* On the light page full-strength ink would be heavy, so lit cells are held back a
+     little there (--lit, set with the theme). The hottest cells are always at full strength. */
+  .screen :global(.hot) {
+    --lit: 1;
+    fill: var(--accent);
+  }
+  .axis {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0.6rem;
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    line-height: 1;
+    letter-spacing: 0.02em;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-3);
+  }
+  .near {
+    display: none;
+  }
+  /* Numbered and captioned the way the figures in the write-ups are. */
+  figcaption {
+    display: grid;
+    grid-template-columns: 3.25rem minmax(0, 1fr);
+    gap: 0.75rem;
+    max-width: 36rem;
+    margin-top: 1rem;
+    font-size: var(--t-sm);
+    line-height: 1.5;
+    color: var(--ink-3);
+  }
+  .n {
+    padding-top: 0.15em;
+  }
+  /* The invitation and the pause control share the caption's last line. */
+  .hint {
+    font-variant-numeric: tabular-nums;
+  }
+  .hint::before {
+    content: '';
+    display: block;
+  }
+  .pause {
+    margin-left: 0.75rem;
+  }
+  /* A narrow window shows the near half of the detector, at a size that can be seen. */
+  @media (max-width: 640px) {
+    svg {
+      aspect-ratio: var(--near);
+    }
+    .far {
+      display: none;
+    }
+    .near {
+      display: inline;
+    }
+  }
+
+  /* Each cell lights when the shower reaches its layer, holds, and fades. The three
+     showers share one long cycle and take turns within it. */
+  @keyframes flash {
+    0% {
+      opacity: 0;
+    }
+    1.5% {
+      opacity: calc(var(--o) * var(--lit, 1));
+    }
+    12% {
+      opacity: calc(var(--o) * var(--lit, 1));
+    }
+    22% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+  /* A shower that was sent by hand plays once. */
+  @keyframes flash-once {
+    0% {
+      opacity: 0;
+    }
+    6% {
+      opacity: calc(var(--o) * var(--lit, 1));
+    }
+    50% {
+      opacity: calc(var(--o) * var(--lit, 1));
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .screen :global(.event:not(.live) .hit) {
+      animation: flash 14.4s linear infinite;
+      animation-delay: calc(var(--t) + var(--d));
+    }
+    .screen :global(.live .hit) {
+      animation: flash-once 3.4s linear both;
+      animation-delay: var(--d);
+    }
+    .screen :global(svg.manual .event:not(.live)) {
+      display: none;
+    }
+    /* Paused: the showers stop taking turns and the first one stays drawn. */
+    :global(html[data-motion='paused']) .screen :global(.event:not(.live) .hit) {
+      animation: none;
+    }
+    :global(html[data-motion='paused']) .screen :global(.first .hit) {
+      opacity: calc(var(--o) * var(--lit, 1));
+    }
+  }
+  /* Without motion, one shower is simply shown: the first, or the last one sent. */
+  @media (prefers-reduced-motion: reduce) {
+    .screen :global(.first .hit),
+    .screen :global(.live .hit) {
+      opacity: calc(var(--o) * var(--lit, 1));
+    }
+    .screen :global(svg.manual .first) {
+      display: none;
+    }
+  }
+</style>

@@ -30,7 +30,7 @@ const covers = await Promise.all(
     const imgs = preview.querySelectorAll<HTMLImageElement>('img');
     const GAP = 14;
     const EDGE = 16;
-    const HEADER = 64;
+    const HEADER = 60;
     let row: HTMLElement | null = null;
     let cursorX = 0;
     let x = 0;
@@ -85,7 +85,7 @@ const covers = await Promise.all(
     rows.forEach((el) => {
       el.addEventListener('pointerenter', (e) => show(el, e));
       el.addEventListener('pointerleave', hide);
-      // The preview steps aside while a verdict's explanation is open over the row.
+      // The preview steps aside while a label's explanation is open over the row.
       el.querySelector('[data-verdict]')?.addEventListener('pointerenter', () => preview.classList.add('aside'));
       el.querySelector('[data-verdict]')?.addEventListener('pointerleave', () => preview.classList.remove('aside'));
     });
@@ -103,6 +103,8 @@ const covers = await Promise.all(
 </script>
 
 <style>
+  /* A card on the figures' own light surface in both themes, like the figures in the
+     write-ups. */
   .preview {
     position: fixed;
     top: 0;
@@ -112,7 +114,7 @@ const covers = await Promise.all(
     aspect-ratio: 16 / 10;
     background: var(--fig);
     border: 1px solid var(--rule);
-    border-radius: 10px;
+    border-radius: 8px;
     overflow: hidden;
     pointer-events: none;
     opacity: 0;

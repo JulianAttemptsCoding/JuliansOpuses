@@ -15,7 +15,9 @@ const work = defineCollection({
       heading: z.string().optional(),
       // The question the project asks: shown on the index row.
       question: z.string(),
-      // One-sentence statement of what was built.
+      // What it is, why, and where it stands, in plain words: the first thing on its page.
+      summary: z.string(),
+      // One-sentence technical statement of what was built.
       claim: z.string(),
       domain: z.string(),
       status: z.enum(STATUSES),
@@ -25,7 +27,17 @@ const work = defineCollection({
       metrics: z
         .array(z.object({ label: z.string(), value: z.string(), note: z.string().optional() }))
         .default([]),
-      links: z.array(z.object({ label: z.string(), href: z.url() })).default([]),
+      // A link out, or a path to a file on this site (starting with "/"), such as a PDF.
+      // `note` is a short remark set after the label, e.g. the length of a document.
+      links: z
+        .array(
+          z.object({
+            label: z.string(),
+            href: z.union([z.url(), z.string().startsWith('/')]),
+            note: z.string().optional(),
+          }),
+        )
+        .default([]),
       cover: image(),
       coverAlt: z.string(),
       worked: z.array(z.string()),

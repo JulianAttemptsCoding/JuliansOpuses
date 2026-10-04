@@ -1,4 +1,8 @@
 ---
+// One project's write-up. It opens the way a reader needs it to: the title and the
+// question, then a plain summary and where the project stands. The facts and figures sit
+// beside that in the margin column, and under them a short list of the page's sections
+// that stays in view while the write-up scrolls.
 import { getCollection, render } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import Verdict from '../../components/Verdict.astro';
@@ -18,199 +22,291 @@ const { data } = entry;
 const { Content, headings } = await render(entry);
 const sections = [
   ...headings.filter((h) => h.depth === 2).map((h) => ({ slug: h.slug, text: h.text })),
-  { slug: 'verdict', text: 'Verdict' },
+  { slug: 'verdict', text: 'Where it stands' },
 ];
 const num = (n: number) => String(n).padStart(2, '0');
 ---
 
-<Base title={data.heading ?? data.title} description={data.claim} progress>
+<Base title={data.heading ?? data.title} description={data.claim} progress status={data.status}>
   <article class="case wrap">
-    <aside class="rail" data-lenis-prevent>
-      <div class="rail-top mono">
+    <header class="case-head g12">
+      <div class="crumbs mono">
         <a href={href('/work/')}>← Projects</a>
         <span>{num(index + 1)} / {num(total)}</span>
       </div>
-
       <p class="label">{data.domain}</p>
       <h1 style={`view-transition-name: work-${entry.id}`}>{data.heading ?? data.title}</h1>
-      <p class="claim">{data.claim}</p>
+      <p class="lede">{data.question}</p>
+    </header>
 
-      <div class="status">
-        <Verdict status={data.status} />
-        <span class="evidence">{data.evidence}</span>
-      </div>
-
-      {
-        data.metrics.length > 0 && (
-          <dl class="metrics">
-            {data.metrics.map((m) => (
-              <div>
-                <dt>{m.label}</dt>
-                <dd>
-                  {m.value}
-                  {m.note && <span class="note">{m.note}</span>}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        )
-      }
-
-      {data.context && <p class="context">{data.context}</p>}
-
-      {
-        data.links.length > 0 && (
-          <ul class="links">
-            {data.links.map((l) => (
-              <li>
-                <a class="ext fill" href={l.href} rel="noopener">{l.label}</a>
-              </li>
-            ))}
-          </ul>
-        )
-      }
-
-      <nav class="toc" aria-label="On this page">
-        <ol>
-          {
-            sections.map((s) => (
-              <li>
-                <a href={`#${s.slug}`} data-toc={s.slug}>
-                  {s.text}
-                </a>
-              </li>
-            ))
-          }
-        </ol>
-      </nav>
-    </aside>
-
-    <div class="body">
-      <p class="question">{data.question}</p>
-
-      <div class="prose">
-        <Content />
-      </div>
-
-      <section class="outcome" id="verdict" aria-labelledby="verdict-h">
-        <h2 id="verdict-h">Verdict</h2>
-        <p class="outcome-status">
-          <span class="stamp" data-reveal="stamp">
-            <Verdict status={data.status} />
-          </span>
-          <span>{VERDICTS[data.status].meaning}</span>
-        </p>
-        <div class="outcome-cols">
-          <div>
-            <h3 class="label">What worked</h3>
-            <ul class="worked" data-stagger>
-              {data.worked.map((item) => <li>{item}</li>)}
-            </ul>
-          </div>
-          <div>
-            <h3 class="label">{data.openLabel}</h3>
-            <ul class="unresolved" data-stagger>
-              {data.open.map((item) => <li>{item}</li>)}
-            </ul>
-          </div>
+    <div class="sheet g12" data-rule>
+      <section class="opening" aria-label="Summary">
+        <p class="read">{data.summary}</p>
+        <div class="status">
+          <Verdict status={data.status} />
+          <span class="evidence">{data.evidence}</span>
         </div>
+        {
+          data.links.length > 0 && (
+            <ul class="links">
+              {data.links.map((l) => {
+                // A path on this site (a PDF) opens in its own tab; anything else is a link out.
+                const local = l.href.startsWith('/');
+                return (
+                  <li>
+                    <a
+                      class:list={{ ext: !local }}
+                      href={local ? href(l.href) : l.href}
+                      target={local ? '_blank' : undefined}
+                      rel="noopener"
+                    >
+                      {l.label}
+                    </a>
+                    {l.note && <span class="link-note mono">{l.note}</span>}
+                  </li>
+                );
+              })}
+            </ul>
+          )
+        }
       </section>
 
-      <a class="next" href={href(`/work/${next.id}/`)}>
-        <span class="label">Next</span>
-        <span class="next-title" data-reveal="mask">{next.data.title}</span>
-        <span class="next-arrow" aria-hidden="true">→</span>
-      </a>
+      <aside class="rail">
+        <p class="claim">{data.claim}</p>
+        {
+          data.metrics.length > 0 && (
+            <dl class="metrics">
+              {data.metrics.map((m) => (
+                <div>
+                  <dt>{m.label}</dt>
+                  <dd>
+                    {m.value}
+                    {m.note && <span class="note">{m.note}</span>}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          )
+        }
+        {data.context && <p class="context">{data.context}</p>}
+
+        <nav class="toc" aria-label="On this page">
+          <p class="label">On this page</p>
+          <ol>
+            {
+              sections.map((s) => (
+                <li>
+                  <a href={`#${s.slug}`} data-toc={s.slug}>
+                    {s.text}
+                  </a>
+                </li>
+              ))
+            }
+          </ol>
+        </nav>
+      </aside>
+
+      <div class="body">
+        <div class="prose">
+          <Content />
+        </div>
+
+        <section class="outcome" id="verdict" aria-labelledby="verdict-h">
+          <h2 id="verdict-h">Where it stands</h2>
+          <p class="outcome-status">
+            <span class="stamp" data-reveal="stamp">
+              <Verdict status={data.status} />
+            </span>
+            <span>{VERDICTS[data.status].meaning}</span>
+          </p>
+          <div class="outcome-cols">
+            <div>
+              <h3 class="label">What worked</h3>
+              <ul class="worked" data-stagger>
+                {data.worked.map((item) => <li>{item}</li>)}
+              </ul>
+            </div>
+            <div>
+              <h3 class="label">{data.openLabel}</h3>
+              <ul class="unresolved" data-stagger>
+                {data.open.map((item) => <li>{item}</li>)}
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <a class="next" href={href(`/work/${next.id}/`)}>
+          <span class="label">Next</span>
+          <span class="next-title" data-reveal="mask">{next.data.title}</span>
+          <span class="next-arrow" aria-hidden="true">→</span>
+        </a>
+      </div>
     </div>
   </article>
 </Base>
 
 <script>
-  // Highlight the section currently being read in the rail's table of contents.
-  const links = new Map<string, HTMLElement>();
-  document.querySelectorAll<HTMLElement>('[data-toc]').forEach((a) => links.set(a.dataset.toc!, a));
-  const targets = [...links.keys()]
-    .map((id) => document.getElementById(id))
+  // Mark the section being read in the list of the page's sections: the last one whose
+  // heading has passed a line a third of the way down the window. Worked out from where
+  // the headings are, so it is right after a jump as well as a slow scroll.
+  const links = [...document.querySelectorAll<HTMLElement>('[data-toc]')];
+  const targets = links
+    .map((a) => document.getElementById(a.dataset.toc!))
     .filter((el): el is HTMLElement => el !== null);
-
-  if (targets.length && 'IntersectionObserver' in window) {
-    const visible = new Set<string>();
-    const update = () => {
-      // The first section in document order that is on screen wins.
-      const current = targets.find((t) => visible.has(t.id)) ?? null;
-      if (!current) return;
-      links.forEach((a, id) =>
-        id === current.id ? a.setAttribute('aria-current', 'true') : a.removeAttribute('aria-current'),
+  if (targets.length) {
+    let queued = false;
+    const mark = () => {
+      queued = false;
+      const line = innerHeight / 3;
+      let current: HTMLElement | null = null;
+      for (const t of targets) if (t.getBoundingClientRect().top <= line) current = t;
+      links.forEach((a) =>
+        current && a.dataset.toc === current.id
+          ? a.setAttribute('aria-current', 'true')
+          : a.removeAttribute('aria-current'),
       );
     };
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) e.isIntersecting ? visible.add(e.target.id) : visible.delete(e.target.id);
-        update();
-      },
-      { rootMargin: '-15% 0px -70% 0px' },
-    );
-    targets.forEach((t) => io.observe(t));
+    const onScroll = () => {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(mark);
+    };
+    addEventListener('scroll', onScroll, { passive: true });
+    addEventListener('resize', onScroll, { passive: true });
+    mark();
   }
+
+  // A figure, table or code block too wide for the window scrolls sideways inside its
+  // own box. While it does, it takes keyboard focus, so it can be scrolled with the arrow
+  // keys; while everything fits, it stays out of the tab order.
+  const boxes = document.querySelectorAll<HTMLElement>('.prose .frame, .prose .scroll, .prose table, .prose pre');
+  const syncScrollers = () =>
+    boxes.forEach((box) => {
+      // A table keeps its own role and name: it only needs to be reachable.
+      const plain = box.tagName !== 'TABLE';
+      if (box.scrollWidth > box.clientWidth + 1) {
+        box.tabIndex = 0;
+        if (plain) {
+          box.setAttribute('role', 'group');
+          box.setAttribute('aria-label', 'Scrolls sideways');
+        }
+      } else {
+        box.removeAttribute('tabindex');
+        if (plain) {
+          box.removeAttribute('role');
+          box.removeAttribute('aria-label');
+        }
+      }
+    });
+  syncScrollers();
+  addEventListener('resize', syncScrollers, { passive: true });
+  addEventListener('load', syncScrollers);
 </script>
 
 <style>
-  .case {
-    display: grid;
-    grid-template-columns: minmax(260px, 350px) minmax(0, 1fr);
-    gap: clamp(2rem, 6vw, 6.5rem);
-    padding-top: clamp(1.5rem, 4vw, 3.5rem);
+  /* ---------- Opening: where this is, what it is called, and the question it asks ---------- */
+  .case-head {
+    row-gap: 0;
+    padding-top: clamp(1.5rem, 4vw, 3rem);
   }
-
-  /* ---------- Rail: the pinned abstract ---------- */
-  .rail {
-    position: sticky;
-    top: calc(var(--header-h) + 1.5rem);
-    align-self: start;
-    max-height: calc(100vh - var(--header-h) - 3rem);
-    overflow-y: auto;
-    scrollbar-width: thin;
-    padding-right: 0.25rem;
-  }
-  .rail-top {
+  .crumbs {
+    grid-column: 1 / -1;
     display: flex;
     justify-content: space-between;
-    padding-bottom: 0.9rem;
-    margin-bottom: 1.5rem;
-    border-bottom: 1px solid var(--ink);
+    margin-bottom: clamp(2rem, 5vw, 3.5rem);
     color: var(--ink-3);
   }
-  .rail-top a {
+  .crumbs a {
+    margin-block: -0.3rem;
+    padding-block: 0.3rem;
     color: var(--ink);
     text-decoration: none;
   }
-  .rail-top a:hover {
+  .crumbs a:hover {
     color: var(--accent);
   }
+  .case-head .label {
+    grid-column: 1 / -1;
+  }
   h1 {
-    margin-top: 0.6rem;
-    font-size: clamp(2rem, 3.1vw, 2.9rem);
-    line-height: 1.02;
-    letter-spacing: -0.02em;
+    grid-column: 1 / -1;
     width: fit-content;
+    margin-top: 0.5rem;
+    font-size: var(--t-h1);
+    line-height: 1.16;
+    letter-spacing: -0.02em;
   }
-  .claim {
-    margin-top: 1rem;
-    color: var(--ink-2);
-    line-height: 1.5;
+  .case-head .lede {
+    margin-top: 1.1rem;
   }
+
+  /* ---------- The page: the write-up in the text columns, its facts beside it ----------
+     The same twelve columns as every other page. The write-up takes eight of them, so
+     its figures have room, and the margin column takes four. */
+  .sheet {
+    row-gap: clamp(1rem, 3vw, 2rem);
+    margin-top: clamp(2rem, 4vw, 3rem);
+  }
+  /* The rule under the opening is a thing of its own, so it can draw itself in. */
+  .sheet::before {
+    content: '';
+    grid-column: 1 / -1;
+    margin-bottom: 0.5rem;
+    border-top: 1px solid var(--ink);
+  }
+  .opening,
+  .body {
+    grid-column: 1 / span 8;
+    min-width: 0;
+  }
+
+  /* What it is, in plain words, and where it stands. */
   .status {
     display: grid;
-    justify-items: start;
-    gap: 0.6rem;
-    margin-top: 1.5rem;
+    grid-template-columns: 8.25rem minmax(0, 1fr);
+    align-items: first baseline;
+    max-width: var(--measure);
+    margin-top: 1.25rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid var(--rule);
     color: var(--ink-2);
   }
   .status :global(.verdict) {
     color: var(--ink);
   }
+  .evidence {
+    max-width: 32rem;
+    font-size: var(--t-sm);
+    line-height: 1.5;
+  }
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.4rem 1.5rem;
+    margin-top: 1.1rem;
+    list-style: none;
+    font-size: var(--t-sm);
+  }
+  .link-note {
+    margin-left: 0.5em;
+    color: var(--ink-3);
+  }
+
+  /* ---------- Margin column: the technical line, the numbers, the sections ---------- */
+  .rail {
+    grid-column: 9 / -1;
+    grid-row: 2 / span 2;
+    min-width: 0;
+  }
+  .claim {
+    max-width: 32rem;
+    color: var(--ink-2);
+    font-size: var(--t-sm);
+    line-height: 1.5;
+  }
   .metrics {
-    margin-top: 1.5rem;
+    margin-top: 1.1rem;
     border-top: 1px solid var(--rule);
   }
   .metrics div {
@@ -218,60 +314,40 @@ const num = (n: number) => String(n).padStart(2, '0');
     justify-content: space-between;
     align-items: baseline;
     gap: 1rem;
-    padding-block: 0.55rem;
+    padding-block: 0.5rem;
     border-bottom: 1px solid var(--rule);
   }
   .metrics dt {
-    font-size: 0.85rem;
+    font-size: var(--t-sm);
     color: var(--ink-3);
   }
   .metrics dd {
     font-family: var(--font-mono);
-    font-size: 0.85rem;
+    font-size: 0.8125rem;
     font-variant-numeric: tabular-nums;
     text-align: right;
   }
   .note {
     display: block;
-    font-size: 0.7rem;
+    font-size: var(--t-xs);
     color: var(--ink-3);
   }
   .context {
-    margin-top: 1rem;
+    margin-top: 0.9rem;
     color: var(--ink-3);
-    font-size: 0.9rem;
+    font-size: var(--t-sm);
     line-height: 1.5;
   }
-  .evidence {
-    font-size: 0.9rem;
-    line-height: 1.45;
-  }
-  .links {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-top: 1.25rem;
-    list-style: none;
-  }
-  .links a {
-    display: inline-flex;
-    padding: 0.5em 1em;
-    border: 1px solid var(--ink);
-    border-radius: 999px;
-    font-size: 0.9rem;
-    text-decoration: none;
-    transition:
-      background-color 0.25s var(--ease),
-      color 0.25s var(--ease);
-  }
-  .links a {
-    --fill: var(--ink);
-    --fill-ink: var(--paper);
-  }
+  /* The only thing that stays in view: a short list, never taller than the window. */
   .toc {
-    margin-top: 1.75rem;
+    position: sticky;
+    top: calc(var(--header-h) + 1.5rem);
+    margin-top: 2rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid var(--ink);
   }
   .toc ol {
+    margin-top: 0.6rem;
     list-style: none;
     counter-reset: toc;
   }
@@ -280,7 +356,7 @@ const num = (n: number) => String(n).padStart(2, '0');
     gap: 0.75rem;
     padding-block: 0.28rem;
     color: var(--ink-3);
-    font-size: 0.92rem;
+    font-size: var(--t-sm);
     text-decoration: none;
     counter-increment: toc;
     transition: color 0.2s;
@@ -288,8 +364,8 @@ const num = (n: number) => String(n).padStart(2, '0');
   .toc a::before {
     content: counter(toc, decimal-leading-zero);
     font-family: var(--font-mono);
-    font-size: 0.7rem;
-    padding-top: 0.3em;
+    font-size: var(--t-xs);
+    padding-top: 0.15em;
   }
   .toc a:hover,
   .toc a[aria-current] {
@@ -300,38 +376,42 @@ const num = (n: number) => String(n).padStart(2, '0');
   }
 
   /* ---------- Body: the evidence ---------- */
-  .body {
-    max-width: 860px;
-    min-width: 0;
-  }
-  .question {
-    font-family: var(--font-display);
-    font-size: clamp(1.7rem, 3.4vw, 2.9rem);
-    line-height: 1.08;
-    letter-spacing: -0.02em;
-    font-weight: 500;
-    text-wrap: balance;
-    padding-bottom: clamp(1.75rem, 4vw, 3rem);
-    border-bottom: 1px solid var(--rule);
-  }
-
   .prose :global(h2),
   .outcome h2 {
-    margin-top: clamp(2.5rem, 5vw, 4rem);
-    font-size: clamp(1.4rem, 2.2vw, 1.8rem);
+    margin-top: clamp(2.5rem, 5vw, 3.5rem);
+    font-size: var(--t-h3);
     letter-spacing: -0.02em;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    @supports (animation-timeline: view()) {
+      .prose :global(h2),
+      .outcome h2 {
+        animation:
+          unmask linear both,
+          leave linear forwards;
+        animation-timeline: view(block 60px 0px), view(block 60px 0px);
+        animation-range:
+          entry 20px entry 220px,
+          exit calc(100% - 150px) exit 100%;
+      }
+    }
+  }
+  .prose :global(h2:first-child) {
+    margin-top: clamp(1rem, 2vw, 1.5rem);
   }
   .prose :global(h3) {
     margin-top: 2rem;
-    font-size: 1.1rem;
+    font-size: var(--t-lg);
     letter-spacing: -0.01em;
   }
   /* Figures style their own content: :not(figure *) keeps the prose rules, and the
      page's theme colours, off the light figure surface. */
   .prose :global(:is(p, ul, ol):not(figure *)) {
-    max-width: 66ch;
+    max-width: var(--measure);
     margin-top: 1rem;
-    color: var(--ink-2);
+    font-family: var(--font-display);
+    font-size: var(--t-lg);
+    line-height: 1.6;
   }
   /* Links out of the site carry the same arrow as everywhere else. */
   .prose :global(a[href^='http']:not(figure *))::after {
@@ -364,7 +444,7 @@ const num = (n: number) => String(n).padStart(2, '0');
     padding: 1rem 1.25rem;
     background: var(--paper-2) !important;
     color: var(--ink) !important;
-    border-radius: 10px;
+    border-radius: 3px;
     overflow-x: auto;
     font-size: 0.82rem;
     line-height: 1.6;
@@ -396,21 +476,19 @@ const num = (n: number) => String(n).padStart(2, '0');
     white-space: nowrap;
   }
   .prose :global(th) {
+    font-family: var(--font-sans);
     font-weight: 500;
-    font-size: 0.7rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
     color: var(--ink-3);
     border-bottom-color: var(--ink);
   }
 
-  /* ---------- Verdict block ---------- */
+  /* ---------- Where it stands ---------- */
   .outcome-status {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.75rem;
-    margin-top: 1rem;
+    gap: 0.4rem 1.25rem;
+    margin-top: 1.25rem;
     color: var(--ink-2);
   }
   .outcome-status :global(.verdict) {
@@ -427,21 +505,10 @@ const num = (n: number) => String(n).padStart(2, '0');
   .stamp :global(.verdict) {
     cursor: default;
   }
-  /* Section headings in the evidence column rise as they arrive. */
-  @media (prefers-reduced-motion: no-preference) {
-    @supports (animation-timeline: view()) {
-      .prose :global(h2:not(figure *)),
-      .outcome h2 {
-        animation: reveal linear both;
-        animation-timeline: view();
-        animation-range: entry 0px entry 180px;
-      }
-    }
-  }
   .outcome-cols {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1.5rem clamp(1.5rem, 4vw, 3rem);
+    gap: 1.5rem clamp(1.5rem, 4vw, 2.5rem);
     margin-top: 1.75rem;
     padding-top: 1.25rem;
     border-top: 1px solid var(--ink);
@@ -455,7 +522,7 @@ const num = (n: number) => String(n).padStart(2, '0');
     padding: 0.7rem 0 0.7rem 1.5rem;
     border-bottom: 1px solid var(--rule);
     color: var(--ink-2);
-    font-size: 0.98rem;
+    font-size: var(--t-md);
     line-height: 1.5;
   }
   .outcome li::before {
@@ -478,7 +545,7 @@ const num = (n: number) => String(n).padStart(2, '0');
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: end;
     gap: 0.5rem 1rem;
-    margin-top: clamp(3rem, 7vw, 6rem);
+    margin-top: clamp(3rem, 7vw, 5rem);
     padding-top: 1.25rem;
     border-top: 1px solid var(--ink);
     text-decoration: none;
@@ -487,13 +554,14 @@ const num = (n: number) => String(n).padStart(2, '0');
     grid-column: 1 / -1;
   }
   .next-title {
-    font-size: clamp(2rem, 5vw, 4rem);
-    line-height: 1;
+    font-family: var(--font-display);
+    font-size: var(--t-h2);
+    line-height: 1.1;
     letter-spacing: -0.02em;
     font-weight: 500;
   }
   .next-arrow {
-    font-size: clamp(1.5rem, 3vw, 2.5rem);
+    font-size: 1.25rem;
     line-height: 1.2;
     transition: transform 0.45s var(--ease);
   }
@@ -501,21 +569,27 @@ const num = (n: number) => String(n).padStart(2, '0');
     transform: translateX(0.5rem);
   }
 
-  /* Two columns only while the evidence column stays wide enough for its figures. */
-  @media (max-width: 1180px) {
-    .case {
-      grid-template-columns: minmax(0, 1fr);
+  /* One column: the summary, then the facts, then the write-up. The list of sections is
+     left out: nothing is beside the text for it to stay in view in. */
+  @media (max-width: 900px) {
+    .opening,
+    .body,
+    .rail {
+      grid-column: 1 / -1;
+      grid-row: auto;
     }
     .rail {
-      position: static;
-      max-height: none;
-      overflow: visible;
+      max-width: 34rem;
     }
     .toc {
       display: none;
     }
   }
   @media (max-width: 600px) {
+    .status {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.15rem;
+    }
     .outcome-cols {
       grid-template-columns: minmax(0, 1fr);
     }

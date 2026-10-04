@@ -1,7 +1,10 @@
 ---
-// One row per project: number, title, the question it asks, and how it did when tested.
-// Used for the short list on the home page and the full list on the Projects page.
-// Pair it with one <RowPreview> per page for the figure that follows the cursor.
+// One row per project, the full width of the column: its number, its title and the
+// question it asks, where it stands, and its field. Each row assembles itself as it is
+// scrolled to, and leans toward the reader when pointed at. Used for the short list on
+// the home page and the lists on the Projects page. Pair it with one <RowPreview> per
+// page for the figure that follows the cursor; where there is no cursor, each row shows
+// its own figure instead.
 import type { CollectionEntry } from 'astro:content';
 import { getImage } from 'astro:assets';
 import Verdict from './Verdict.astro';
@@ -9,23 +12,23 @@ import { href } from '../lib/url';
 
 interface Props {
   items: CollectionEntry<'work'>[];
-  /** Smaller titles, for the research notes under the main list. */
+  /** Smaller titles, for the study under the main list. */
   small?: boolean;
 }
 const { items, small = false } = Astro.props;
-const covers = Object.fromEntries(
-  await Promise.all(items.map(async (w) => [w.id, await getImage({ src: w.data.cover, width: 900 })] as const)),
-);
 const num = (n: number) => String(n).padStart(2, '0');
+const rows = await Promise.all(
+  items.map(async (w) => ({ w, img: await getImage({ src: w.data.cover, width: 900 }) })),
+);
 ---
 
 <ol class:list={['rows', { small }]}>
   {
-    items.map((w) => (
+    rows.map(({ w, img }) => (
       <li>
-        <a class="row" href={href(`/work/${w.id}/`)} data-row={w.id}>
+        <a class="row" href={href(`/work/${w.id}/`)} data-row={w.id} data-status={w.data.status}>
           <span class="num mono">{num(w.data.order)}</span>
-          <span class="main">
+          <span class="what">
             <span class="title display" style={`view-transition-name: work-${w.id}`}>
               {w.data.title}
             </span>
@@ -39,12 +42,35 @@ const num = (n: number) => String(n).padStart(2, '0');
           <span class="arrow" aria-hidden="true">
             →
           </span>
-          <img class="thumb" src={covers[w.id].src} alt="" loading="lazy" decoding="async" width="900" height="520" />
+          <span class="thumb" aria-hidden="true">
+            <img
+              src={img.src}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              width={img.attributes.width}
+              height={img.attributes.height}
+            />
+          </span>
         </a>
       </li>
     ))
   }
 </ol>
+
+<script>
+  // The key to the labels doubles as a way to pick them out: pointing at one of its
+  // entries (or focusing it) dims every project row that has a different label.
+  const rows = document.querySelectorAll<HTMLElement>('[data-row][data-status]');
+  document.querySelectorAll<HTMLElement>('.legend [data-verdict]').forEach((key) => {
+    const pick = (status: string | null) =>
+      rows.forEach((r) => r.toggleAttribute('data-dim', status !== null && r.dataset.status !== status));
+    key.addEventListener('pointerenter', () => pick(key.dataset.verdict!));
+    key.addEventListener('pointerleave', () => pick(null));
+    key.addEventListener('focus', () => pick(key.dataset.verdict!));
+    key.addEventListener('blur', () => pick(null));
+  });
+</script>
 
 <style>
   .rows {
@@ -52,10 +78,10 @@ const num = (n: number) => String(n).padStart(2, '0');
   }
   .row {
     display: grid;
-    grid-template-columns: 3.5rem minmax(0, 1fr) minmax(0, 19rem) 9.5rem 2rem;
+    grid-template-columns: 3rem minmax(0, 1fr) minmax(0, 20rem) 9rem 2rem;
     align-items: center;
-    gap: 0 clamp(1rem, 2.5vw, 2.5rem);
-    padding-block: clamp(1.5rem, 3vw, 2.6rem);
+    gap: 0 clamp(1rem, 2.5vw, 2.25rem);
+    padding-block: clamp(1.5rem, 2.8vw, 2.4rem);
     border-bottom: 1px solid var(--rule);
     text-decoration: none;
     color: inherit;
@@ -64,58 +90,65 @@ const num = (n: number) => String(n).padStart(2, '0');
   .row:hover {
     color: inherit;
   }
+  .row[data-dim] {
+    opacity: 0.3;
+  }
   .num,
   .domain {
     color: var(--ink-3);
   }
   .domain {
-    font-size: 0.88rem;
+    font-size: var(--t-sm);
   }
-  .main {
+  .what {
     display: grid;
     gap: 0.5rem;
     transition: transform 0.45s var(--ease);
   }
   .title {
-    font-size: clamp(1.9rem, 4vw, 3.4rem);
-    line-height: 1.04;
-    letter-spacing: -0.02em;
     width: fit-content;
+    font-size: var(--t-row);
+    font-weight: 500;
+    line-height: 1.08;
+    letter-spacing: -0.02em;
   }
   .small .title {
-    font-size: clamp(1.5rem, 2.6vw, 2.2rem);
+    font-size: var(--t-h2);
   }
   .question {
-    max-width: 46ch;
+    max-width: 30rem;
+    font-family: var(--font-display);
+    font-size: var(--t-lg);
+    line-height: 1.45;
     color: var(--ink-2);
-    line-height: 1.4;
   }
-  /* The verdict sits above the cells after it, so its explanation is never underneath them. */
+  /* The label sits above the cells after it, so its explanation is never underneath them. */
   .result {
     position: relative;
     z-index: 1;
     display: grid;
     justify-items: start;
-    gap: 0.45rem;
+    gap: 0.35rem;
   }
   .evidence {
     color: var(--ink-2);
-    font-size: 0.88rem;
-    line-height: 1.45;
+    font-size: var(--t-sm);
+    line-height: 1.5;
   }
   .arrow {
     justify-self: end;
-    font-size: 1.4rem;
+    font-size: 1.3rem;
     color: var(--ink-3);
     transition:
       transform 0.45s var(--ease),
       color 0.3s;
   }
+  /* The row's own figure: only where there is no cursor for a preview to follow. */
   .thumb {
     display: none;
   }
 
-  /* A row being pointed at sits above its neighbours, so its verdict's explanation is not
+  /* A row being pointed at sits above its neighbours, so its label's explanation is not
      covered by the next row. */
   .rows > li:hover,
   .rows > li:focus-within {
@@ -126,23 +159,19 @@ const num = (n: number) => String(n).padStart(2, '0');
   /* Each row assembles as it arrives and comes apart as it leaves by the top: number,
      title out of its mask, then the rest. All the parts read one timeline, the row's own
      passage through the window. */
-  @keyframes fade-out {
-    to {
-      opacity: 0;
-    }
-  }
   @media (prefers-reduced-motion: no-preference) {
     @supports (animation-timeline: view()) {
       .rows > li {
         view-timeline: --row block;
-        view-timeline-inset: 64px 0px;
+        view-timeline-inset: 60px 0px;
       }
       .row .num,
       .row .title,
       .row .question,
       .row .result,
       .row .domain,
-      .row .arrow {
+      .row .arrow,
+      .row .thumb {
         animation:
           reveal linear both,
           leave linear forwards;
@@ -187,8 +216,8 @@ const num = (n: number) => String(n).padStart(2, '0');
     .rows:focus-within:not(:hover) .row:focus-visible {
       opacity: 1;
     }
-    .row:hover .main,
-    .row:focus-visible .main {
+    .row:hover .what,
+    .row:focus-visible .what {
       transform: translateX(0.75rem);
     }
     .row:hover .arrow,
@@ -198,41 +227,52 @@ const num = (n: number) => String(n).padStart(2, '0');
     }
   }
 
-  @media (max-width: 960px) {
+  /* Less room: the title and the question keep the first line, and the rest goes under
+     them in the same column. */
+  @media (max-width: 1000px) {
     .row {
       grid-template-columns: 2.5rem minmax(0, 1fr) 1.5rem;
       align-items: start;
-      row-gap: 1rem;
+      row-gap: 0.9rem;
     }
     .num {
-      padding-top: 0.6em;
+      padding-top: 0.75em;
     }
-    .result {
+    .result,
+    .domain,
+    .thumb {
       grid-column: 2 / -1;
-      grid-row: 2;
-    }
-    .domain {
-      grid-column: 2 / -1;
-      grid-row: 3;
     }
     .arrow {
       grid-column: 3;
       grid-row: 1;
-      padding-top: 0.15em;
+      padding-top: 0.2em;
+    }
+    .evidence {
+      max-width: 32rem;
+    }
+  }
+  @media (max-width: 560px) {
+    .row {
+      grid-template-columns: 1.75rem minmax(0, 1fr) 1.25rem;
+      column-gap: 0.75rem;
     }
   }
   @media (hover: none) {
     .thumb {
       display: block;
-      grid-column: 2 / -1;
-      width: 100%;
-      height: auto;
-      aspect-ratio: 16 / 9;
-      padding: 10px;
-      object-fit: contain;
-      background: var(--fig);
+      padding: 0.6rem;
+      background: var(--thumb);
       border: 1px solid var(--rule);
-      border-radius: 8px;
+      border-radius: 4px;
+      isolation: isolate;
+    }
+    .thumb img {
+      width: 100%;
+      max-height: 15rem;
+      object-fit: contain;
+      filter: var(--thumb-filter);
+      mix-blend-mode: var(--thumb-blend);
     }
   }
 </style>

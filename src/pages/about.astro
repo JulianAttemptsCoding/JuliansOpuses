@@ -3,162 +3,72 @@ import Base from '../layouts/Base.astro';
 import Education from '../components/Education.astro';
 import { href } from '../lib/url';
 import { site } from '../data/site';
-import { activities, tools } from '../data/profile';
+import { tools } from '../data/profile';
 ---
 
-<Base title="About" description="About Julian Juan: school, college coursework and what he does outside research.">
-  <section class="intro wrap">
-    <h1>I like finding out how things work, and whether the numbers actually add up.</h1>
+<Base
+  title="About"
+  description="About Julian Juan: what he likes working on, school and college coursework, and the tools he uses."
+  sections={[
+    { id: 'education', label: 'Education' },
+    { id: 'tools', label: 'Tools' },
+  ]}
+>
+  <section class="page-intro wrap g12">
+    <h1>I like physics, math, computing, economics and history about equally.</h1>
     <div class="lede">
+      <p>
+        What they have in common, for me, is that I enjoy taking something messy and finding a way to measure
+        it.
+      </p>
       <p>
         I’m a senior at Los Gatos High School. Alongside school I’ve taken 29 units of college math, statistics,
         computer science and economics, and I’ve spent two summers doing research at Academia Sinica in Taipei.
       </p>
-      <p>
-        I like physics, math, computing, economics and history about equally. What they have in common, for me,
-        is that I enjoy taking something messy, finding a way to measure it, and then not trusting the first
-        good-looking number.
-      </p>
-      <p class="links">
-        <a href={href('/work/')}>Projects →</a>
-        <a href={href('/contact/')}>Get in touch →</a>
-        {
-          site.linkedin && (
-            <a class="ext" href={site.linkedin} rel="noopener">LinkedIn</a>
-          )
-        }
-        <a class="ext" href={site.github} rel="noopener">GitHub</a>
-      </p>
     </div>
-  </section>
-
-  <section class="section wrap ledger" id="education" data-rule>
-    <h2 class="label marked ledger-label">Education</h2>
-    <Education open />
-  </section>
-
-  <section class="section wrap ledger" id="outside" data-rule>
-    <h2 class="label marked ledger-label">Outside research</h2>
-    <ul class="items" data-stagger>
+    <ul class="side side-list links">
+      <li><a class="quiet" href={href('/work/')}>Projects&nbsp;→</a></li>
+      <li><a class="quiet" href={href('/experience/')}>Research, awards and activities&nbsp;→</a></li>
+      <li><a class="quiet" href={href('/contact/')}>Get in touch&nbsp;→</a></li>
       {
-        activities.map((a) => (
+        site.linkedin && (
           <li>
-            <div class="item-head">
-              <h3>
-                {a.href ? (
-                  <a class="ext quiet" href={a.href} rel="noopener">{a.title}</a>
-                ) : (
-                  a.title
-                )}
-              </h3>
-              <span class="role">{a.role}</span>
-            </div>
-            <p>{a.body}</p>
-            {a.link && (
-              <p class="item-link">
-                <a class="ext" href={a.link.href} rel="noopener">{a.link.label}</a>
-              </p>
-            )}
+            <a class="quiet ext" href={site.linkedin} rel="noopener">LinkedIn</a>
           </li>
-        ))
+        )
       }
+      <li><a class="quiet ext" href={site.github} rel="noopener">GitHub</a></li>
     </ul>
   </section>
 
+  <section class="section wrap ledger" id="education" data-rule>
+    <h2 class="sec-title marked"><span data-reveal="mask-in">Education</span></h2>
+    <Education />
+  </section>
+
   <section class="section wrap ledger" id="tools" data-rule>
-    <h2 class="label marked ledger-label">Tools I use</h2>
-    <p class="tools" data-reveal>
-      {
-        tools.map((t, i) => (
-          <>
-            <a class="quiet" href={t.href} rel="noopener">{t.label}</a>
-            {i < tools.length - 1 ? ', ' : '.'}
-          </>
-        ))
-      }
-    </p>
+    <h2 class="sec-title marked"><span data-reveal="mask-in">Tools I use</span></h2>
+    <p class="tools read" data-reveal>{tools.map((t) => t.label).join(', ')}.</p>
   </section>
 </Base>
 
 <style>
-  .intro {
-    padding-top: clamp(3rem, 9vw, 7rem);
+  /* The title here is a sentence, and the introduction under it runs to two paragraphs,
+     with the ways on from this page beside them. */
+  .page-intro {
+    align-items: first baseline;
   }
-  h1 {
-    max-width: 21ch;
-    font-size: clamp(2.2rem, 5.4vw, 4.6rem);
-    line-height: 1.04;
-    letter-spacing: -0.022em;
+  .page-intro h1 {
+    max-width: 22em;
   }
-  .lede {
+  .page-intro .lede {
     display: grid;
-    gap: 1.1rem;
-    max-width: 62ch;
-    margin-top: clamp(2rem, 5vw, 3.5rem);
-    margin-left: auto;
-    font-size: clamp(1.05rem, 1.4vw, 1.22rem);
-    line-height: 1.55;
-    color: var(--ink-2);
-  }
-  .links {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem 1.75rem;
-    color: var(--ink);
-    font-size: 1rem;
-  }
-  @media (prefers-reduced-motion: no-preference) {
-    :global(html.js) .intro h1,
-    :global(html.js) .intro .lede {
-      animation: fade-up 0.8s var(--ease) both;
-    }
-    :global(html.js) .intro .lede {
-      animation-delay: 0.15s;
-    }
+    gap: 0.9rem;
   }
 
-  .items {
-    list-style: none;
-  }
-  .items li {
-    padding-block: 1.1rem;
-    border-bottom: 1px solid var(--rule);
-  }
-  .items li:first-child {
-    padding-top: 0;
-  }
-  .item-head {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 0.25rem 1.5rem;
-  }
-  .item-head h3 {
-    font-size: 1.3rem;
-  }
-  .role {
-    color: var(--ink-3);
-    font-size: 0.92rem;
-  }
-  .items p {
-    max-width: 66ch;
-    margin-top: 0.45rem;
-    color: var(--ink-2);
-  }
-  .items .item-link {
-    margin-top: 0.6rem;
-    font-size: 0.95rem;
-    color: var(--ink);
-  }
-  .tools {
-    max-width: 58ch;
-    color: var(--ink-2);
-  }
-
-  @media (max-width: 720px) {
-    .lede {
-      margin-left: 0;
+  @media (max-width: 900px) {
+    .links {
+      max-width: 26rem;
     }
   }
 </style>

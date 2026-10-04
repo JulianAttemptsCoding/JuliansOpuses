@@ -6,7 +6,7 @@
  */
 export const site = {
   name: 'Julian Juan',
-  title: 'Julian Juan',
+  title: 'Julian Juan | Machine-learning research for particle physics',
   description:
     'Julian Juan is a high-school senior who does machine-learning research for particle physics. Projects, research and how each result held up when tested.',
   github: 'https://github.com/JulianAttemptsCoding',

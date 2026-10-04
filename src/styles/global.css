@@ -1,7 +1,9 @@
 /* ---------- Tokens ----------
    Paper and ink are both pulled in from pure white and pure black, so the page
    reads as soft charcoal on warm paper rather than hard black on white. Colour is
-   flat everywhere: no gradients and no translucent "glass" surfaces. */
+   flat everywhere: no gradients and no translucent "glass" surfaces. There is one
+   accent, and it is used for very little: a link under the pointer, the hottest cells
+   of the detector drawing, the focus ring. */
 :root {
   color-scheme: light;
   --paper: #f2f0e9;
@@ -13,15 +15,15 @@
   --accent: #b8430f;
   --accent-fill: #cf4d12;
   --on-accent: #ffffff;
-  /* Second colour, used in a few small places: markers, range spheres, live dots. */
+  /* Second colour, used in a few small places: range spheres, live dots. */
   --accent-2: #1f6677;
 
-  /* One hue per verdict. Only the glyph is coloured; the label always says the state. */
-  --v-holds: #2c7a4f;
-  --v-open: #a5670b;
-  --v-prototype: #2a62a8;
-  --v-shipped: #6a48b0;
-  --v-negative: #b8430f;
+  /* A verdict is told apart by the shape of its mark and by its word, not by a hue. */
+  --v-holds: var(--ink);
+  --v-open: var(--ink);
+  --v-prototype: var(--ink);
+  --v-shipped: var(--ink);
+  --v-negative: var(--ink);
 
   /* Figures keep a light "printed page" surface in both themes. */
   --fig: #fbfaf6;
@@ -33,18 +35,53 @@
   --fig-accent-2: #1f6677;
   --fig-shade: #efede5;
 
+  /* The footer is the one dark surface on the light page: the page lifts off it. */
   --footer-bg: #22262b;
   --footer-ink: #efede6;
   --footer-ink-2: #a9abb0;
   --footer-rule: #3b4047;
 
+  /* Small figures in the margin. On the light page they sit on the figure surface; on the
+     dark page they are redrawn light-on-dark, so they do not glare. */
+  --thumb: var(--fig);
+  --thumb-filter: none;
+  --thumb-blend: multiply;
+  /* How strongly the detector drawing's lit cells are inked. */
+  --lit: 0.62;
+
   --font-display: 'Source Serif 4 Variable', 'Source Serif 4', Georgia, 'Times New Roman', serif;
   --font-sans: 'Geist Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: 'Geist Mono Variable', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
 
-  --gutter: clamp(20px, 4vw, 56px);
-  --max: 1320px;
-  --header-h: 64px;
+  /* One type scale, each step about 1.25 times the last: 14, 18, 22, 28, 44. Sizes are
+     fixed: a wider window gets more margin, not larger type. Reading text is set in the
+     serif at --t-lg; the sans is for names, labels and notes; the mono is for numbers. */
+  --t-xs: 0.75rem;
+  --t-sm: 0.875rem;
+  --t-md: 1rem;
+  --t-lg: 1.125rem;
+  --t-xl: 1.25rem;
+  --t-h3: 1.375rem;
+  --t-h2: 1.75rem;
+  --t-h1: clamp(1.875rem, 1.1rem + 2.7vw, 2.75rem);
+  /* The three display sizes: the opening sentence of the home page, a project's title
+     in a list, and the name of the place a section is about. They grow with the window
+     up to a fixed size. */
+  --t-hero: clamp(2.05rem, 4.4vw, 3.6rem);
+  --t-row: clamp(1.6rem, 2.7vw, 2.4rem);
+  --t-org: clamp(1.55rem, 2.5vw, 2.15rem);
+
+  /* The page is a column in the middle of the window with one twelve-column grid inside
+     it, split the way a page with margin notes is: columns 1 to 7 hold the text, and
+     columns 8 to 12 hold what belongs beside it (a figure, a result, a link). */
+  --gutter: clamp(1.25rem, 4vw, 3.5rem);
+  --max: 80rem;
+  --col-gap: clamp(1rem, 2.5vw, 2rem);
+  /* How far into the gutter a number or a mark hangs beside a title. */
+  --hang: max(var(--col-gap), 1.6rem);
+  /* The longest a line of reading text may run: about 66 characters. */
+  --measure: 35rem;
+  --header-h: 60px;
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   --ease-inout: cubic-bezier(0.76, 0, 0.24, 1);
 }
@@ -62,14 +99,15 @@
     --accent-fill: #e2703f;
     --on-accent: #181b1f;
     --accent-2: #74c0d0;
-    --v-holds: #76c893;
-    --v-open: #e0b354;
-    --v-prototype: #86b4e8;
-    --v-shipped: #b7a1e6;
-    --v-negative: #f08a5d;
     --fig: #edebe4;
     --fig-shade: #e2dfd6;
+    --fig-ink-3: #595d65;
+    --fig-accent: #a83c0c;
     --footer-bg: #21252b;
+    --thumb: #1e2227;
+    --thumb-filter: invert(1) hue-rotate(180deg);
+    --thumb-blend: screen;
+    --lit: 1;
   }
 }
 :root[data-theme='dark'] {
@@ -84,14 +122,15 @@
   --accent-fill: #e2703f;
   --on-accent: #181b1f;
   --accent-2: #74c0d0;
-  --v-holds: #76c893;
-  --v-open: #e0b354;
-  --v-prototype: #86b4e8;
-  --v-shipped: #b7a1e6;
-  --v-negative: #f08a5d;
   --fig: #edebe4;
   --fig-shade: #e2dfd6;
+  --fig-ink-3: #595d65;
+  --fig-accent: #a83c0c;
   --footer-bg: #21252b;
+  --thumb: #1e2227;
+  --thumb-filter: invert(1) hue-rotate(180deg);
+  --thumb-blend: screen;
+  --lit: 1;
 }
 
 /* ---------- Base ---------- */
@@ -110,8 +149,8 @@ body {
   background: var(--paper);
   color: var(--ink);
   font-family: var(--font-sans);
-  font-size: 1.0625rem;
-  line-height: 1.6;
+  font-size: var(--t-md);
+  line-height: 1.55;
   font-feature-settings: 'ss01', 'cv11';
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -125,11 +164,11 @@ main {
   flex: 1;
   position: relative;
   z-index: 1;
-  padding-bottom: clamp(4rem, 10vw, 9rem);
+  padding-bottom: clamp(4rem, 8vw, 6.5rem);
   background: var(--paper);
   /* Reveals move and scale things; none of that may widen the page. */
   overflow-x: clip;
-  border-radius: 0 0 clamp(20px, 3vw, 40px) clamp(20px, 3vw, 40px);
+  border-radius: 0 0 clamp(18px, 2.5vw, 32px) clamp(18px, 2.5vw, 32px);
 }
 img,
 svg {
@@ -139,6 +178,8 @@ svg {
 img {
   height: auto;
 }
+/* The serif carries an optical-size axis: the browser picks the fine display cut for
+   large sizes and the sturdier text cut for reading sizes. */
 h1,
 h2,
 h3,
@@ -147,9 +188,14 @@ h4,
   margin: 0;
   font-family: var(--font-display);
   font-weight: 500;
-  line-height: 1.1;
-  letter-spacing: -0.015em;
+  font-optical-sizing: auto;
+  line-height: 1.2;
+  letter-spacing: -0.012em;
   text-wrap: balance;
+}
+h1,
+.display {
+  font-weight: 400;
 }
 p {
   margin: 0;
@@ -192,62 +238,278 @@ button {
   margin-inline: auto;
   padding-inline: var(--gutter);
 }
+/* Reading text: sentences meant to be read, as opposed to names, labels and notes. It
+   never runs wider than the measure. */
+.read {
+  max-width: var(--measure);
+  font-family: var(--font-display);
+  font-size: var(--t-lg);
+  line-height: 1.6;
+}
 .mono {
   font-family: var(--font-mono);
-  font-size: 0.78rem;
-  letter-spacing: 0.02em;
+  font-size: var(--t-xs);
+  letter-spacing: 0.01em;
   font-variant-numeric: tabular-nums;
 }
 .label {
   font-family: var(--font-sans);
-  font-size: 0.92rem;
+  font-size: var(--t-sm);
   font-weight: 500;
   line-height: 1.4;
   letter-spacing: 0;
   color: var(--ink-2);
 }
-/* Section labels carry a small square in the second colour. */
-.label.marked::before {
-  content: '';
-  display: inline-block;
-  width: 0.5em;
-  height: 0.5em;
-  margin-right: 0.6em;
-  background: var(--accent-2);
-  vertical-align: 0.08em;
-}
 
-/* ---------- Page sections ----------
-   A section is a rule, its name in a narrow left column, and its content beside it. */
-.section {
-  padding-top: clamp(3.5rem, 8vw, 7rem);
-}
+/* ---------- The grid ----------
+   Every page is set on one twelve-column grid as wide as the content box. Sections come
+   in two forms, so a page is not the same shape all the way down:
+
+   A ledger (`.ledger`): a rule, the section's name in columns 1 to 3, its content in
+     columns 4 to 12. Inside the content, `.g9` is the same grid again, so its own
+     columns land on the page's lines: text in 1 to 6, notes beside it in 7 to 9.
+   A feature (`.sec-head` over full-width content): the section's name and a line about
+     it, with something beside them, over a rule, and then content the full width of
+     the column (the project rows).
+
+   `.g12` with `.main` / `.side` splits the full width 7 to 5: text, and what belongs
+   beside it. */
+.g12,
+.g9,
 .ledger {
   display: grid;
-  grid-template-columns: minmax(0, 3fr) minmax(0, 9fr);
-  gap: 1.5rem clamp(1.5rem, 4vw, 4rem);
+  column-gap: var(--col-gap);
+}
+.g12,
+.ledger {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+}
+.g9 {
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+}
+.g12 > *,
+.g9 > * {
+  min-width: 0;
+}
+.main {
+  grid-column: 1 / span 7;
+}
+.side {
+  grid-column: 8 / -1;
+}
+
+/* ---------- Page sections ---------- */
+.section {
+  padding-top: clamp(4rem, 8vw, 6.5rem);
+}
+/* A section's name: the serif, a size above everything in the section. */
+.sec-title {
+  position: relative;
+  font-size: var(--t-h2);
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+}
+/* It carries a small square, hung in the gutter so the name itself keeps the left edge.
+   It is an outline until the section is the one being read, and then it fills. */
+.marked::before {
+  content: '';
+  position: absolute;
+  /* In the gutter, ending where the numbers that hang beside project titles end. */
+  left: calc(0.55rem - var(--hang));
+  top: 0.62em;
+  width: 0.375rem;
+  height: 0.375rem;
+  box-shadow: inset 0 0 0 1px var(--ink-3);
+  transition:
+    background-color 0.35s var(--ease),
+    box-shadow 0.35s var(--ease);
+}
+[data-current] .marked::before,
+html:not(.js) .marked::before {
+  background: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--ink);
+}
+
+/* Ledger: the rule draws itself from the left; the name stays in view beside the
+   content while it is read. */
+.ledger {
+  row-gap: 1.25rem;
+  align-items: start;
 }
 .ledger::before {
   content: '';
   grid-column: 1 / -1;
+  margin-bottom: 0.5rem;
   border-top: 1px solid var(--ink);
 }
-.ledger-label {
+.ledger > * {
+  grid-column: 4 / -1;
+  min-width: 0;
+}
+.ledger > .sec-title {
+  grid-column: 1 / span 3;
   position: sticky;
   top: calc(var(--header-h) + 1.5rem);
-  align-self: start;
 }
+
+/* Feature: the name and a line about it on the left, something beside them on the
+   right, and the rule under both. */
+.sec-head {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem 2.5rem;
+  padding-bottom: 1.2rem;
+}
+.sec-head::before {
+  content: '';
+  position: absolute;
+  inset: auto 0 0 0;
+  border-top: 1px solid var(--ink);
+}
+.sec-intro {
+  max-width: var(--measure);
+  margin-top: 0.6rem;
+  font-family: var(--font-display);
+  font-size: var(--t-lg);
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+
+/* The opening of a page: one statement in the serif, and a few plain sentences under
+   it, both at the left edge of the column, under the name in the header. */
+.page-intro {
+  row-gap: 1.25rem;
+  padding-top: clamp(3rem, 8vw, 6rem);
+}
+.page-intro h1 {
+  grid-column: 1 / -1;
+  font-size: var(--t-h1);
+  line-height: 1.16;
+  letter-spacing: -0.02em;
+}
+.lede {
+  grid-column: 1 / span 7;
+  max-width: 36rem;
+  font-family: var(--font-display);
+  font-size: var(--t-xl);
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+
 /* A plain "more of this" link under a short version of something. */
 .onward {
-  margin-top: 1.5rem;
-  font-size: 0.98rem;
+  margin-top: 1.25rem;
+  font-size: var(--t-sm);
 }
-@media (max-width: 720px) {
-  .ledger {
-    grid-template-columns: minmax(0, 1fr);
+/* A short list of links or names set beside the text: one to a line, between faint rules. */
+.side-list {
+  list-style: none;
+  font-size: var(--t-sm);
+}
+.side-list > li {
+  padding-block: 0.55rem;
+  border-top: 1px solid var(--rule);
+}
+.side-list > li:last-child {
+  border-bottom: 1px solid var(--rule);
+}
+
+/* ---------- Section ticks ----------
+   On a wide window a column of short ticks sits in the right gutter, one for each
+   section of the page. The tick for the section being read is longer, and pointing at
+   the column shows the names. The names open outward, into the empty margin, so they
+   can never sit on top of the page's content; the ticks are only there when the margin
+   is wide enough to hold them. */
+.ticks-anchor {
+  position: sticky;
+  top: 50vh;
+  z-index: 30;
+  height: 0;
+  display: none;
+}
+.ticks {
+  position: absolute;
+  right: max(0px, (100% - var(--max)) / 2);
+  width: var(--gutter);
+  transform: translateY(-50%);
+}
+.ticks ol {
+  list-style: none;
+}
+/* Each entry is as wide as the gutter and no wider. The mark starts at a fixed place and
+   grows to the right; the name follows it and cannot be pointed at. */
+.ticks a {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 1.5rem;
+  padding-left: calc(var(--gutter) * 0.4);
+  font-size: var(--t-xs);
+  line-height: 1;
+  color: var(--ink-3);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.ticks-name {
+  position: absolute;
+  left: calc(var(--gutter) * 0.4 + 1.125rem + 0.6rem);
+  top: 50%;
+  pointer-events: none;
+  opacity: 0;
+  translate: -4px -50%;
+  transition:
+    opacity 0.2s,
+    translate 0.3s var(--ease);
+}
+.ticks:hover .ticks-name,
+.ticks:focus-within .ticks-name {
+  opacity: 1;
+  translate: 0 -50%;
+}
+.ticks-mark {
+  flex: none;
+  width: 0.5rem;
+  height: 1px;
+  background: currentColor;
+  transition: width 0.35s var(--ease);
+}
+.ticks a:hover,
+.ticks a[aria-current] {
+  color: var(--ink);
+}
+.ticks a[aria-current] .ticks-mark {
+  width: 1.125rem;
+}
+/* 80rem of column plus a margin wide enough for the longest name. */
+@media (min-width: 1500px) {
+  .ticks-anchor {
+    display: block;
   }
-  .ledger-label {
-    position: static;
+}
+
+/* Less room: one column. What sat beside the text goes under it, and a section's name
+   sits above its content. */
+@media (max-width: 900px) {
+  .main,
+  .side,
+  .lede,
+  .ledger > *,
+  .ledger > .sec-title {
+    grid-column: 1 / -1;
+  }
+  .ledger > .sec-title {
+    position: relative;
+    top: auto;
+  }
+}
+/* A phone's gutter is too narrow to hang anything in. */
+@media (max-width: 720px) {
+  .marked::before {
+    display: none;
   }
 }
 .sr-only {
@@ -421,6 +683,16 @@ a.ext:hover::after {
   font-size: 1rem;
   line-height: 1.45;
 }
+/* What kind of numbers follow: said at the point of reading, above the numbers. */
+.fx-flag {
+  margin-top: 0.9rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--fig-ink);
+}
+.fx-flag + .fx-insight {
+  margin-top: 0.2rem;
+}
 .fx-readout {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
@@ -470,15 +742,19 @@ a.ext:hover::after {
    browsers without scroll-driven animations, and for readers who prefer reduced
    motion. `html.js` is set by an inline script before first paint.
 
-   Scroll-driven reveals are opted into with data attributes:
+   Scroll-driven reveals are opted into with data attributes. They follow the scroll
+   position exactly, forwards and backwards, so nothing plays on its own:
      data-reveal            fade up
      data-reveal="left"     slide in from the left
-     data-reveal="mask"     rise out of a mask (large type)
+     data-reveal="mask"     rise out of a mask (headings)
+     data-reveal="mask-in"  the same, without a departure (names that stay stuck in view)
      data-reveal="scale"    settle from slightly small (figures)
      data-reveal="stamp"    land like a stamp (the verdict)
      data-stagger           each child fades up as it arrives
      data-rule              the rule above a section draws from the left
-     data-drift             drift a little against the scroll (set --drift) */
+
+   The things that do move on their own (the detector drawing, the band of fields, the
+   small live dots) stop when the reader presses Pause: html[data-motion='paused']. */
 @keyframes reveal {
   from {
     opacity: 0;
@@ -490,10 +766,15 @@ a.ext:hover::after {
     opacity: 0;
   }
 }
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
 @keyframes slide-in-left {
   from {
     opacity: 0;
-    transform: translateX(-28px);
+    transform: translateX(-24px);
   }
 }
 @keyframes unmask {
@@ -502,35 +783,32 @@ a.ext:hover::after {
     transform: translateY(0.45em);
   }
   to {
-    clip-path: inset(-30% -5%);
+    clip-path: inset(-30% -8%);
     transform: none;
   }
 }
 @keyframes scale-in {
   from {
     opacity: 0;
-    transform: translateY(30px) scale(0.96);
+    transform: translateY(26px) scale(0.965);
   }
 }
+/* It grows from its own left edge, so it never reaches outside the column, and it is
+   barely there while it is at its largest. */
 @keyframes stamp {
   0% {
     opacity: 0;
-    transform: scale(1.8) rotate(-10deg);
+    transform: scale(1.45) rotate(-8deg);
   }
-  65% {
+  35% {
+    opacity: 0.15;
+  }
+  70% {
     opacity: 1;
-    transform: scale(0.95) rotate(1.5deg);
+    transform: scale(0.96) rotate(1deg);
   }
   100% {
     transform: none;
-  }
-}
-@keyframes drift {
-  from {
-    transform: translateY(var(--drift, 28px));
-  }
-  to {
-    transform: translateY(calc(var(--drift, 28px) * -1));
   }
 }
 /* Leaving by the top of the window: the same things fade up and out, so that scrolling
@@ -579,7 +857,7 @@ a.ext:hover::after {
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .live-dot {
+  html:not([data-motion='paused']) .live-dot {
     animation: pulse-dot 2.4s ease-in-out infinite;
   }
 
@@ -594,7 +872,7 @@ a.ext:hover::after {
       animation:
         reveal linear both,
         leave linear forwards;
-      animation-timeline: view(block 64px 0px), view(block 64px 0px);
+      animation-timeline: view(block 60px 0px), view(block 60px 0px);
       animation-range:
         entry 0px entry 200px,
         exit calc(100% - 150px) exit 100%;
@@ -608,32 +886,35 @@ a.ext:hover::after {
     [data-reveal='mask'] {
       animation-name: unmask, leave;
       animation-range:
-        entry 20px entry 240px,
+        entry 20px entry 220px,
         exit calc(100% - 150px) exit 100%;
+    }
+    /* A section's name stays stuck beside its content, so it only arrives: a departure
+       timed by the scroll would fade it while it is still on screen. */
+    [data-reveal='mask-in'] {
+      animation: unmask linear both;
+      animation-timeline: view(block 60px 0px);
+      animation-range: entry 20px entry 220px;
     }
     [data-reveal='scale'] {
       animation-name: scale-in, leave;
       animation-range:
-        entry 0px entry 320px,
-        exit calc(100% - 220px) exit 100%;
+        entry 0px entry 300px,
+        exit calc(100% - 200px) exit 100%;
     }
     [data-reveal='stamp'] {
+      transform-origin: left center;
       animation-name: stamp, leave;
       animation-range:
-        entry 80px entry 380px,
+        entry 90px entry 300px,
         exit calc(100% - 150px) exit 100%;
-    }
-    [data-drift] {
-      animation: drift linear both;
-      animation-timeline: view();
-      animation-range: cover;
     }
     /* Section rules draw themselves from the left as they come into view. */
     [data-rule]::before {
       transform-origin: left center;
       animation: draw-rule linear both;
       animation-timeline: view();
-      animation-range: entry 0px entry 340px;
+      animation-range: entry 0px entry 320px;
     }
   }
 
@@ -653,6 +934,59 @@ a.ext:hover::after {
   }
   html.theme-switch::view-transition-new(root) {
     z-index: 2;
+  }
+}
+
+/* The opening of a page arrives when the page does: each part a moment after the one
+   before. On the first page of a visit it waits for the intro curtain. */
+@media (prefers-reduced-motion: no-preference) {
+  html.js :is(.page-intro, .case-head) > * {
+    animation: fade-up 0.8s var(--ease) both;
+    animation-delay: calc(var(--enter, 0.05s) + var(--n, 0) * 90ms);
+  }
+  html.js :is(.page-intro, .case-head) > :nth-child(2) {
+    --n: 1;
+  }
+  html.js :is(.page-intro, .case-head) > :nth-child(3) {
+    --n: 2;
+  }
+  html.js :is(.page-intro, .case-head) > :nth-child(n + 4) {
+    --n: 3;
+  }
+  html.intro :is(.hero, .page-intro, .case-head) {
+    --enter: 1.3s;
+  }
+  html.intro-skipped :is(.hero, .page-intro, .case-head) {
+    --enter: 0.05s;
+  }
+}
+
+/* A button that leans toward the pointer and springs back when it leaves. */
+[data-magnetic] {
+  transition: transform 0.45s cubic-bezier(0.2, 1.5, 0.4, 1);
+  will-change: transform;
+}
+
+/* The word that stops the things that move on their own. */
+.pause {
+  padding: 0.15rem 0;
+  border: 0;
+  background: none;
+  color: var(--ink-2);
+  font-size: var(--t-sm);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.pause:hover {
+  color: var(--accent);
+}
+/* There is nothing to pause for a reader who has asked for no motion. */
+@media (prefers-reduced-motion: reduce) {
+  .pause {
+    display: none;
   }
 }
 

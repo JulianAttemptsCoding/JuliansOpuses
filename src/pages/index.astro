@@ -1,6 +1,9 @@
 ---
 // Home: who I am in one screen, then a short version of each section with a link to the
-// full one. Nothing here is the only copy of anything.
+// full one, in the order a reader needs them: the projects first, since they are the
+// evidence, then the research they grew out of, the awards, and the rest. The sections
+// are not all one shape: the projects run the full width, the others hang from their
+// names. Nothing here is the only copy of anything.
 import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import Verdict from '../components/Verdict.astro';
@@ -8,37 +11,61 @@ import Ticker from '../components/Ticker.astro';
 import WorkRows from '../components/WorkRows.astro';
 import RowPreview from '../components/RowPreview.astro';
 import Awards from '../components/Awards.astro';
+import Shower from '../components/Shower.astro';
 import { href } from '../lib/url';
 import { STATUS_ORDER } from '../data/verdicts';
-import { experience, links } from '../data/profile';
+import { experience, links, recognition } from '../data/profile';
 
 const all = (await getCollection('work')).sort((a, b) => a.data.order - b.data.order);
 const featured = all.slice(0, 3);
+const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+const sections = [
+  { id: 'work', label: 'Projects' },
+  { id: 'research', label: 'Research' },
+  { id: 'awards', label: 'Awards' },
+  { id: 'beyond', label: 'Outside the lab' },
+];
 // The headline is split into words at build time so each can rise out of its own mask.
-const headline =
-  'I’m Julian Juan, a senior at Los Gatos High School. I do machine-learning research for particle physics.'.split(' ');
+// `b` marks the name, the one thing in the sentence set heavier; `tail` is punctuation
+// that follows a word without taking its weight.
+const headline: { t: string; b?: boolean; tail?: string }[] = [
+  { t: 'I’m' },
+  { t: 'Julian', b: true },
+  { t: 'Juan', b: true, tail: ',' },
+  ...'a senior at Los Gatos High School. I do machine-learning research for particle physics.'
+    .split(' ')
+    .map((t) => ({ t })),
+];
 ---
 
-<Base>
+<Base sections={sections}>
   <section class="hero wrap">
     <h1>
       {
-        headline.map((word, i) => (
+        headline.map((w, i) => (
           <>
             <span class="w">
-              <span style={`--i:${i}`}>{word}</span>
+              <span style={`--i:${i}`}>
+                {w.b ? <strong>{w.t}</strong> : w.t}
+                {w.tail}
+              </span>
             </span>{' '}
           </>
         ))
       }
     </h1>
-    <div class="hero-foot">
-      <p class="lede">
-        I’ve spent two summers at Academia Sinica’s Institute of Physics in Taipei, building models for particle
-        detectors. Each project on this site says how it did when I tested it properly, including the one that
-        failed.
-      </p>
-      <dl class="facts">
+    <div class="hero-foot g12">
+      <div class="main">
+        <p class="lede">
+          I’ve spent two summers at Academia Sinica’s Institute of Physics in Taipei, building models for particle
+          detectors. This site has the projects I’ve built, the results so far, and the questions I’m still
+          working on.
+        </p>
+        <p class="hero-links">
+          <a href="#work">Selected projects&nbsp;↓</a>
+        </p>
+      </div>
+      <dl class="facts side">
         <div>
           <dt>Research</dt>
           <dd><a class="ext quiet" href={experience.href} rel="noopener">{experience.org}</a></dd>
@@ -49,25 +76,34 @@ const headline =
         </div>
         <div>
           <dt>College</dt>
-          <dd><a class="quiet" href={href('/about/#education')}>29 units alongside high school, 4.0 GPA →</a></dd>
+          <dd>
+            <a class="quiet" href={href('/about/#education')}>29 units alongside high school, 4.0 GPA&nbsp;→</a>
+          </dd>
         </div>
         <div>
           <dt>Awards</dt>
-          <dd><a class="quiet" href={href('/experience/#awards')}>HiMCM finalist, and nine more →</a></dd>
+          <dd>
+            <a class="quiet" href={href('/experience/#awards')}>
+              {recognition[0].name} {recognition[0].result.toLowerCase()}, and {recognition.length - 1} more&nbsp;→
+            </a>
+          </dd>
         </div>
       </dl>
+    </div>
+    <div class="hero-fig">
+      <Shower />
     </div>
   </section>
 
   <Ticker />
 
   <section class="section wrap" id="work">
-    <header class="sec-head">
+    <header class="sec-head" data-rule>
       <div>
-        <h2 class="label marked">Projects</h2>
-        <p class="sec-intro">Three of five. Each is labelled with how it did when tested.</p>
+        <h2 class="sec-title marked"><span data-reveal="mask">Selected projects</span></h2>
+        <p class="sec-intro" data-reveal>Three of five. The label on each says where it stands.</p>
       </div>
-      <ul class="legend" aria-label="What the labels mean. Point at or focus one to read it.">
+      <ul class="legend" data-reveal aria-label="What the labels mean. Point at or focus one to read it.">
         {
           STATUS_ORDER.map((s) => (
             <li>
@@ -79,60 +115,77 @@ const headline =
     </header>
     <WorkRows items={featured} />
     <p class="onward" data-reveal>
-      <a href={href('/work/')}>All five projects, including the one that failed →</a>
+      <a href={href('/work/')}>All five projects&nbsp;→</a>
     </p>
   </section>
 
   <section class="section wrap ledger" id="research" data-rule>
-    <h2 class="label marked ledger-label">Research</h2>
-    <div>
-      <p class="exp-org display" data-reveal="mask">
-        <a class="ext quiet" href={experience.href} rel="noopener">{experience.org}</a>
-      </p>
-      <p class="exp-meta" data-reveal>
-        {experience.role} in {experience.place}, {experience.dates}
-      </p>
-      <p class="exp-summary" data-reveal>
-        {experience.summary} The longest piece was a machine-learning stand-in for the detector simulation. An
-        early version generated showers about 200× faster in benchmarks, and I’m still working out whether they
-        are accurate enough to use.
-      </p>
-      <p class="onward" data-reveal>
-        <a href={href('/experience/')}>What I worked on there →</a>
-      </p>
+    <h2 class="sec-title marked"><span data-reveal="mask-in">Research</span></h2>
+    <div class="g9 research">
+      <div class="research-text">
+        <h3 class="exp-org display" data-reveal="mask">
+          <a class="ext quiet" href={experience.href} rel="noopener">{experience.org}</a>
+        </h3>
+        <p class="exp-meta" data-reveal>
+          {experience.role} in {experience.place}, {experience.dates}
+        </p>
+        <p class="exp-summary read" data-reveal>{experience.summary}</p>
+        <p class="onward" data-reveal>
+          <a href={href('/experience/')}>What I worked on there&nbsp;→</a>
+        </p>
+      </div>
+      <ol class="side-list strands" data-stagger>
+        {
+          experience.strands.map((s) => (
+            <li>
+              <a class="quiet" href={href(`/experience/#${slug(s.title)}`)}>
+                <span>{s.title}</span>
+                <span aria-hidden="true">→</span>
+              </a>
+            </li>
+          ))
+        }
+      </ol>
     </div>
   </section>
 
   <section class="section wrap ledger" id="awards" data-rule>
-    <h2 class="label marked ledger-label">Awards</h2>
+    <h2 class="sec-title marked"><span data-reveal="mask-in">Awards</span></h2>
     <div>
       <Awards limit={4} />
       <p class="onward" data-reveal>
-        <a href={href('/experience/#awards')}>All ten →</a>
+        <a href={href('/experience/#awards')}>All ten&nbsp;→</a>
       </p>
     </div>
   </section>
 
   <section class="section wrap ledger" id="beyond" data-rule>
-    <h2 class="label marked ledger-label">Outside the lab</h2>
+    <h2 class="sec-title marked"><span data-reveal="mask-in">Outside the lab</span></h2>
     <div>
       <ul class="beyond" data-stagger>
-        <li>
-          I’m the voting student member of my school district’s budget advisory committee, where I helped
-          reconcile over $6 million in reporting differences.{' '}
-          <a href={href('/experience/#leadership')}>More →</a>
+        <li class="g9">
+          <p class="read">
+            I’m the voting student member of my school district’s budget advisory committee, where I helped
+            reconcile over $6 million in reporting differences.
+          </p>
+          <a class="quiet" href={href('/experience/#leadership')}>Budget committee&nbsp;→</a>
         </li>
-        <li>
-          I’m Director of Strategy at Los Gatos Hacks, a nonprofit hackathon for middle and high school students.{' '}
-          <a href={href('/about/#outside')}>More →</a>
+        <li class="g9">
+          <p class="read">
+            I’m Director of Strategy at Los Gatos Hacks, a nonprofit hackathon for middle and high school
+            students.
+          </p>
+          <a class="quiet" href={href('/experience/#leadership')}>Los Gatos Hacks&nbsp;→</a>
         </li>
-        <li>
-          I started a résumé workshop that is now part of freshman and sophomore English at my school.{' '}
-          <a href={href('/experience/#leadership')}>More →</a>
+        <li class="g9">
+          <p class="read">
+            I started a résumé workshop that is now part of freshman and sophomore English at my school.
+          </p>
+          <a class="quiet" href={href('/experience/#leadership')}>Résumé workshop&nbsp;→</a>
         </li>
       </ul>
       <p class="onward" data-reveal>
-        <a href={href('/about/')}>Education, coursework and the rest →</a>
+        <a href={href('/about/')}>Education, coursework and the rest&nbsp;→</a>
       </p>
     </div>
   </section>
@@ -141,16 +194,20 @@ const headline =
 </Base>
 
 <style>
-  /* ---------- Hero ---------- */
+  /* ---------- Opening ---------- */
   .hero {
-    padding-block: clamp(3rem, 9vw, 7.5rem) clamp(2.5rem, 6vw, 5rem);
+    padding-top: clamp(3rem, 8vw, 6.5rem);
   }
   .hero h1 {
     max-width: 25ch;
-    font-size: clamp(2.05rem, 4.5vw, 3.9rem);
+    font-size: var(--t-hero);
     line-height: 1.08;
     letter-spacing: -0.022em;
     text-wrap: pretty;
+  }
+  /* The name is the one thing in the sentence set heavier. */
+  .hero h1 strong {
+    font-weight: 600;
   }
   /* Each word sits in a mask a little taller than the line, so descenders are not cut. */
   .w {
@@ -163,27 +220,27 @@ const headline =
   .w > span {
     display: inline-block;
   }
+  /* Under the sentence: a few more sentences, and the plain facts beside them. */
   .hero-foot {
-    display: grid;
-    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
-    gap: 2rem clamp(2rem, 6vw, 6rem);
+    row-gap: 2rem;
     align-items: end;
-    margin-top: clamp(2.25rem, 5vw, 4rem);
+    margin-top: clamp(2rem, 4.5vw, 3.5rem);
   }
-  .lede {
-    max-width: 46ch;
-    font-size: clamp(1.08rem, 1.45vw, 1.3rem);
-    line-height: 1.5;
-    color: var(--ink-2);
+  .hero-links {
+    margin-top: 1.1rem;
+    font-size: var(--t-sm);
+  }
+  .hero-links a {
+    padding-block: 0.15rem;
   }
   .facts {
-    font-size: 0.92rem;
+    font-size: var(--t-sm);
   }
   .facts div {
     display: grid;
-    grid-template-columns: 5.5rem 1fr;
+    grid-template-columns: 5.25rem minmax(0, 1fr);
     gap: 1rem;
-    padding-block: 0.6rem;
+    padding-block: 0.55rem;
     border-top: 1px solid var(--rule);
   }
   .facts div:last-child {
@@ -192,109 +249,147 @@ const headline =
   .facts dt {
     color: var(--ink-3);
   }
+  .hero-fig {
+    margin-top: clamp(2.25rem, 5vw, 4rem);
+    padding-bottom: clamp(2.5rem, 5vw, 4rem);
+  }
 
-  /* The headline rises word by word; the rest of the hero follows. On a first visit it
-     waits for the intro curtain. Without scripts none of this applies. */
+  /* The headline rises word by word; the rest of the opening follows. On a first visit
+     it waits for the intro curtain. Without scripts none of this applies. */
   @media (prefers-reduced-motion: no-preference) {
     :global(html.js) .w > span {
       animation: rise 0.9s var(--ease) both;
-      animation-delay: calc(var(--i) * 38ms + var(--hero-delay, 0.1s));
+      animation-delay: calc(var(--i) * 38ms + var(--enter, 0.1s));
     }
     :global(html.js) .hero-foot {
       animation: fade-up 0.8s var(--ease) both;
-      animation-delay: calc(var(--hero-delay, 0.1s) + 0.6s);
+      animation-delay: calc(var(--enter, 0.1s) + 0.6s);
     }
-    :global(html.intro) .hero {
-      --hero-delay: 1.3s;
-    }
-    :global(html.intro-skipped) .hero {
-      --hero-delay: 0.1s;
+    :global(html.js) .hero-fig {
+      animation: fade-up 0.9s var(--ease) both;
+      animation-delay: calc(var(--enter, 0.1s) + 0.8s);
     }
     /* Leaving the top of the page, the headline lags behind and thins out. */
     @supports (animation-timeline: scroll()) {
       .hero h1 {
         animation: hero-out linear both;
         animation-timeline: scroll(root block);
-        animation-range: 0px 85vh;
+        animation-range: 0px 80vh;
       }
       .lede,
+      .hero-links,
       .facts {
         animation: hero-out-fast linear both;
         animation-timeline: scroll(root block);
-        animation-range: 0px 70vh;
+        animation-range: 0px 65vh;
       }
     }
   }
   @keyframes hero-out {
     to {
       opacity: 0.12;
-      transform: translateY(70px);
+      transform: translateY(60px);
     }
   }
   @keyframes hero-out-fast {
     to {
       opacity: 0;
-      transform: translateY(-30px);
+      transform: translateY(-26px);
     }
   }
 
-  /* ---------- Sections ---------- */
-  .sec-head {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: end;
-    justify-content: space-between;
-    gap: 1rem 2rem;
-    padding-bottom: 1.25rem;
-    border-bottom: 1px solid var(--ink);
-  }
-  .sec-intro {
-    margin-top: 0.4rem;
-    color: var(--ink-2);
-  }
+  /* ---------- Projects: the key to the labels sits beside the section's name ---------- */
   .legend {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.25rem 1.25rem;
+    gap: 0.1rem 1.1rem;
     list-style: none;
     color: var(--ink-2);
   }
 
+  /* ---------- Research: the place, what I did there, and the pieces of work beside it ---------- */
+  .research {
+    row-gap: 1.5rem;
+    align-items: first baseline;
+  }
+  .research-text {
+    grid-column: 1 / span 6;
+  }
   .exp-org {
-    font-size: clamp(1.7rem, 3vw, 2.5rem);
-    line-height: 1.1;
+    font-size: var(--t-org);
+    font-weight: 400;
+    line-height: 1.12;
+    letter-spacing: -0.018em;
   }
   .exp-meta {
-    margin-top: 0.6rem;
+    margin-top: 0.55rem;
     color: var(--ink-3);
+    font-size: var(--t-sm);
   }
   .exp-summary {
-    max-width: 58ch;
-    margin-top: 1.1rem;
+    margin-top: 1rem;
+  }
+  /* The three pieces of work, numbered in the same figures as the projects. Each goes
+     to its account on the Experience page. */
+  .strands {
+    grid-column: 7 / -1;
+    counter-reset: strand;
+  }
+  .strands li {
+    display: flex;
+    align-items: baseline;
+    gap: 0.9rem;
     color: var(--ink-2);
-    font-size: 1.08rem;
+    counter-increment: strand;
+  }
+  .strands li::before {
+    content: counter(strand, decimal-leading-zero);
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    color: var(--ink-3);
+  }
+  /* The arrow sits at the end of the row, so the names keep one left edge. */
+  .strands a {
+    flex: 1;
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-block: 0.1rem;
   }
 
+  /* ---------- Outside the lab: a sentence each, with its link beside it ---------- */
   .beyond {
     list-style: none;
-    max-width: 62ch;
   }
   .beyond li {
+    row-gap: 0.3rem;
+    align-items: first baseline;
     padding-block: 0.95rem;
     border-bottom: 1px solid var(--rule);
-    color: var(--ink-2);
   }
   .beyond li:first-child {
     padding-top: 0;
   }
+  .beyond p {
+    grid-column: 1 / span 6;
+  }
   .beyond a {
-    color: var(--ink);
+    grid-column: 7 / -1;
+    justify-self: start;
+    padding-block: 0.1rem;
+    font-size: var(--t-sm);
     white-space: nowrap;
   }
 
-  @media (max-width: 720px) {
-    .hero-foot {
-      grid-template-columns: minmax(0, 1fr);
+  @media (max-width: 1000px) {
+    .research-text,
+    .strands,
+    .beyond p,
+    .beyond a {
+      grid-column: 1 / -1;
+    }
+    .strands {
+      max-width: 26rem;
     }
   }
 </style>

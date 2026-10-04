@@ -3,6 +3,7 @@ order: 4
 tier: flagship
 title: LaTeXRenderer
 question: What security guarantees are actually possible on a static host?
+summary: A browser workspace where a small team writes and renders LaTeX together. It is hosted on GitHub Pages, which cannot keep a secret, so every decision about who gets in is made on a server instead.
 claim: A collaborative browser LaTeX environment whose public shell runs on GitHub Pages, with every authorization decision moved to the server.
 domain: Full-stack, security
 status: shipped
@@ -18,6 +19,7 @@ metrics:
     value: SHA-256, every asset
 links:
   - label: Live site
+    note: sign-in required
     href: https://julianattemptscoding.github.io/LaTeXRenderer/
   - label: Repository
     href: https://github.com/JulianAttemptsCoding/LaTeXRenderer
@@ -27,7 +29,7 @@ worked:
   - 'Deployed and live, with CI that type-checks, lints, runs unit and Playwright tests, scans the build for secrets, publishes, then smoke-tests the live URL.'
   - 'Authorization never depends on client code: each access decision is made in a Supabase Edge Function against a stored grant.'
   - 'The browser refuses to run any application bytes whose SHA-256 does not match the manifest the server published.'
-  - 'The end-to-end suite asserts, one by one, that each client-side bypass fails.'
+  - 'The end-to-end suite checks four client-side bypasses one by one, and each fails.'
 openLabel: Known limits
 open:
   - 'The encrypted fallback mode ships public ciphertext, so it permits offline password guessing and is weaker than production.'
@@ -64,7 +66,7 @@ Sign-in uses [Supabase](https://supabase.com/) Auth with Google OAuth and PKCE, 
 
 ## Testing the attacks
 
-I didn’t want to call it secure without trying to break it. The [Playwright](https://playwright.dev/) suite asserts each obvious bypass individually: deleting the password form in DevTools, setting a local-storage flag, calling shell functions from the console, and requesting the private bucket directly. All of them fail. The shell doesn’t stop them; there is simply nothing in the shell worth reaching.
+Before calling it secure, I tried to break it. The [Playwright](https://playwright.dev/) suite tests four client-side bypasses one by one: deleting the password form in DevTools, setting a local-storage flag, calling shell functions from the console, and requesting the private bucket directly. All four fail. The shell doesn’t stop them; there is simply nothing in the shell worth reaching.
 
 Around that sit Vitest unit tests for integrity verification, lint rules that ban `innerHTML` and `eval` in the shell, a build that refuses to start if it is handed a service-role key, and a CI step that scans the built output for credential material before publishing.
 

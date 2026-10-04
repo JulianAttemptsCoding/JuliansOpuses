@@ -4,6 +4,7 @@ tier: note
 title: QTA0
 heading: 'QTA0: When a Backtest Stops Working'
 question: Does apparent trading alpha survive adversarial validation?
+summary: A stock-prediction model that beat the index in its first test. I kept making the test harder, and the advantage shrank to a coin flip. This is the write-up of how that happened.
 claim: An equity forecasting system, followed by increasingly strict validation until the apparent edge disappeared.
 domain: Quant research
 status: negative
@@ -29,7 +30,7 @@ worked:
 openLabel: What did not
 open:
   - 'No net-of-cost edge under any regime-fair validation.'
-  - 'Hit rate decays toward a coin flip as the test period moves away from training: concept drift.'
+  - 'Hit rate decays toward a coin flip as the test period moves away from training, which is consistent with concept drift.'
   - 'Two re-validations use survivorship-biased free data, so they are compared only against their own universe, never against SPY.'
   - 'Conclusion: not deployable.'
 ---
@@ -79,7 +80,7 @@ The hit rates in run1 and run2 are statistically distinguishable from 50%, and s
 
 ## What the decline means
 
-Directional accuracy falls the further the test set sits from training in time. That pattern is concept drift. What the model learned was true of the market it trained on, and it faded as the market changed.
+Directional accuracy falls the further the test set sits from training in time. That is what concept drift would look like: what the model learned was true of the market it trained on, and faded as the market changed. The runs also differ in data source, universe and validation design, so they do not isolate that one cause.
 
 <Figure
   n={3}
