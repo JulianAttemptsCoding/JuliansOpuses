@@ -54,6 +54,7 @@ const sections = [
           <a class="quiet" href={href(`/work/${lead.id}/`)}>{lead.data.title}</a>
         </h3>
         <p class="lead-question" data-reveal>{lead.data.question}</p>
+        {lead.data.context && <p class="lead-context" data-reveal>{lead.data.context}</p>}
         <p class="lead-claim read" data-reveal>{lead.data.summary}</p>
         <div class="lead-result" data-reveal>
           <Verdict status={lead.data.status} />
@@ -187,6 +188,11 @@ const sections = [
     font-family: var(--font-display);
     font-size: var(--t-xl);
     line-height: 1.4;
+  }
+  .lead-context {
+    margin-top: 0.8rem;
+    color: var(--ink-3);
+    font-size: var(--t-sm);
   }
   .lead-claim {
     margin-top: 0.8rem;

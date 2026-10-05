@@ -60,8 +60,9 @@ const rows = await Promise.all(
 
 <script>
   // The key to the labels doubles as a way to pick them out: pointing at one of its
-  // entries (or focusing it) dims every project row that has a different label.
-  const rows = document.querySelectorAll<HTMLElement>('[data-row][data-status]');
+  // entries (or focusing it) dims every project that has a different label: the rows,
+  // and the entry a page leads with, if it has one.
+  const rows = document.querySelectorAll<HTMLElement>('[data-row][data-status], [data-lead][data-status]');
   document.querySelectorAll<HTMLElement>('.legend [data-verdict]').forEach((key) => {
     const pick = (status: string | null) =>
       rows.forEach((r) => r.toggleAttribute('data-dim', status !== null && r.dataset.status !== status));

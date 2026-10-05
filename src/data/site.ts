@@ -6,9 +6,9 @@
  */
 export const site = {
   name: 'Julian Juan',
-  title: 'Julian Juan | Machine-learning research for particle physics',
+  title: 'Julian Juan | Physics research, software and math modeling',
   description:
-    'Julian Juan is a high-school senior who does machine-learning research for particle physics. Projects, research and the results so far.',
+    'Julian Juan is a senior at Los Gatos High School who does physics research, builds software and hardware, and competes in math modeling.',
   github: 'https://github.com/JulianAttemptsCoding',
   linkedin: 'https://www.linkedin.com/in/4a4a75616e/',
   resume: '/resume.pdf', // public/resume.pdf: the copy without a personal email address

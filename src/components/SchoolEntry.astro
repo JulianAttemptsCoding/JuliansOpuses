@@ -33,7 +33,7 @@ const count = `${total} ${total === 1 ? 'course' : 'courses'}${ongoing > 0 ? `, 
   <details open={open}>
     <summary>
       <span class="plus" aria-hidden="true"></span>
-      <span>Coursework</span>
+      <span>{entry.coursesLabel ?? 'Coursework'}</span>
       <span class="mono count">{count}</span>
     </summary>
     <ul class="courses">

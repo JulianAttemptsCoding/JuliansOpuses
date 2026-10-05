@@ -9,7 +9,6 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import { site } from '../data/site';
 import { href } from '../lib/url';
-import { VERDICTS, STATUS_ORDER } from '../data/verdicts';
 
 interface Props {
   title?: string;
@@ -42,10 +41,34 @@ const person = {
   description: site.description,
   sameAs: [site.github, site.linkedin].filter(Boolean),
 };
+
+// The first page of a visit opens on a dark screen that runs through what the site
+// covers, one phrase at a time, and ends on the name. Every phrase is something that has
+// a page or a section here. The timings live in one place: a beat of dark screen while
+// the page arrives, each phrase up long enough to read, the name held, then the curtain
+// lifts.
+const introWords = [
+  'Particle physics',
+  'Detector simulation',
+  'Machine learning',
+  'Math modeling',
+  'Web security',
+  'Hardware',
+  'School budgets',
+  'Hackathons',
+];
+const INTRO_LEAD = 0.25; // seconds before the first phrase
+const INTRO_WORD = 0.48; // seconds each phrase is shown
+const INTRO_HOLD = 0.9; // seconds from the name appearing to the curtain starting to lift
+const INTRO_LIFT = 0.7; // seconds the curtain takes
+const introName = INTRO_LEAD + introWords.length * INTRO_WORD;
+const introOut = introName + INTRO_HOLD;
+const introTiming = `--intro-lead:${INTRO_LEAD}s;--intro-word:${INTRO_WORD}s;--intro-name:${introName.toFixed(2)}s;--intro-out:${introOut.toFixed(2)}s;--intro-lift:${INTRO_LIFT}s`;
+const introMs = Math.round((introOut + INTRO_LIFT) * 1000);
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" style={introTiming}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -62,7 +85,7 @@ const person = {
     <meta property="og:image" content={preview} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Julian Juan, a senior at Los Gatos High School who does machine-learning research for particle physics." />
+    <meta property="og:image:alt" content="Julian Juan, a senior at Los Gatos High School who does physics research, builds software and hardware, and competes in math modeling." />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="theme-color" content="#f2f0e9" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#181b1f" media="(prefers-color-scheme: dark)" />
@@ -90,20 +113,21 @@ const person = {
     </script>
   </head>
   <body id="top">
-    <!-- First-visit intro: the five labels flick past, then the curtain lifts. It only
-         appears when the inline script above adds `intro`, so it never blocks a reader
-         without JavaScript or one who prefers reduced motion. -->
-    <div class="intro-screen" aria-hidden="true" data-intro>
+    <!-- First-visit intro: what the site covers, a phrase at a time, then the name, then
+         the curtain lifts. It only appears when the inline script above adds `intro`, so
+         it never blocks a reader without JavaScript or one who prefers reduced motion. -->
+    <div class="intro-screen" aria-hidden="true" data-intro={introMs}>
       <div class="intro-stack">
         {
-          STATUS_ORDER.map((s, i) => (
+          introWords.map((w, i) => (
             <span class="intro-word" style={`--k:${i}`}>
-              {VERDICTS[s].label}
+              {w}
             </span>
           ))
         }
         <span class="intro-name">{site.name}</span>
       </div>
+      <span class="intro-skip"><span class="by-click">Click</span><span class="by-tap">Tap</span> to skip</span>
     </div>
 
     <a class="skip" href="#main">Skip to content</a>
@@ -151,15 +175,17 @@ const person = {
     intro!.addEventListener('animationend', (e) => {
       if (e.animationName.includes('intro-lift')) done();
     });
-    // Any key or click skips it, and the page's own entrance then starts at once.
+    // Any key, click or turn of the wheel skips it, and the page's own entrance then
+    // starts at once.
     const skip = () => {
       if (!root.classList.contains('intro-done')) root.classList.add('intro-skipped');
       done();
     };
     addEventListener('keydown', skip, { once: true });
     addEventListener('pointerdown', skip, { once: true });
-    // A backstop in case the animation never runs.
-    setTimeout(done, 2600);
+    addEventListener('wheel', skip, { once: true, passive: true });
+    // A backstop in case the animation never runs: the intro's own length, and a little.
+    setTimeout(done, Number(intro!.dataset.intro) + 500);
   });
 
   // ---- Page-to-page transitions: a link to something that cannot take part (the résumé
@@ -353,7 +379,7 @@ const person = {
     place-items: center;
     background: var(--footer-bg);
     color: var(--footer-ink);
-    animation: intro-lift 0.7s var(--ease-inout) 1.05s forwards;
+    animation: intro-lift var(--intro-lift) var(--ease-inout) var(--intro-out) forwards;
   }
   /* The curtain's lower edge is an arc that flattens as it rises. */
   html.intro:not(.intro-done) .intro-screen::after {
@@ -366,7 +392,7 @@ const person = {
     margin-top: -1px;
     background: inherit;
     border-radius: 0 0 50% 50% / 0 0 100% 100%;
-    animation: intro-arc 0.7s var(--ease-inout) 1.05s forwards;
+    animation: intro-arc var(--intro-lift) var(--ease-inout) var(--intro-out) forwards;
   }
   .intro-stack {
     position: relative;
@@ -377,24 +403,67 @@ const person = {
     grid-area: 1 / 1;
     opacity: 0;
   }
+  /* Each phrase arrives from just below, stands still for most of its turn, and leaves
+     upward as the next one arrives. */
   .intro-word {
-    font-family: var(--font-sans);
-    font-size: clamp(1rem, 1.9vw, 1.4rem);
-    letter-spacing: 0.02em;
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 3.4vw, 2.5rem);
+    letter-spacing: -0.012em;
     color: var(--footer-ink-2);
-    animation: intro-flick 0.11s steps(1) calc(var(--k) * 0.11s);
+    white-space: nowrap;
+    animation: intro-word var(--intro-word) linear calc(var(--intro-lead) + var(--k) * var(--intro-word)) both;
   }
   .intro-name {
     font-family: var(--font-display);
     font-size: clamp(2.2rem, 6vw, 4.6rem);
     font-weight: 500;
     letter-spacing: -0.02em;
-    animation: intro-name 0.3s var(--ease) 0.55s forwards;
+    white-space: nowrap;
+    animation: intro-name 0.4s var(--ease) var(--intro-name) forwards;
   }
-  @keyframes intro-flick {
-    from,
-    to {
+  /* How to get past it, said quietly once it is clear the screen is going to stay a while. */
+  .intro-skip {
+    position: absolute;
+    inset: auto 0 clamp(1.5rem, 5vh, 3rem) 0;
+    text-align: center;
+    font-size: var(--t-xs);
+    letter-spacing: 0.02em;
+    color: var(--footer-ink-2);
+    opacity: 0;
+    animation: intro-hint 0.5s ease 0.9s forwards;
+  }
+  .by-tap {
+    display: none;
+  }
+  @media (hover: none) {
+    .by-click {
+      display: none;
+    }
+    .by-tap {
+      display: inline;
+    }
+  }
+  @keyframes intro-word {
+    0% {
+      opacity: 0;
+      transform: translateY(0.3em);
+    }
+    15% {
       opacity: 1;
+      transform: none;
+    }
+    87% {
+      opacity: 1;
+      transform: none;
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-0.22em);
+    }
+  }
+  @keyframes intro-hint {
+    to {
+      opacity: 0.75;
     }
   }
   @keyframes intro-name {

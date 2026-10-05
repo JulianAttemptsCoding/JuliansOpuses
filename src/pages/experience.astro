@@ -1,5 +1,5 @@
 ---
-// Experience: the research, every award, and every role outside the lab, in full.
+// Experience: the research, every role outside the lab, and every award, in full.
 import { getCollection } from 'astro:content';
 import { getImage } from 'astro:assets';
 import Base from '../layouts/Base.astro';
@@ -26,16 +26,16 @@ const strands = await Promise.all(
 
 <Base
   title="Experience"
-  description="Julian Juan’s research at Academia Sinica, awards, leadership and activities."
+  description="Julian Juan’s research at Academia Sinica, leadership and activities, and awards."
   sections={[
     { id: 'research', label: 'Research' },
-    { id: 'awards', label: 'Awards' },
     { id: 'leadership', label: 'Leadership' },
+    { id: 'awards', label: 'Awards' },
   ]}
 >
   <section class="page-intro wrap g12">
     <h1>Experience</h1>
-    <p class="lede">Research, awards, and what I do outside the lab.</p>
+    <p class="lede">Research, what I do outside the lab, and awards.</p>
   </section>
 
   <section class="section wrap ledger" id="research" data-rule>
@@ -98,11 +98,6 @@ const strands = await Promise.all(
     </div>
   </section>
 
-  <section class="section wrap ledger" id="awards" data-rule>
-    <h2 class="sec-title marked"><span data-reveal="mask-in">Awards</span></h2>
-    <Awards />
-  </section>
-
   <section class="section wrap ledger" id="leadership" data-rule>
     <h2 class="sec-title marked"><span data-reveal="mask-in">Leadership and activities</span></h2>
     <div class="roles">
@@ -139,6 +134,11 @@ const strands = await Promise.all(
         ))
       }
     </div>
+  </section>
+
+  <section class="section wrap ledger" id="awards" data-rule>
+    <h2 class="sec-title marked"><span data-reveal="mask-in">Awards</span></h2>
+    <Awards />
   </section>
 </Base>
 

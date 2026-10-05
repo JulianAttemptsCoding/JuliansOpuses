@@ -1,10 +1,12 @@
 ---
 // Home: who I am in one screen, then a short version of each section with a link to the
-// full one, in the order a reader needs them: the projects first, since they are the
-// evidence, then the research they grew out of, the awards, and the rest. The sections
-// are not all one shape: the projects run the full width, the others hang from their
-// names. Nothing here is the only copy of anything.
+// full one. The research and the projects are one list, since the research is the first
+// project: it is set out larger, with the lab it was done in, and the others follow as
+// rows. Then what I do outside the lab, then the awards. The sections are not all one
+// shape: the projects run the full width, the others hang from their names. Nothing here
+// is the only copy of anything.
 import { getCollection } from 'astro:content';
+import { getImage } from 'astro:assets';
 import Base from '../layouts/Base.astro';
 import Verdict from '../components/Verdict.astro';
 import Ticker from '../components/Ticker.astro';
@@ -17,13 +19,16 @@ import { STATUS_ORDER } from '../data/verdicts';
 import { experience, links, recognition } from '../data/profile';
 
 const all = (await getCollection('work')).sort((a, b) => a.data.order - b.data.order);
-const featured = all.slice(0, 3);
+// The research project leads; the next three follow as rows.
+const [lead, ...others] = all;
+const rows = others.slice(0, 3);
+const cover = await getImage({ src: lead.data.cover, width: 1200 });
+const num = (n: number) => String(n).padStart(2, '0');
 const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 const sections = [
   { id: 'work', label: 'Projects' },
-  { id: 'research', label: 'Research' },
-  { id: 'awards', label: 'Awards' },
   { id: 'beyond', label: 'Outside the lab' },
+  { id: 'awards', label: 'Awards' },
 ];
 // The headline is split into pieces at build time so each can rise out of its own mask.
 // A piece is usually one word. Words joined by `_` stay together as one piece, so a name
@@ -34,9 +39,9 @@ const headline: { t: string; b?: boolean; tail?: string }[] = [
   { t: 'I’m' },
   { t: 'Julian', b: true },
   { t: 'Juan', b: true, tail: ',' },
-  ...'a senior at Los_Gatos High School. I_do machine-learning research for particle_physics.'
+  ...'a senior at Los_Gatos High School. I_do physics research, build software and hardware, and compete in math_modeling.'
     .split(' ')
-    .map((t) => ({ t: t.replace(/_/g, '\u00a0') })),
+    .map((t) => ({ t: t.replace(/_/g, ' ') })),
 ];
 ---
 
@@ -59,13 +64,15 @@ const headline: { t: string; b?: boolean; tail?: string }[] = [
     <div class="hero-foot g12">
       <div class="main">
         <p class="lede">
-          I’ve spent two summers at Academia Sinica’s Institute of Physics in Taipei, building models for particle
-          detectors. This site has the projects I’ve built, the results so far, and the questions I’m still
-          working on.
+          I’ve spent two summers at Academia Sinica’s Institute of Physics in Taipei, working on particle
+          detectors. I also sit on my school district’s budget committee and help run a student hackathon. This
+          site has the research, the projects and where each one stands, and the awards.
         </p>
-        <p class="hero-links">
-          <a href="#work">Selected projects&nbsp;↓</a>
-        </p>
+        <ul class="hero-links">
+          <li><a href="#work">Research and projects&nbsp;↓</a></li>
+          <li><a href="#beyond">Outside the lab&nbsp;↓</a></li>
+          <li><a href="#awards">Awards&nbsp;↓</a></li>
+        </ul>
       </div>
       <dl class="facts side">
         <div>
@@ -80,6 +87,14 @@ const headline: { t: string; b?: boolean; tail?: string }[] = [
           <dt>College</dt>
           <dd>
             <a class="quiet" href={href('/about/#education')}>29 units alongside high school, 4.0 GPA&nbsp;→</a>
+          </dd>
+        </div>
+        <div>
+          <dt>Leadership</dt>
+          <dd>
+            <a class="quiet" href={href('/experience/#leadership')}>
+              District budget committee, Los Gatos Hacks&nbsp;→
+            </a>
           </dd>
         </div>
         <div>
@@ -102,8 +117,10 @@ const headline: { t: string; b?: boolean; tail?: string }[] = [
   <section class="section wrap" id="work">
     <header class="sec-head" data-rule>
       <div>
-        <h2 class="sec-title marked"><span data-reveal="mask">Selected projects</span></h2>
-        <p class="sec-intro" data-reveal>Three of five. The label on each says where it stands.</p>
+        <h2 class="sec-title marked"><span data-reveal="mask">Research and projects</span></h2>
+        <p class="sec-intro" data-reveal>
+          Four of five. The first is my research at Academia Sinica. The label on each says where it stands.
+        </p>
       </div>
       <ul class="legend" data-reveal aria-label="What the labels mean. Point at or focus one to read it.">
         {
@@ -115,50 +132,72 @@ const headline: { t: string; b?: boolean; tail?: string }[] = [
         }
       </ul>
     </header>
-    <WorkRows items={featured} />
+
+    <!-- The research and the project that came out of it are one thing, so they are one
+         entry: the lab, the project, where it stands, and the rest of the work there. -->
+    <article class="lead" data-lead data-status={lead.data.status}>
+      <span class="lead-num mono" data-reveal="left">{num(lead.data.order)}</span>
+      <div class="lead-text">
+        <p class="lead-where" data-reveal>
+          <span>
+            {experience.role} at the{' '}
+            <a class="ext" href={experience.href} rel="noopener">{experience.org}</a>
+          </span>
+          <span class="lead-when">{experience.place}, {experience.dates}</span>
+        </p>
+        <h3 class="lead-title display" style={`view-transition-name: work-${lead.id}`} data-reveal="mask">
+          <a class="quiet" href={href(`/work/${lead.id}/`)}>{lead.data.title}</a>
+        </h3>
+        <p class="lead-question" data-reveal>{lead.data.question}</p>
+        <p class="lead-summary read" data-reveal>
+          {experience.summary}{' '}
+          {lead.data.title} is a machine-learning model that generates particle showers directly, in place of Geant4,
+          the standard detector simulator.
+        </p>
+        <div class="lead-result" data-reveal>
+          <Verdict status={lead.data.status} />
+          <span>{lead.data.evidence}</span>
+        </div>
+        <p class="onward" data-reveal>
+          <a href={href(`/work/${lead.id}/`)}>Read the write-up&nbsp;→</a>
+        </p>
+      </div>
+      <div class="lead-side">
+        <figure class="lead-fig" data-reveal="scale">
+          <a class="frame" href={href(`/work/${lead.id}/`)} tabindex="-1" aria-hidden="true">
+            <img
+              src={cover.src}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              width={cover.attributes.width}
+              height={cover.attributes.height}
+            />
+          </a>
+          <figcaption>{lead.data.coverAlt}</figcaption>
+        </figure>
+        <div class="lead-lab">
+          <p class="lead-lab-name" data-reveal>What I worked on at the lab</p>
+          <ol class="side-list strands" data-stagger>
+            {
+              experience.strands.map((s) => (
+                <li>
+                  <a class="quiet" href={href(`/experience/#${slug(s.title)}`)}>
+                    <span>{s.title}</span>
+                    <span aria-hidden="true">→</span>
+                  </a>
+                </li>
+              ))
+            }
+          </ol>
+        </div>
+      </div>
+    </article>
+
+    <WorkRows items={rows} />
     <p class="onward" data-reveal>
       <a href={href('/work/')}>All five projects&nbsp;→</a>
     </p>
-  </section>
-
-  <section class="section wrap ledger" id="research" data-rule>
-    <h2 class="sec-title marked"><span data-reveal="mask-in">Research</span></h2>
-    <div class="g9 research">
-      <div class="research-text">
-        <h3 class="exp-org display" data-reveal="mask">
-          <a class="ext quiet" href={experience.href} rel="noopener">{experience.org}</a>
-        </h3>
-        <p class="exp-meta" data-reveal>
-          {experience.role} in {experience.place}, {experience.dates}
-        </p>
-        <p class="exp-summary read" data-reveal>{experience.summary}</p>
-        <p class="onward" data-reveal>
-          <a href={href('/experience/')}>What I worked on there&nbsp;→</a>
-        </p>
-      </div>
-      <ol class="side-list strands" data-stagger>
-        {
-          experience.strands.map((s) => (
-            <li>
-              <a class="quiet" href={href(`/experience/#${slug(s.title)}`)}>
-                <span>{s.title}</span>
-                <span aria-hidden="true">→</span>
-              </a>
-            </li>
-          ))
-        }
-      </ol>
-    </div>
-  </section>
-
-  <section class="section wrap ledger" id="awards" data-rule>
-    <h2 class="sec-title marked"><span data-reveal="mask-in">Awards</span></h2>
-    <div>
-      <Awards limit={4} />
-      <p class="onward" data-reveal>
-        <a href={href('/experience/#awards')}>All ten&nbsp;→</a>
-      </p>
-    </div>
   </section>
 
   <section class="section wrap ledger" id="beyond" data-rule>
@@ -187,12 +226,22 @@ const headline: { t: string; b?: boolean; tail?: string }[] = [
         </li>
       </ul>
       <p class="onward" data-reveal>
-        <a href={href('/about/')}>Education, coursework and the rest&nbsp;→</a>
+        <a href={href('/experience/#leadership')}>All leadership and activities&nbsp;→</a>
       </p>
     </div>
   </section>
 
-  <RowPreview items={featured} />
+  <section class="section wrap ledger" id="awards" data-rule>
+    <h2 class="sec-title marked"><span data-reveal="mask-in">Awards</span></h2>
+    <div>
+      <Awards limit={4} />
+      <p class="onward" data-reveal>
+        <a href={href('/experience/#awards')}>All ten&nbsp;→</a>
+      </p>
+    </div>
+  </section>
+
+  <RowPreview items={rows} />
 </Base>
 
 <style>
@@ -228,11 +277,17 @@ const headline: { t: string; b?: boolean; tail?: string }[] = [
     align-items: end;
     margin-top: clamp(2rem, 4.5vw, 3.5rem);
   }
+  /* The ways down the page, in the order the page runs. */
   .hero-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1.5rem;
     margin-top: 1.1rem;
+    list-style: none;
     font-size: var(--t-sm);
   }
   .hero-links a {
+    display: inline-block;
     padding-block: 0.15rem;
   }
   .facts {
@@ -264,7 +319,7 @@ const headline: { t: string; b?: boolean; tail?: string }[] = [
   @media (prefers-reduced-motion: no-preference) {
     :global(html.js) .w > span {
       animation: rise 0.9s var(--ease) both;
-      animation-delay: calc(var(--i) * 38ms + var(--enter, 0.1s));
+      animation-delay: calc(var(--i) * 34ms + var(--enter, 0.1s));
     }
     :global(html.js) .hero-foot {
       animation: fade-up 0.8s var(--ease) both;
@@ -312,50 +367,115 @@ const headline: { t: string; b?: boolean; tail?: string }[] = [
     color: var(--ink-2);
   }
 
-  /* ---------- Research: the place, what I did there, and the pieces of work beside it ---------- */
-  .research {
-    row-gap: 1.5rem;
-    align-items: first baseline;
+  /* ---------- The research: the first entry of the list, opened out ----------
+     It is set on the rows' own columns, so its number and its title stand where theirs
+     do and its figure starts where their results start. What makes it the main one is
+     size: a larger title, the lab above it, its figure beside it. */
+  .lead {
+    --g: clamp(1rem, 2.5vw, 2.25rem);
+    display: grid;
+    grid-template-columns: 3rem minmax(0, 1fr) min(calc(31rem + 2 * var(--g)), 50%);
+    column-gap: var(--g);
+    align-items: start;
+    padding-block: clamp(2rem, 3.8vw, 3.25rem);
+    border-bottom: 1px solid var(--rule);
+    transition: opacity 0.3s var(--ease);
   }
-  .research-text {
-    grid-column: 1 / span 6;
+  /* Picking a label in the key dims the entries that carry a different one. */
+  .lead[data-dim] {
+    opacity: 0.3;
   }
-  .exp-org {
-    font-size: var(--t-org);
-    font-weight: 400;
-    line-height: 1.12;
-    letter-spacing: -0.018em;
+  .lead-num {
+    color: var(--ink-3);
+    line-height: 1.3125rem;
   }
-  .exp-meta {
+  .lead-text {
+    display: grid;
+    justify-items: start;
+  }
+  /* Where it was done: the lab on one line, the place and the dates under it. */
+  .lead-where {
+    display: grid;
+    gap: 0.1rem;
+    font-size: var(--t-sm);
+    line-height: 1.5;
+  }
+  .lead-when {
+    color: var(--ink-3);
+  }
+  .lead-title {
+    margin-top: 1.1rem;
+    font-size: var(--t-lead);
+    font-weight: 500;
+    line-height: 1.04;
+    letter-spacing: -0.024em;
+  }
+  .lead-title a {
+    text-decoration-thickness: 1.5px;
+  }
+  .lead-question {
+    max-width: 28rem;
+    margin-top: 0.85rem;
+    font-family: var(--font-display);
+    font-size: var(--t-xl);
+    line-height: 1.4;
+  }
+  .lead-summary {
+    margin-top: 0.85rem;
+    color: var(--ink-2);
+  }
+  .lead-result {
+    display: grid;
+    justify-items: start;
+    gap: 0.35rem;
+    width: 100%;
+    margin-top: 1.3rem;
+    padding-top: 0.95rem;
+    border-top: 1px solid var(--rule);
+    color: var(--ink-2);
+    font-size: var(--t-sm);
+    line-height: 1.5;
+  }
+  .lead-result span:last-child {
+    max-width: 30rem;
+  }
+  .lead-fig {
+    margin: 0;
+  }
+  .frame {
+    display: block;
+    padding: clamp(0.6rem, 1.2vw, 1rem);
+    background: var(--thumb);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    isolation: isolate;
+  }
+  .frame img {
+    width: 100%;
+    height: auto;
+    filter: var(--thumb-filter);
+    mix-blend-mode: var(--thumb-blend);
+  }
+  .lead-fig figcaption {
     margin-top: 0.55rem;
     color: var(--ink-3);
     font-size: var(--t-sm);
+    line-height: 1.5;
   }
-  .exp-summary {
-    margin-top: 1rem;
+  /* The three pieces of work at the lab. Each goes to its account on the Experience page. */
+  .lead-lab {
+    margin-top: clamp(1.5rem, 2.6vw, 2.25rem);
   }
-  /* The three pieces of work, numbered in the same figures as the projects. Each goes
-     to its account on the Experience page. */
-  .strands {
-    grid-column: 7 / -1;
-    counter-reset: strand;
+  .lead-lab-name {
+    margin-bottom: 0.55rem;
+    color: var(--ink-3);
+    font-size: var(--t-sm);
   }
   .strands li {
-    display: flex;
-    align-items: baseline;
-    gap: 0.9rem;
     color: var(--ink-2);
-    counter-increment: strand;
-  }
-  .strands li::before {
-    content: counter(strand, decimal-leading-zero);
-    font-family: var(--font-mono);
-    font-size: var(--t-xs);
-    color: var(--ink-3);
   }
   /* The arrow sits at the end of the row, so the names keep one left edge. */
   .strands a {
-    flex: 1;
     display: flex;
     justify-content: space-between;
     gap: 1rem;
@@ -386,15 +506,26 @@ const headline: { t: string; b?: boolean; tail?: string }[] = [
     white-space: nowrap;
   }
 
+  /* Less room: the entry becomes one column beside its number, as the rows do, and its
+     figure goes under its text. */
   @media (max-width: 1000px) {
-    .research-text,
-    .strands,
+    .lead {
+      grid-template-columns: 2.5rem minmax(0, 1fr);
+      row-gap: 1.75rem;
+    }
+    .lead-side {
+      grid-column: 2;
+      max-width: 34rem;
+    }
     .beyond p,
     .beyond a {
       grid-column: 1 / -1;
     }
-    .strands {
-      max-width: 26rem;
+  }
+  @media (max-width: 560px) {
+    .lead {
+      grid-template-columns: 1.75rem minmax(0, 1fr);
+      column-gap: 0.75rem;
     }
   }
 </style>

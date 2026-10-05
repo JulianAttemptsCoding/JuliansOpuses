@@ -147,15 +147,16 @@ export const activities: {
   link?: { label: string; href: string };
 }[] = [
   {
-    // Figures are the ones the organisation publishes on its archive page.
+    // Figures are the ones the organisation publishes on its archive page, added up over
+    // its four events: 50, 73, 100 and 115 hackers; 17, 25, 34 and 39 projects.
     title: 'Los Gatos Hacks',
     href: links.lgHacks,
     role: 'Director of Strategy',
     figures: [
-      { value: '115', label: 'hackers in 2026' },
-      { value: '39', label: 'projects in 2026' },
+      { value: '338', label: 'hackers in total' },
+      { value: '115', label: 'projects in total' },
     ],
-    body: 'I’m on the leadership team of this nonprofit, which runs a one-day hackathon for middle and high school students. It has grown each year, from 50 hackers and 17 projects in 2023 to 115 hackers and 39 projects in 2026.',
+    body: 'I’m on the leadership team of this nonprofit, which runs a one-day hackathon for middle and high school students. It has grown each year, from 50 hackers and 17 projects in 2023 to 115 hackers and 39 projects in 2026. Over the four events that comes to 338 hackers and 115 projects.',
     link: { label: 'See every year in the archive', href: links.lgHacksArchive },
   },
   {
@@ -178,13 +179,22 @@ export const activities: {
 ];
 
 export type Course = { code?: string; title: string; ongoing?: boolean };
-export type School = { school: string; href: string; dates: string; facts: Part[]; courses: Course[] };
+export type School = {
+  school: string;
+  href: string;
+  dates: string;
+  facts: Part[];
+  courses: Course[];
+  /** What the list of courses is called, when it is not the whole list. */
+  coursesLabel?: string;
+};
 
 export const highSchool: School = {
   school: 'Los Gatos High School',
   href: links.lghs,
   dates: '2023 – 2027',
   facts: ['Class of 2027, 4.0 GPA'],
+  coursesLabel: 'Selected coursework',
   courses: [
     { title: 'AP Calculus BC' },
     { title: 'AP Physics C: Mechanics and E&M', ongoing: true },
