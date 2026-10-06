@@ -8,11 +8,11 @@ const connected = contact.accessKey !== '';
 const showForm = connected || dev;
 ---
 
-<Base title="Contact" description="Send Julian Juan a message about research, projects or opportunities." cta={false}>
+<Base title="Contact" description="Send Julian Juan a message about research, projects, or opportunities." cta={false}>
   <section class="page-intro wrap g12">
     <h1>{showForm ? 'Send me a message.' : 'Get in touch.'}</h1>
     <p class="lede">
-      Questions about a project, research, an internship or working together are welcome. So are corrections.
+      Questions about a project, research, an internship, or working together are welcome. So are corrections.
     </p>
   </section>
 
@@ -431,7 +431,7 @@ const showForm = connected || dev;
   }
 
   /* One column: the form, then the other ways to reach me. */
-  @media (max-width: 900px) {
+  @media (max-width: 56.25em) {
     .panel,
     .beside,
     .sheet.solo .beside {

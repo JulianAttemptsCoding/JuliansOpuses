@@ -4,7 +4,7 @@ tier: flagship
 title: Firefighter Tracker
 heading: Firefighter Tracker / Sentinel Nano
 question: Does localization still work once real radio noise and deployment geometry replace ideal equations?
-summary: "A design for finding a firefighter inside a building, where GPS fails, from radio ranges to reference points that arrive with the crew. It was shaped by a conversation with a fire department battalion chief. The 3D model on this page is a simulation, not measured hardware."
+summary: "A design for finding a firefighter inside a building, where GPS fails, from radio ranges to reference points that arrive with the crew. I designed it around the constraints a fire department battalion chief described. The 3D model on this page is a simulation, not measured hardware."
 claim: Indoor positioning for firefighters where GPS fails, using UWB ranging to mobile reference points and estimation built for noisy, blocked signals.
 domain: Estimation, hardware
 status: prototype
@@ -20,8 +20,8 @@ metrics:
 cover: ../../assets/work/tracker/concept.svg
 coverAlt: Schematic of reference points outside a building ranging to a tag carried by a firefighter inside.
 worked:
-  - 'The problem definition came from practitioners: smoke, lost visual contact, deployment time and hardware limits shaped the design.'
-  - 'The system concept addresses what ideal multilateration ignores: noisy ranges, blocked paths and poor reference-point geometry.'
+  - 'The problem definition came from practitioners: smoke, lost visual contact, deployment time, and hardware limits shaped the design.'
+  - 'The system concept addresses what ideal multilateration ignores: noisy ranges, blocked paths, and poor reference-point geometry.'
   - 'Recognized as a Conrad Challenge Innovator.'
 openLabel: What is still open
 open:
@@ -76,6 +76,6 @@ With exact ranges this is a textbook problem. The project is about what happens 
 I designed the estimator around those failures. It uses robust estimation, which tolerates ranges that disagree with each other, and a machine-learning correction for range error, mainly for measurements taken without a clear line of sight. I treat where the reference points go as part of the system, since their geometry decides how much any range error gets amplified.
 
 <DevNote>
-  Prototype photographs, ranging tests and localization-error plots would strengthen this page. Add them as
+  Prototype photographs, ranging tests, and localization-error plots would strengthen this page. Add them as
   figures here.
 </DevNote>

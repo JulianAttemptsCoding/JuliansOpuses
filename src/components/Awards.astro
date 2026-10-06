@@ -60,7 +60,7 @@ const items = limit ? recognition.slice(0, limit) : recognition;
     line-height: 1.5;
   }
   /* Less room: the name and the result share a line, and the note goes under them. */
-  @media (max-width: 1000px) {
+  @media (max-width: 62.5em) {
     .award-name {
       grid-column: 1 / span 6;
     }
@@ -72,7 +72,7 @@ const items = limit ? recognition.slice(0, limit) : recognition;
       max-width: 32rem;
     }
   }
-  @media (max-width: 560px) {
+  @media (max-width: 35em) {
     .award-name,
     .award-result {
       grid-column: 1 / -1;

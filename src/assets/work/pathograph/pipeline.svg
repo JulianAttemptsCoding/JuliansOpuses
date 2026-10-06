@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 340" role="img" aria-label="Schematic of the PathoGraph pipeline: trade, climate and outbreak reports feed a country graph per time step, which a spatio-temporal graph network turns into calibrated risk per country and pathogen.">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 340" role="img" aria-label="Schematic of the PathoGraph pipeline: trade, climate, and outbreak reports feed a country graph per time step, which a spatio-temporal graph network turns into calibrated risk per country and pathogen.">
   <defs>
     <marker id="pg-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
       <path d="M0 0L10 5L0 10z" fill="#15161a"/>

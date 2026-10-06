@@ -24,11 +24,11 @@ export const experience = {
   place: 'Taipei, Taiwan',
   dates: 'summers of 2025 and 2026',
   summary:
-    'I worked on particle detectors: testing real hardware, and building the models that run on its data.',
+    'I worked on particle detectors, from testing real hardware to building the models that run on its data.',
   strands: [
     {
       title: 'Detector testing',
-      body: 'I analyzed nearly 1,800 oscilloscope captures to compare detector prototypes on how reliably each one counts particles and how its timing behaves. This was inside the lab’s real detector and DAQ setup, using ROOT, C++ and Python.',
+      body: 'I analyzed nearly 1,800 oscilloscope captures to compare detector prototypes on how reliably each one counts particles and how its timing behaves. I worked inside the lab’s own detector and DAQ setup, in ROOT, C++, and Python.',
     },
     {
       title: 'Neutron reconstruction',
@@ -48,14 +48,16 @@ export const recognition: { name: string; href: string; result: string; note: Pa
     name: 'HiMCM',
     href: 'https://www.comap.com/contests/himcm-midmcm',
     result: 'Finalist',
-    note: ['Team lead. One of roughly seven U.S. finalist teams, from more than 1,200 teams worldwide.'],
+    note: [
+      'Team lead in the High School Mathematical Contest in Modeling. One of roughly seven U.S. finalist teams, from more than 1,200 teams worldwide.',
+    ],
   },
   {
     name: 'IMMC',
     href: 'https://immchallenge.org/',
     result: 'U.S. Candidate Round qualifier',
     note: [
-      'Advanced to the round that picks the U.S. teams. Between the two contests we chose sustainable host cities for major events and allocated anti-poaching resources across national parks.',
+      'Advanced to the round that selects the U.S. teams for the International Mathematical Modeling Challenge. Across the two contests we chose sustainable host cities for major events and allocated anti-poaching resources across national parks.',
     ],
   },
   {
@@ -65,7 +67,7 @@ export const recognition: { name: string; href: string; result: string; note: Pa
     note: [
       'Finals at ',
       { text: 'Santa Clara University’s Leavey School of Business', href: links.leavey },
-      '. We used public environmental and economic data, and some optimization, to recommend where to hold an event.',
+      '. We combined public environmental and economic data with optimization to recommend where to hold an event.',
     ],
   },
   {
@@ -78,13 +80,13 @@ export const recognition: { name: string; href: string; result: string; note: Pa
     name: 'Santa Clara Valley Science & Engineering Fair',
     href: 'https://science-fair.org/',
     result: 'First Place · Honorable Mention',
-    note: ['For my science-fair research projects.'],
+    note: ['For independent research projects.'],
   },
   {
     name: 'California Science & Engineering Fair',
     href: 'https://csef.usc.edu/',
     result: 'Qualifier',
-    note: ['Qualified for the state fair from the regional one.'],
+    note: ['Advanced from the regional fair.'],
   },
   {
     name: 'Conrad Challenge',
@@ -96,7 +98,7 @@ export const recognition: { name: string; href: string; result: string; note: Pa
     name: 'Global Quantum Mechanics Challenge',
     href: 'https://glqmc.org/',
     result: 'Semifinalist',
-    note: ['Reached the second of three rounds of the international quantum-mechanics contest.'],
+    note: ['Advanced to the second of three rounds of the international quantum-mechanics contest.'],
   },
   {
     name: 'Global Logic & Reasoning Competition',
@@ -127,7 +129,7 @@ export const leadership: {
       { value: '$88M', label: 'annual district budget' },
       { value: '$6M+', label: 'differences reconciled' },
     ],
-    body: 'I was appointed to represent students on the committee that oversees the district’s budget, which covers more than 3,000 students. I helped find and reconcile over $6 million in cumulative differences across four years of budget reports. I also pushed for itemized records and plain-language presentations, so that students, families and board members could follow the numbers.',
+    body: 'I was appointed to represent students on the committee that oversees the district’s budget, which covers more than 3,000 students. I helped find and reconcile over $6 million in cumulative differences across four years of budget reports. I pushed for itemized records and plain-language presentations, so that students, families, and board members could follow the numbers.',
   },
   {
     title: 'Résumé Workshop',
@@ -156,7 +158,7 @@ export const activities: {
       { value: '338', label: 'hackers in total' },
       { value: '115', label: 'projects in total' },
     ],
-    body: 'I’m on the leadership team of this nonprofit, which runs a one-day hackathon for middle and high school students. It has grown each year, from 50 hackers and 17 projects in 2023 to 115 hackers and 39 projects in 2026. Over the four events that comes to 338 hackers and 115 projects.',
+    body: 'I set strategy for this nonprofit, which runs a one-day hackathon for middle and high school students. It has grown every year and more than doubled, from 50 hackers and 17 projects in 2023 to 115 hackers and 39 projects in 2026. Over the four events that comes to 338 hackers and 115 projects.',
     link: { label: 'See every year in the archive', href: links.lgHacksArchive },
   },
   {
@@ -164,17 +166,17 @@ export const activities: {
     href: links.stemBeyondBoundaries,
     role: 'Director of Outreach',
     figures: [{ value: '~80', label: 'children taught' }],
-    body: 'I help run outreach for a group that brings science lessons to kids. So far I’ve taught about 80 children, with hands-on lessons on topics like magnetism.',
+    body: 'I lead outreach for a group that brings science lessons to kids. So far I’ve taught about 80 children, in hands-on lessons on topics like magnetism.',
   },
   {
     title: 'Game Theory Club',
     role: 'Founder / Co-President',
-    body: 'I started it by merging the school’s Chess Club and Cards Club into one club about strategy, probability, negotiation and game theory.',
+    body: 'I started it by merging the school’s Chess Club and Cards Club into one club about strategy, probability, negotiation, and game theory.',
   },
   {
     title: 'Tutoring',
     role: 'Paid tutor',
-    body: 'I tutor math, science and history, including precalculus, AP Calculus BC, AP Physics, chemistry, biology, AP European History and AP U.S. History.',
+    body: 'I tutor math, science, and history, including precalculus, AP Calculus BC, AP Physics, chemistry, biology, AP European History, and AP U.S. History.',
   },
 ];
 

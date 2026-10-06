@@ -150,7 +150,8 @@ const rows = await Promise.all(
       transform 0.45s var(--ease),
       color 0.3s;
   }
-  /* The row's own figure: only where there is no cursor for a preview to follow. */
+  /* The row's own figure: only where there is no cursor for a preview to follow, and
+     only in the one-column layout, which has a place for it under the text. */
   .thumb {
     display: none;
   }
@@ -170,7 +171,7 @@ const rows = await Promise.all(
     @supports (animation-timeline: view()) {
       .rows > li {
         view-timeline: --row block;
-        view-timeline-inset: 60px 0px;
+        view-timeline-inset: var(--header-h) 0px;
       }
       .row .num,
       .row .title,
@@ -236,7 +237,7 @@ const rows = await Promise.all(
 
   /* Less room: the title and the question keep the first line, and the rest goes under
      them in the same column. */
-  @media (max-width: 1000px) {
+  @media (max-width: 62.5em) {
     .row {
       grid-template-columns: 2.5rem minmax(0, 1fr) 1.5rem;
       align-items: start;
@@ -259,13 +260,13 @@ const rows = await Promise.all(
       max-width: 32rem;
     }
   }
-  @media (max-width: 560px) {
+  @media (max-width: 35em) {
     .row {
       grid-template-columns: 1.75rem minmax(0, 1fr) 1.25rem;
       column-gap: 0.75rem;
     }
   }
-  @media (hover: none) {
+  @media (hover: none) and (max-width: 62.5em) {
     .thumb {
       display: block;
       padding: 0.6rem;

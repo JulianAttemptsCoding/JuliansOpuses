@@ -67,7 +67,7 @@ const counts = [1, 2, 3, 4];
     <canvas
       data-canvas
       tabindex="0"
-      aria-label="3D view of a four-storey building. Each reference point outside carries a translucent sphere whose radius is its measured range; the spheres meet at the firefighter's tag. Drag to rotate. Drag a reference point, the drone or the tag to move it. With the view focused, arrow keys move the tag and Page Up or Page Down change its floor."
+      aria-label="3D view of a four-storey building. Each reference point outside carries a translucent sphere whose radius is its measured range; the spheres meet at the firefighter's tag. Drag to rotate. Drag a reference point, the drone, or the tag to move it. With the view focused, arrow keys move the tag and Page Up or Page Down change its floor."
     ></canvas>
     <div class="labels" data-labels aria-hidden="true"></div>
     <p class="fallback" data-fallback hidden>
@@ -76,8 +76,8 @@ const counts = [1, 2, 3, 4];
     <noscript><p class="fallback">This sandbox needs JavaScript to run.</p></noscript>
   </div>
   <p class="fx-note">
-    Each bubble is one measured range. Drag the background to rotate; drag a reference point, the drone or the tag
-    to move it.
+    Each bubble is one measured range. Drag the background to rotate; drag a reference point, the drone, or the
+    tag to move it.
   </p>
 
   <p class="fx-flag">From this simulation, not from measured hardware</p>
@@ -768,7 +768,13 @@ const counts = [1, 2, 3, 4];
       const w = stage.clientWidth;
       if (!w) return;
       width = w;
-      height = Math.round(clamp(w * 0.72, 340, 580));
+      // The frame's height follows its width, between limits that grow with the type
+      // size (a large display) and shrink with a very narrow column. It is never taller
+      // than about three quarters of the window, so on a phone held sideways the whole
+      // scene is still in view at once.
+      const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) / 16 || 1;
+      const ideal = clamp(w * 0.72, Math.min(340 * rem, w * 1.05), 580 * rem);
+      height = Math.round(Math.min(ideal, Math.max(200, innerHeight * 0.74)));
       canvas.style.height = `${height}px`;
       renderer.setSize(width, height, false);
       camera.aspect = width / height;
@@ -784,6 +790,9 @@ const counts = [1, 2, 3, 4];
     };
     placeCamera();
     new ResizeObserver(resize).observe(stage);
+    // The observer sees the column change width; a change of window height alone
+    // (a phone turned, a window made shorter) arrives here.
+    addEventListener('resize', resize, { passive: true });
     resize();
 
     // ---- Picking and dragging ----
@@ -1077,10 +1086,27 @@ const counts = [1, 2, 3, 4];
         }
       }
       const fromAbove = spherical.setFromVector3(camera.position.clone().sub(target)).phi < 0.35;
+      // In a small frame (narrow, or short on a phone held sideways) only the firefighter's
+      // own floor is named: four floor names beside the reference points' names would sit
+      // on top of each other.
+      const tight = Math.min(width, height * 1.4) < 440;
       floorLabels.forEach((el, f) => {
-        el.hidden = fromAbove;
+        el.hidden = fromAbove || (tight && model?.floor !== f + 1);
         el.classList.toggle('on', model?.floor === f + 1);
         stick(el, at({ ...left, z: (f + 0.5) * BLDG.floorH }), -14, 0);
+        // In a small frame a reference point can stand right beside that corner. Its name
+        // matters more than the floor's, which the lit floor and the control already show.
+        if (tight && !el.hidden) {
+          const fr = el.getBoundingClientRect();
+          el.hidden = rigs.some((rig) => {
+            if (rig.label.hidden) return false;
+            const ar = rig.label.getBoundingClientRect();
+            return (
+              Math.min(fr.right, ar.right) - Math.max(fr.left, ar.left) > 0 &&
+              Math.min(fr.bottom, ar.bottom) - Math.max(fr.top, ar.top) > 0
+            );
+          });
+        }
       });
     };
     const io = new IntersectionObserver((entries) => {
@@ -1118,8 +1144,8 @@ const counts = [1, 2, 3, 4];
 
 <style>
   .slider {
-    flex: 1 1 170px;
-    max-width: 240px;
+    flex: 1 1 10.625rem;
+    max-width: 15rem;
   }
 
   .stage {
@@ -1131,7 +1157,7 @@ const counts = [1, 2, 3, 4];
   canvas {
     display: block;
     width: 100%;
-    height: 420px;
+    height: 26.25rem;
     cursor: grab;
     outline-offset: -3px;
   }
@@ -1156,7 +1182,7 @@ const counts = [1, 2, 3, 4];
     overflow: hidden;
     pointer-events: none;
     font-family: var(--font-mono);
-    font-size: 0.66rem;
+    font-size: 0.7rem;
     color: var(--fig-ink);
   }
   .labels :global(.tag-label) {
@@ -1215,7 +1241,7 @@ const counts = [1, 2, 3, 4];
     border: 1.5px solid var(--fig-accent);
   }
 
-  @media (max-width: 560px) {
+  @media (max-width: 35em) {
     .slider {
       max-width: none;
     }

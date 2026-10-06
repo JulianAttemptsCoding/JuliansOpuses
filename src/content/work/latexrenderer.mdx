@@ -24,7 +24,7 @@ links:
   - label: Repository
     href: https://github.com/JulianAttemptsCoding/LaTeXRenderer
 cover: ../../assets/work/latex/auth-flow.svg
-coverAlt: Sequence diagram of sign-in, server-side password verification, signed URLs and asset integrity checks.
+coverAlt: Sequence diagram of sign-in, server-side password verification, signed URLs, and asset integrity checks.
 worked:
   - 'Deployed and live, with CI that type-checks, lints, runs unit and Playwright tests, scans the build for secrets, publishes, then smoke-tests the live URL.'
   - 'Authorization never depends on client code: each access decision is made in a Supabase Edge Function against a stored grant.'
@@ -62,7 +62,7 @@ I kept the public repository small on purpose, and wrote down what it cannot do.
   <AuthFlow />
 </Figure>
 
-Sign-in uses [Supabase](https://supabase.com/) Auth with Google OAuth and PKCE, verified server-side. The shared password is checked in an Edge Function with PBKDF2, a constant-time comparison and rate limiting, and a success writes a grant row that expires. The editor bundle sits in a private storage bucket and is reachable only through five-minute signed URLs, issued after the grant is checked again. Before running anything, the shell hashes every downloaded asset and compares it with the manifest.
+Sign-in uses [Supabase](https://supabase.com/) Auth with Google OAuth and PKCE, verified server-side. The shared password is checked in an Edge Function with PBKDF2, a constant-time comparison, and rate limiting; a success writes a grant row that expires. The editor bundle sits in a private storage bucket and is reachable only through five-minute signed URLs, issued after the grant is checked again. Before running anything, the shell hashes every downloaded asset and compares it with the manifest.
 
 ## Testing the attacks
 

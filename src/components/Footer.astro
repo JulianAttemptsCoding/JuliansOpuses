@@ -26,7 +26,7 @@ const contactLabel = contact.accessKey || dev ? 'Send a message' : 'Ways to reac
           </h2>
           <div class="reach-body">
             <p class="reach-text">
-              Questions about a project, research, an internship or working together are welcome.
+              Questions about a project, research, an internship, or working together are welcome.
             </p>
             <ul class="links">
               <li>
@@ -87,6 +87,22 @@ const contactLabel = contact.accessKey || dev ? 'Send a message' : 'Ways to reac
   </div>
 </footer>
 
+<script>
+  // The footer waits at the bottom of the window while the page lifts off it. That only
+  // works if the whole footer fits in the window under the header: on a narrow window its
+  // links stack, and a footer taller than the room it has would keep its own top out of
+  // reach. So it is measured, at every size, instead of guessed from the window's height.
+  const footer = document.querySelector<HTMLElement>('.site-footer');
+  const header = document.querySelector<HTMLElement>('.site-header');
+  if (footer) {
+    const fit = () =>
+      footer.classList.toggle('fits', footer.offsetHeight <= innerHeight - (header?.offsetHeight ?? 0));
+    new ResizeObserver(fit).observe(footer);
+    addEventListener('resize', fit, { passive: true });
+    fit();
+  }
+</script>
+
 <style>
   /* The one dark surface. The page above is a sheet that lifts off it. */
   .site-footer {
@@ -98,14 +114,13 @@ const contactLabel = contact.accessKey || dev ? 'Send a message' : 'Ways to reac
   .site-footer.slim {
     padding-top: 0.25rem;
   }
-  /* On a tall enough window the footer waits at the bottom and the page lifts off it.
-     It has to fit inside the window for that, so short windows keep the plain flow. */
-  @media (min-height: 720px) {
-    .site-footer {
-      position: sticky;
-      bottom: 0;
-      z-index: 0;
-    }
+  /* Where the whole footer fits in the window (the script above measures it and adds
+     `fits`), it waits at the bottom and the page lifts off it. Anywhere else, and without
+     scripts, it stays in the plain flow. */
+  .site-footer.fits {
+    position: sticky;
+    bottom: 0;
+    z-index: 0;
   }
   .cta {
     font-size: clamp(2.4rem, 6.5vw, 5rem);
@@ -144,14 +159,14 @@ const contactLabel = contact.accessKey || dev ? 'Send a message' : 'Ways to reac
       transform: translateY(16px);
     }
   }
-  @media (prefers-reduced-motion: no-preference) and (min-height: 720px) {
+  @media (prefers-reduced-motion: no-preference) {
     @supports (animation-timeline: scroll()) {
-      .cta-line {
+      .fits .cta-line {
         animation: cta-rise linear both;
         animation-timeline: scroll(root block);
         animation-range: calc(100% - 420px) calc(100% - 120px);
       }
-      .reach-body {
+      .fits .reach-body {
         animation: links-in linear both;
         animation-timeline: scroll(root block);
         animation-range: calc(100% - 260px) calc(100% - 40px);

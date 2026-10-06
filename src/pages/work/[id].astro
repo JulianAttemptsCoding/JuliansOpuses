@@ -389,7 +389,7 @@ const num = (n: number) => String(n).padStart(2, '0');
       .prose :global(h2),
       .outcome h2 {
         animation: unmask linear both;
-        animation-timeline: view(block 60px 0px);
+        animation-timeline: view(block var(--header-h) 0px);
         animation-range: entry 20px entry 220px;
       }
     }
@@ -569,7 +569,7 @@ const num = (n: number) => String(n).padStart(2, '0');
 
   /* One column: the summary, then the facts, then the write-up. The list of sections is
      left out: nothing is beside the text for it to stay in view in. */
-  @media (max-width: 900px) {
+  @media (max-width: 56.25em) {
     .opening,
     .body,
     .rail {
@@ -583,7 +583,7 @@ const num = (n: number) => String(n).padStart(2, '0');
       display: none;
     }
   }
-  @media (max-width: 600px) {
+  @media (max-width: 37.5em) {
     .status {
       grid-template-columns: minmax(0, 1fr);
       gap: 0.15rem;

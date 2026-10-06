@@ -42,11 +42,11 @@ const person = {
   sameAs: [site.github, site.linkedin].filter(Boolean),
 };
 
-// The first page of a visit opens on a dark screen that runs through what the site
-// covers, one phrase at a time, and ends on the name. Every phrase is something that has
-// a page or a section here. The timings live in one place: a beat of dark screen while
-// the page arrives, each phrase up long enough to read, the name held, then the curtain
-// lifts.
+// The home page, when it is the first page of a visit, opens on a dark screen that runs
+// through what the site covers, one phrase at a time, and ends on the name. Every phrase
+// is something that has a page or a section here. The timings live in one place: a beat
+// of dark screen while the page arrives, the phrases at a quick steady pace, the name
+// held, then the curtain lifts.
 const introWords = [
   'Particle physics',
   'Detector simulation',
@@ -58,7 +58,7 @@ const introWords = [
   'Hackathons',
 ];
 const INTRO_LEAD = 0.25; // seconds before the first phrase
-const INTRO_WORD = 0.48; // seconds each phrase is shown
+const INTRO_WORD = 0.24; // seconds each phrase is shown
 const INTRO_HOLD = 0.9; // seconds from the name appearing to the curtain starting to lift
 const INTRO_LIFT = 0.7; // seconds the curtain takes
 const introName = INTRO_LEAD + introWords.length * INTRO_WORD;
@@ -68,7 +68,7 @@ const introMs = Math.round((introOut + INTRO_LIFT) * 1000);
 ---
 
 <!doctype html>
-<html lang="en" style={introTiming}>
+<html lang="en" style={introTiming} data-opening={isHome ? '' : undefined}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -85,15 +85,14 @@ const introMs = Math.round((introOut + INTRO_LIFT) * 1000);
     <meta property="og:image" content={preview} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Julian Juan, a senior at Los Gatos High School who does physics research, builds software and hardware, and competes in math modeling." />
+    <meta property="og:image:alt" content="Julian Juan, a senior at Los Gatos High School who does physics research, builds software and hardware, and models problems mathematically." />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="theme-color" content="#f2f0e9" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#181b1f" media="(prefers-color-scheme: dark)" />
     {isHome && <script type="application/ld+json" is:inline set:html={JSON.stringify(person)} />}
     <script is:inline>
       // Runs before first paint: mark that scripts work, apply a saved theme and a saved
-      // "paused" choice, and decide whether this is the first page of the visit (which
-      // gets the short intro).
+      // "paused" choice, and decide whether the intro plays.
       (function () {
         var d = document.documentElement;
         d.classList.add('js');
@@ -102,33 +101,43 @@ const introMs = Math.round((introOut + INTRO_LIFT) * 1000);
           if (t === 'light' || t === 'dark') d.dataset.theme = t;
           if (localStorage.getItem('motion') === 'paused') d.dataset.motion = 'paused';
         } catch (e) {}
+        // The intro plays once, at the very beginning: on the home page, when it is the
+        // first page of the visit. Any other page (a link someone was sent, a page opened
+        // in a new tab from this site) never shows it, and marks the visit as begun, so
+        // going to the home page afterwards does not show it either.
         try {
           var calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
-          if (!calm && !sessionStorage.getItem('intro')) {
-            d.classList.add('intro');
-            sessionStorage.setItem('intro', '1');
-          }
+          var begun = sessionStorage.getItem('intro');
+          var fromHere = document.referrer && new URL(document.referrer).origin === location.origin;
+          if (!calm && !begun && !fromHere && d.hasAttribute('data-opening')) d.classList.add('intro');
+          sessionStorage.setItem('intro', '1');
         } catch (e) {}
       })();
     </script>
   </head>
   <body id="top">
-    <!-- First-visit intro: what the site covers, a phrase at a time, then the name, then
-         the curtain lifts. It only appears when the inline script above adds `intro`, so
-         it never blocks a reader without JavaScript or one who prefers reduced motion. -->
-    <div class="intro-screen" aria-hidden="true" data-intro={introMs}>
-      <div class="intro-stack">
-        {
-          introWords.map((w, i) => (
-            <span class="intro-word" style={`--k:${i}`}>
-              {w}
-            </span>
-          ))
-        }
-        <span class="intro-name">{site.name}</span>
-      </div>
-      <span class="intro-skip"><span class="by-click">Click</span><span class="by-tap">Tap</span> to skip</span>
-    </div>
+    <!-- The intro, on the home page only: what the site covers, a phrase at a time, then
+         the name, then the curtain lifts. It only appears when the inline script above
+         adds `intro`, so it never blocks a reader without JavaScript or one who prefers
+         reduced motion. -->
+    {
+      isHome && (
+        <div class="intro-screen" aria-hidden="true" data-intro={introMs}>
+          <div class="intro-stack">
+            {introWords.map((w, i) => (
+              <span class="intro-word" style={`--k:${i}`}>
+                {w}
+              </span>
+            ))}
+            <span class="intro-name">{site.name}</span>
+          </div>
+          <span class="intro-skip">
+            <span class="by-click">Click</span>
+            <span class="by-tap">Tap</span> to skip
+          </span>
+        </div>
+      )
+    }
 
     <a class="skip" href="#main">Skip to content</a>
     <Header progress={progress} />

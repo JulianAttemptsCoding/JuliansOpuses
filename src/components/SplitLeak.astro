@@ -240,8 +240,11 @@ const pct = (months: number) => `${(months / MONTHS) * 100}%`;
     cursor: default;
   }
 
+  /* The board is a container: what fits in it depends on its own width, which follows
+     the column it sits in, not the window. */
   .board {
     --name-w: 1.4rem;
+    container-type: inline-size;
     padding: 0.85rem 0.85rem 0.6rem;
     background: var(--fig-shade);
     border-radius: 6px;
@@ -249,7 +252,7 @@ const pct = (months: number) => `${(months / MONTHS) * 100}%`;
   .bands {
     display: flex;
     margin: 0 0 0.4rem var(--name-w);
-    font-size: 0.66rem;
+    font-size: 0.7rem;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--fig-ink-2);
@@ -336,7 +339,7 @@ const pct = (months: number) => `${(months / MONTHS) * 100}%`;
     display: flex;
     justify-content: space-between;
     margin: 0.5rem 0 0 var(--name-w);
-    font-size: 0.66rem;
+    font-size: 0.7rem;
     color: var(--fig-ink-3);
   }
   .k {
@@ -344,8 +347,8 @@ const pct = (months: number) => `${(months / MONTHS) * 100}%`;
     width: 12px;
   }
 
-  @media (max-width: 640px) {
-    /* The last two bands are only four cells wide: use the short labels. */
+  @container (max-width: 39.5rem) {
+    /* The last two bands are only four cells wide: in a narrow board, the short labels. */
     .bands .wide {
       display: none;
     }
@@ -356,7 +359,7 @@ const pct = (months: number) => `${(months / MONTHS) * 100}%`;
       letter-spacing: 0.02em;
     }
   }
-  @media (max-width: 560px) {
+  @media (max-width: 35em) {
     .cells,
     .rows {
       gap: 2px;

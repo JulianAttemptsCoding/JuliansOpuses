@@ -25,13 +25,13 @@ const sections = [
 
 <Base
   title="Projects"
-  description="Five projects by Julian Juan: research, software and a prototype, each with its result so far."
+  description="Five projects by Julian Juan: research, software, and a prototype, each with its result so far."
   sections={sections}
 >
   <section class="page-intro wrap g12">
     <h1>Projects</h1>
     <div class="lede">
-      <p class="claim">Research, software and a prototype.</p>
+      <p class="claim">Research, software, and a prototype.</p>
       <p>Five projects. Each write-up covers what I built, the result so far, and what is still open.</p>
     </div>
     <ul class="legend side" aria-label="What the labels mean. Point at or focus one to read it.">
@@ -125,7 +125,7 @@ const sections = [
     <header class="sec-head" data-rule>
       <div>
         <h2 class="sec-title marked"><span data-reveal="mask">Negative result</span></h2>
-        <p class="sec-intro" data-reveal>A smaller study, where the result went away under harder testing.</p>
+        <p class="sec-intro" data-reveal>A study I kept testing until the result went away.</p>
       </div>
     </header>
     <WorkRows items={notes} small />
@@ -275,7 +275,7 @@ const sections = [
     text-align: right;
   }
 
-  @media (max-width: 1000px) {
+  @media (max-width: 62.5em) {
     .lead-text,
     .lead-side {
       grid-column: 1 / -1;
@@ -284,7 +284,7 @@ const sections = [
       max-width: 34rem;
     }
   }
-  @media (max-width: 900px) {
+  @media (max-width: 56.25em) {
     .num {
       width: auto;
       margin: 0 0.6rem 0 0;

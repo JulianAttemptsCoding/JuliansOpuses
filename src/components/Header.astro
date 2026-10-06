@@ -195,7 +195,7 @@ const isCurrent = (p: string) => !p.includes('#') && path.startsWith(href(p));
   .menu-btn {
     display: inline-grid;
     place-items: center;
-    height: 32px;
+    height: 2rem;
     border: 1px solid var(--rule);
     border-radius: 999px;
     background: none;
@@ -205,11 +205,11 @@ const isCurrent = (p: string) => !p.includes('#') && path.startsWith(href(p));
       color 0.2s;
   }
   .icon-btn {
-    width: 32px;
+    width: 2rem;
   }
   .icon-btn svg {
-    width: 14px;
-    height: 14px;
+    width: 0.875rem;
+    height: 0.875rem;
   }
   .icon-btn svg {
     transition: transform 0.5s var(--ease);
@@ -250,7 +250,7 @@ const isCurrent = (p: string) => !p.includes('#') && path.startsWith(href(p));
     }
   }
 
-  @media (max-width: 820px) {
+  @media (max-width: 51.25em) {
     .bar {
       gap: 0.5rem;
     }

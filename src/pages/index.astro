@@ -34,39 +34,58 @@ const sections = [
 // A piece is usually one word. Words joined by `_` stay together as one piece, so a name
 // is never split across two lines and "I" never dangles at the end of one. `b` marks the
 // name, the one thing in the sentence set heavier; `tail` is punctuation that follows a
-// word without taking its weight.
-const headline: { t: string; b?: boolean; tail?: string }[] = [
+// word without taking its weight. A word ending in `+` is kept beside the next one on a
+// narrow phone only, where the two would otherwise end up one to a line.
+type Piece = { t: string; b?: boolean; tail?: string; keep?: boolean };
+const pieces: Piece[] = [
   { t: 'I’m' },
   { t: 'Julian', b: true },
   { t: 'Juan', b: true, tail: ',' },
-  ...'a senior at Los_Gatos High School. I_do physics research, build software and hardware, and compete in math_modeling.'
+  ...'a senior at Los_Gatos High School. I_do physics research, build software and hardware, and model+ problems mathematically.'
     .split(' ')
-    .map((t) => ({ t: t.replace(/_/g, ' ') })),
+    .map((t) => ({ t: t.replace(/_/g, ' ').replace(/\+$/, ''), keep: t.endsWith('+') })),
 ];
+// Each piece keeps its place in the sentence (for the order it rises in); a kept pair is
+// one group.
+const headline: (Piece & { i: number })[][] = [];
+pieces.forEach((p, i) => {
+  const last = headline[headline.length - 1];
+  if (last && last[last.length - 1].keep) last.push({ ...p, i });
+  else headline.push([{ ...p, i }]);
+});
 ---
 
 <Base sections={sections}>
   <section class="hero wrap">
     <h1>
       {
-        headline.map((w, i) => (
-          <>
-            <span class="w">
-              <span style={`--i:${i}`}>
-                {w.b ? <strong>{w.t}</strong> : w.t}
-                {w.tail}
+        headline.map((group) => {
+          const words = group.map((w, k) => (
+            <>
+              <span class="w">
+                <span style={`--i:${w.i}`}>
+                  {w.b ? <strong>{w.t}</strong> : w.t}
+                  {w.tail}
+                </span>
               </span>
-            </span>{' '}
-          </>
-        ))
+              {k < group.length - 1 && ' '}
+            </>
+          ));
+          return (
+            <>
+              {group.length > 1 ? <span class="pair">{words}</span> : words}{' '}
+            </>
+          );
+        })
       }
     </h1>
     <div class="hero-foot g12">
       <div class="main">
         <p class="lede">
-          I’ve spent two summers at Academia Sinica’s Institute of Physics in Taipei, working on particle
-          detectors. I also sit on my school district’s budget committee and help run a student hackathon. This
-          site has the research, the projects and where each one stands, and the awards.
+          I’ve spent two summers doing detector research at Academia Sinica’s Institute of Physics in Taipei. I
+          also hold the student vote on the committee for my school district’s $88 million budget, and I direct
+          strategy for a student hackathon. This site has the research, the projects and where each one stands,
+          and the awards.
         </p>
         <ul class="hero-links">
           <li><a href="#work">Research and projects&nbsp;↓</a></li>
@@ -206,15 +225,15 @@ const headline: { t: string; b?: boolean; tail?: string }[] = [
       <ul class="beyond" data-stagger>
         <li class="g9">
           <p class="read">
-            I’m the voting student member of my school district’s budget advisory committee, where I helped
-            reconcile over $6 million in reporting differences.
+            I’m the voting student member of my school district’s budget advisory committee, which oversees an
+            $88 million budget. I helped find and reconcile over $6 million in reporting differences.
           </p>
           <a class="quiet" href={href('/experience/#leadership')}>Budget committee&nbsp;→</a>
         </li>
         <li class="g9">
           <p class="read">
             I’m Director of Strategy at Los Gatos Hacks, a nonprofit hackathon for middle and high school
-            students.
+            students that has more than doubled over four events, from 50 hackers to 115.
           </p>
           <a class="quiet" href={href('/experience/#leadership')}>Los Gatos Hacks&nbsp;→</a>
         </li>
@@ -246,11 +265,13 @@ const headline: { t: string; b?: boolean; tail?: string }[] = [
 
 <style>
   /* ---------- Opening ---------- */
+  /* The opening is sized by the window's height as well as its width, so that on a short
+     laptop window the sentence, the paragraph, and the facts still share the first screen. */
   .hero {
-    padding-top: clamp(3rem, 8vw, 6.5rem);
+    padding-top: clamp(2.5rem, min(8vw, 10vh), 6.5rem);
   }
   .hero h1 {
-    max-width: 25ch;
+    max-width: 27ch;
     font-size: var(--t-hero);
     line-height: 1.08;
     letter-spacing: -0.022em;
@@ -271,11 +292,17 @@ const headline: { t: string; b?: boolean; tail?: string }[] = [
   .w > span {
     display: inline-block;
   }
+  /* Two words that stay on one line together, on a narrow phone only. */
+  @media (max-width: 23em) {
+    .pair {
+      white-space: nowrap;
+    }
+  }
   /* Under the sentence: a few more sentences, and the plain facts beside them. */
   .hero-foot {
     row-gap: 2rem;
     align-items: end;
-    margin-top: clamp(2rem, 4.5vw, 3.5rem);
+    margin-top: clamp(1.5rem, min(4.5vw, 5.6vh), 3.5rem);
   }
   /* The ways down the page, in the order the page runs. */
   .hero-links {
@@ -508,7 +535,7 @@ const headline: { t: string; b?: boolean; tail?: string }[] = [
 
   /* Less room: the entry becomes one column beside its number, as the rows do, and its
      figure goes under its text. */
-  @media (max-width: 1000px) {
+  @media (max-width: 62.5em) {
     .lead {
       grid-template-columns: 2.5rem minmax(0, 1fr);
       row-gap: 1.75rem;
@@ -522,7 +549,7 @@ const headline: { t: string; b?: boolean; tail?: string }[] = [
       grid-column: 1 / -1;
     }
   }
-  @media (max-width: 560px) {
+  @media (max-width: 35em) {
     .lead {
       grid-template-columns: 1.75rem minmax(0, 1fr);
       column-gap: 0.75rem;

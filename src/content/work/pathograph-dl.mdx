@@ -3,8 +3,8 @@ order: 2
 tier: flagship
 title: PathoGraph-DL
 question: Does strong predictive performance survive leakage-safe evaluation in time?
-summary: I built a model that forecasts crop-disease risk for about 194 countries from trade, climate and outbreak reports, and scored it on a later period it had never seen.
-claim: A spatio-temporal graph neural network that forecasts agricultural pathogen risk across about 194 countries from trade, climate and outbreak reports.
+summary: I built a model that forecasts crop-disease risk for about 194 countries from trade, climate, and outbreak reports, and scored it on a later period it had never seen.
+claim: A spatio-temporal graph neural network that forecasts agricultural pathogen risk across about 194 countries from trade, climate, and outbreak reports.
 domain: Graph ML
 status: holds
 evidence: Macro AUROC 0.960 ± 0.010 on a held-out test, with calibration error 0.020.
@@ -28,7 +28,7 @@ coverAlt: Schematic of the PathoGraph pipeline from data sources through a count
 worked:
   - 'Held-out test performance is strong and calibrated: macro AUROC 0.960 ± 0.010 with expected calibration error near 0.02.'
   - 'Splits are chronological and enforced by data contracts, so no future information reaches training.'
-  - 'Results come from a frozen record: the package, config and checkpoint are pinned and validated.'
+  - 'Results come from a frozen record: the package, config, and checkpoint are pinned and validated.'
   - 'The code is a tested package, with experiments driven by configuration files and 32 test files.'
 openLabel: Where the limits are
 open:
@@ -59,7 +59,7 @@ Three kinds of signal come together: international trade, climate, and reported 
   <Pipeline />
 </Figure>
 
-Getting heterogeneous public data into one consistent tensor is most of the work. Inputs are audited, stored as [Zarr](https://zarr.dev/) tensors, and guarded by strict data contracts so that if a source changes its shape, units or coverage, the pipeline stops with an error instead of producing a slightly different result.
+Getting heterogeneous public data into one consistent tensor is most of the work. Inputs are audited, stored as [Zarr](https://zarr.dev/) tensors, and guarded by strict data contracts so that if a source changes its shape, units, or coverage, the pipeline stops with an error instead of producing a slightly different result.
 
 ## Model
 
@@ -71,7 +71,7 @@ The easiest way to get an impressive score on data like this is to leak the futu
 
 <Figure
   n={2}
-  caption="Why a random split flatters a forecaster. A toy calendar, not project data: six made-up countries, 24 months and a handful of outbreaks. Switch to a random split and see how many tested outbreak months the model had already seen the end of."
+  caption="Why a random split flatters a forecaster. A toy calendar, not project data: six made-up countries, 24 months, and a handful of outbreaks. Switch to a random split and see how many tested outbreak months the model had already seen the end of."
 >
   <SplitLeak />
 </Figure>

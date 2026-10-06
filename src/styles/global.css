@@ -66,8 +66,9 @@
   --t-h1: clamp(1.875rem, 1.1rem + 2.7vw, 2.75rem);
   /* The display sizes: the opening sentence of the home page, the title of the project
      a list leads with, a project's title in a list, and the name of the place a section
-     is about. They grow with the window up to a fixed size. */
-  --t-hero: clamp(2.05rem, 4.4vw, 3.6rem);
+     is about. They grow with the window up to a fixed size. The opening sentence also
+     follows the window's height, so a short laptop window still shows what is under it. */
+  --t-hero: clamp(1.9rem, min(4.4vw, 6.4vh), 3.6rem);
   --t-lead: clamp(1.9rem, 3.8vw, 3.25rem);
   --t-row: clamp(1.6rem, 2.7vw, 2.4rem);
   --t-org: clamp(1.55rem, 2.5vw, 2.15rem);
@@ -82,9 +83,17 @@
   --hang: max(var(--col-gap), 1.6rem);
   /* The longest a line of reading text may run: about 66 characters. */
   --measure: 35rem;
-  --header-h: 60px;
+  --header-h: 3.75rem;
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   --ease-inout: cubic-bezier(0.76, 0, 0.24, 1);
+}
+
+/* A phone held sideways has very little height: the opening sentence is set smaller so
+   it does not take the whole screen. */
+@media (max-height: 30em) and (orientation: landscape) {
+  :root {
+    --t-hero: clamp(1.6rem, 7vh, 2.05rem);
+  }
 }
 
 @media (prefers-color-scheme: dark) {
@@ -140,10 +149,16 @@
 *::after {
   box-sizing: border-box;
 }
+/* Every size on the site is in rem, so the root size is the one dial for the whole
+   layout. Up to a 1920 by 1080 window it is the reader's own default. On a larger window
+   (a 1440p or 4K monitor at full scale) the page would otherwise be a small island of
+   small type, so everything grows together, in proportion to the window. The smaller of
+   the two terms wins, so an ultrawide monitor scales by its height, not its width. */
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
-  scroll-padding-top: calc(var(--header-h) + 24px);
+  font-size: clamp(100%, min(0.25rem + 0.625vw, 0.25rem + 1.111vh), 175%);
+  scroll-padding-top: calc(var(--header-h) + 1.5rem);
 }
 body {
   margin: 0;
@@ -497,7 +512,7 @@ html:not(.js) .marked::before {
   width: 1.125rem;
 }
 /* 80rem of column plus a margin wide enough for the longest name. */
-@media (min-width: 1500px) {
+@media (min-width: 93.75em) {
   .ticks-anchor {
     display: block;
   }
@@ -505,7 +520,7 @@ html:not(.js) .marked::before {
 
 /* Less room: one column. What sat beside the text goes under it, and a section's name
    sits above its content. */
-@media (max-width: 900px) {
+@media (max-width: 56.25em) {
   .main,
   .side,
   .lede,
@@ -519,7 +534,7 @@ html:not(.js) .marked::before {
   }
 }
 /* A phone's gutter is too narrow to hang anything in. */
-@media (max-width: 720px) {
+@media (max-width: 45em) {
   .marked::before {
     display: none;
   }
@@ -884,7 +899,7 @@ a.ext:hover::after {
       animation:
         reveal linear both,
         leave linear forwards;
-      animation-timeline: view(block 60px 0px), view(block 60px 0px);
+      animation-timeline: view(block var(--header-h) 0px), view(block var(--header-h) 0px);
       animation-range:
         entry 0px entry 200px,
         exit calc(100% - 150px) exit 100%;
@@ -905,7 +920,7 @@ a.ext:hover::after {
        timed by the scroll would fade it while it is still on screen. */
     [data-reveal='mask-in'] {
       animation: unmask linear both;
-      animation-timeline: view(block 60px 0px);
+      animation-timeline: view(block var(--header-h) 0px);
       animation-range: entry 20px entry 220px;
     }
     [data-reveal='scale'] {
@@ -950,7 +965,7 @@ a.ext:hover::after {
 }
 
 /* The opening of a page arrives when the page does: each part a moment after the one
-   before. On the first page of a visit it waits for the intro curtain. */
+   before. Where the intro plays (the home page, first in a visit) it waits for the curtain. */
 @media (prefers-reduced-motion: no-preference) {
   html.js :is(.page-intro, .case-head) > * {
     animation: fade-up 0.8s var(--ease) both;
