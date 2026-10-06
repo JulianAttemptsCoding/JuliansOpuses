@@ -49,8 +49,11 @@
   /* How strongly the detector drawing's lit cells are inked. */
   --lit: 0.62;
 
-  --font-display: 'Source Serif 4 Variable', 'Source Serif 4', Georgia, 'Times New Roman', serif;
-  --font-sans: 'Geist Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Source Serif 4 Variable', 'Source Serif 4', 'Source Serif Fallback', Georgia, 'Times New Roman', serif;
+  /* The same serif for large type (page titles, names of projects and places): only the
+     stand-in differs, since the serif is drawn narrower at these sizes. */
+  --font-display-lg: 'Source Serif 4 Variable', 'Source Serif 4', 'Source Serif Display Fallback', Georgia, 'Times New Roman', serif;
+  --font-sans: 'Geist Variable', 'Geist Fallback', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: 'Geist Mono Variable', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
 
   /* One type scale, each step about 1.25 times the last: 14, 18, 22, 28, 44. Sizes are
@@ -68,8 +71,8 @@
      a list leads with, a project's title in a list, and the name of the place a section
      is about. They grow with the window up to a fixed size. The opening sentence also
      follows the window's height, so a short laptop window still shows what is under it. */
-  --t-hero: clamp(1.9rem, min(4.4vw, 6.4vh), 3.6rem);
-  --t-lead: clamp(1.9rem, 3.8vw, 3.25rem);
+  --t-hero: clamp(1.9rem, min(4.15vw, 6.4vh), 3.3rem);
+  --t-lead: clamp(1.9rem, 3.5vw, 3rem);
   --t-row: clamp(1.6rem, 2.7vw, 2.4rem);
   --t-org: clamp(1.55rem, 2.5vw, 2.15rem);
 
@@ -86,6 +89,26 @@
   --header-h: 3.75rem;
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   --ease-inout: cubic-bezier(0.76, 0, 0.24, 1);
+}
+
+/* Stand-ins for the web fonts until they arrive: a system font scaled to take the same
+   room (measured against the real fonts), so text does not re-wrap and push the page
+   down when they load. Text sizes and the phone-size opening sentence need different
+   scales, because the serif is drawn narrower at display sizes. */
+@font-face {
+  font-family: 'Source Serif Fallback';
+  src: local('Georgia');
+  size-adjust: 101%;
+}
+@font-face {
+  font-family: 'Source Serif Display Fallback';
+  src: local('Georgia');
+  size-adjust: 97.5%;
+}
+@font-face {
+  font-family: 'Geist Fallback';
+  src: local('Arial');
+  size-adjust: 102.3%;
 }
 
 /* A phone held sideways has very little height: the opening sentence is set smaller so
@@ -211,6 +234,7 @@ h4,
 }
 h1,
 .display {
+  font-family: var(--font-display-lg);
   font-weight: 400;
 }
 p {
@@ -431,6 +455,18 @@ html:not(.js) .marked::before {
 .onward {
   margin-top: 1.25rem;
   font-size: var(--t-sm);
+}
+/* A link that stands on its own, not inside a sentence, takes a tap over at least 24px
+   of height. On an inline link the padding adds to what can be pressed without moving
+   anything around it. */
+.onward a,
+.side-list a,
+.facts a,
+.lead-links a,
+.links a,
+.more a,
+.role-link a {
+  padding-block: 0.3rem;
 }
 /* A short list of links or names set beside the text: one to a line, between faint rules. */
 .side-list {
@@ -770,11 +806,11 @@ a.ext:hover::after {
    motion. `html.js` is set by an inline script before first paint.
 
    Scroll-driven reveals are opted into with data attributes. They follow the scroll
-   position exactly, forwards and backwards, so nothing plays on its own:
+   position exactly, so nothing plays on its own, and they are arrivals only: once
+   something is in, it stays in.
      data-reveal            fade up
      data-reveal="left"     slide in from the left
-     data-reveal="mask"     rise out of a mask (headings)
-     data-reveal="mask-in"  the same, without a departure (names that stay stuck in view)
+     data-reveal="mask"     rise out of a mask (headings; "mask-in" is the same)
      data-reveal="scale"    settle from slightly small (figures)
      data-reveal="stamp"    land like a stamp (the verdict)
      data-stagger           each child fades up as it arrives
@@ -790,11 +826,6 @@ a.ext:hover::after {
 }
 @keyframes fade-in {
   from {
-    opacity: 0;
-  }
-}
-@keyframes fade-out {
-  to {
     opacity: 0;
   }
 }
@@ -836,14 +867,6 @@ a.ext:hover::after {
   }
   100% {
     transform: none;
-  }
-}
-/* Leaving by the top of the window: the same things fade up and out, so that scrolling
-   back down brings them in again. */
-@keyframes leave {
-  to {
-    opacity: 0;
-    transform: translateY(-18px);
   }
 }
 @keyframes draw-rule {
@@ -889,64 +912,56 @@ a.ext:hover::after {
   }
 
   @supports (animation-timeline: view()) {
-    /* Ranges are lengths, not percentages of the element, so a short line and a tall
-       figure both finish arriving the same distance above the bottom of the window. */
-    /* Two animations share one timeline: the arrival, then the departure. The departure
-       has no effect before its own range begins, so it never fights the arrival. The top
-       inset is the sticky header: something is "gone" once it is behind that. */
-    [data-reveal],
-    [data-stagger] > * {
-      animation:
-        reveal linear both,
-        leave linear forwards;
-      animation-timeline: view(block var(--header-h) 0px), view(block var(--header-h) 0px);
-      animation-range:
-        entry 0px entry 200px,
-        exit calc(100% - 150px) exit 100%;
-    }
-    [data-reveal='left'] {
-      animation-name: slide-in-left, leave;
-      animation-range:
-        entry 0px entry 260px,
-        exit calc(100% - 150px) exit 100%;
-    }
-    [data-reveal='mask'] {
-      animation-name: unmask, leave;
-      animation-range:
-        entry 20px entry 220px,
-        exit calc(100% - 150px) exit 100%;
-    }
-    /* A section's name stays stuck beside its content, so it only arrives: a departure
-       timed by the scroll would fade it while it is still on screen. */
-    [data-reveal='mask-in'] {
-      animation: unmask linear both;
-      animation-timeline: view(block var(--header-h) 0px);
-      animation-range: entry 20px entry 220px;
-    }
-    [data-reveal='scale'] {
-      animation-name: scale-in, leave;
-      animation-range:
-        entry 0px entry 300px,
-        exit calc(100% - 200px) exit 100%;
-    }
-    [data-reveal='stamp'] {
-      transform-origin: left center;
-      animation-name: stamp, leave;
-      animation-range:
-        entry 90px entry 300px,
-        exit calc(100% - 150px) exit 100%;
-    }
-    /* Section rules draw themselves from the left as they come into view. */
-    [data-rule]::before {
-      transform-origin: left center;
-      animation: draw-rule linear both;
-      animation-timeline: view();
-      animation-range: entry 0px entry 320px;
+    /* Arrivals only, and short ones. Something has finished arriving once it is about
+       90px into the window, and from then on it stays as it is however the page is
+       scrolled: nothing fades away as it leaves, so text in the middle of the window is
+       never dimmed. On a phone-width window nothing is revealed at all; the text is
+       simply there. Ranges are lengths, not percentages of the element, so a short line
+       and a tall figure both finish arriving the same distance above the bottom of the
+       window. The top inset is the sticky header. */
+    @media (min-width: 43.75em) {
+      [data-reveal],
+      [data-stagger] > * {
+        animation: reveal linear both;
+        animation-timeline: view(block var(--header-h) 0px);
+        animation-range: entry 0px entry 90px;
+      }
+      [data-reveal='left'] {
+        animation-name: slide-in-left;
+        animation-range: entry 0px entry 110px;
+      }
+      [data-reveal='mask'],
+      [data-reveal='mask-in'] {
+        animation-name: unmask;
+        animation-range: entry 10px entry 110px;
+      }
+      [data-reveal='scale'] {
+        animation-name: scale-in;
+        animation-range: entry 0px entry 140px;
+      }
+      [data-reveal='stamp'] {
+        transform-origin: left center;
+        animation-name: stamp;
+        animation-range: entry 40px entry 150px;
+      }
+      /* Section rules draw themselves from the left as they come into view. */
+      [data-rule]::before {
+        transform-origin: left center;
+        animation: draw-rule linear both;
+        animation-timeline: view();
+        animation-range: entry 0px entry 200px;
+      }
     }
   }
 
   @view-transition {
     navigation: auto;
+  }
+  /* A project's title that travels to its write-up takes its time and eases at both
+     ends. The page itself still cross-fades quickly. */
+  ::view-transition-group(*) {
+    animation-duration: 0.5s;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   }
   ::view-transition-old(root),
   ::view-transition-new(root) {
@@ -1011,11 +1026,15 @@ a.ext:hover::after {
 .pause:hover {
   color: var(--accent);
 }
-/* There is nothing to pause for a reader who has asked for no motion. */
+/* There is nothing to pause for a reader who has asked for no motion, and nothing the
+   word can do without scripts. */
 @media (prefers-reduced-motion: reduce) {
   .pause {
     display: none;
   }
+}
+html:not(.js) .pause {
+  display: none;
 }
 
 /* A button whose fill rises from below on hover. Set --fill and --fill-ink. */

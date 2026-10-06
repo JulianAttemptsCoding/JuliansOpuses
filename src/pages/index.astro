@@ -34,16 +34,24 @@ const sections = [
 // A piece is usually one word. Words joined by `_` stay together as one piece, so a name
 // is never split across two lines and "I" never dangles at the end of one. `b` marks the
 // name, the one thing in the sentence set heavier; `tail` is punctuation that follows a
-// word without taking its weight. A word ending in `+` is kept beside the next one on a
-// narrow phone only, where the two would otherwise end up one to a line.
-type Piece = { t: string; b?: boolean; tail?: string; keep?: boolean };
+// word without taking its weight. A word ending in `/` ends a line on anything wider than
+// a phone: there the sentence is always these five lines, whatever font is drawn, so a
+// late-arriving font cannot add a line and push the page down. On a phone the lines wrap
+// on their own. A word ending in `+` is kept beside the next one on a narrow phone only,
+// where the two would otherwise end up one to a line.
+type Piece = { t: string; b?: boolean; tail?: string; keep?: boolean; brk?: boolean };
+const NBSP = String.fromCharCode(160);
 const pieces: Piece[] = [
   { t: 'I’m' },
   { t: 'Julian', b: true },
   { t: 'Juan', b: true, tail: ',' },
-  ...'a senior at Los_Gatos High School. I_do physics research, build software and hardware, and model+ problems mathematically.'
+  ...'a senior at/ Los_Gatos High School. I_do/ physics research, build software/ and hardware, and model+/ problems mathematically.'
     .split(' ')
-    .map((t) => ({ t: t.replace(/_/g, ' ').replace(/\+$/, ''), keep: t.endsWith('+') })),
+    .map((raw) => {
+      const brk = raw.endsWith('/');
+      const word = brk ? raw.slice(0, -1) : raw;
+      return { t: word.replace(/_/g, NBSP).replace(/\+$/, ''), keep: word.endsWith('+'), brk };
+    }),
 ];
 // Each piece keeps its place in the sentence (for the order it rises in); a kept pair is
 // one group.
@@ -56,7 +64,7 @@ pieces.forEach((p, i) => {
 ---
 
 <Base sections={sections}>
-  <section class="hero wrap">
+  <section class="hero wrap g12">
     <h1>
       {
         headline.map((group) => {
@@ -68,6 +76,7 @@ pieces.forEach((p, i) => {
                   {w.tail}
                 </span>
               </span>
+              {w.brk && <br class="brk" />}
               {k < group.length - 1 && ' '}
             </>
           ));
@@ -79,13 +88,15 @@ pieces.forEach((p, i) => {
         })
       }
     </h1>
+    <div class="hero-fig">
+      <Shower />
+    </div>
     <div class="hero-foot g12">
       <div class="main">
         <p class="lede">
           I’ve spent two summers doing detector research at Academia Sinica’s Institute of Physics in Taipei. I
           also hold the student vote on the committee for my school district’s $88 million budget, and I direct
-          strategy for a student hackathon. This site has the research, the projects and where each one stands,
-          and the awards.
+          strategy for a student hackathon.
         </p>
         <ul class="hero-links">
           <li><a href="#work">Research and projects&nbsp;↓</a></li>
@@ -126,9 +137,6 @@ pieces.forEach((p, i) => {
         </div>
       </dl>
     </div>
-    <div class="hero-fig">
-      <Shower />
-    </div>
   </section>
 
   <Ticker />
@@ -154,7 +162,7 @@ pieces.forEach((p, i) => {
 
     <!-- The research and the project that came out of it are one thing, so they are one
          entry: the lab, the project, where it stands, and the rest of the work there. -->
-    <article class="lead" data-lead data-status={lead.data.status}>
+    <article class="lead" data-lead data-vt-scope data-status={lead.data.status}>
       <span class="lead-num mono" data-reveal="left">{num(lead.data.order)}</span>
       <div class="lead-text">
         <p class="lead-where" data-reveal>
@@ -164,7 +172,7 @@ pieces.forEach((p, i) => {
           </span>
           <span class="lead-when">{experience.place}, {experience.dates}</span>
         </p>
-        <h3 class="lead-title display" style={`view-transition-name: work-${lead.id}`} data-reveal="mask">
+        <h3 class="lead-title display" data-vt={`work-${lead.id}`} data-reveal>
           <a class="quiet" href={href(`/work/${lead.id}/`)}>{lead.data.title}</a>
         </h3>
         <p class="lead-question" data-reveal>{lead.data.question}</p>
@@ -264,14 +272,26 @@ pieces.forEach((p, i) => {
 </Base>
 
 <style>
-  /* ---------- Opening ---------- */
-  /* The opening is sized by the window's height as well as its width, so that on a short
-     laptop window the sentence, the paragraph, and the facts still share the first screen. */
+  /* ---------- Opening ----------
+     The sentence, with the detector drawing beside it, then a paragraph and the plain
+     facts. It is sized by the window's height as well as its width, so that on a short
+     laptop window all of it shares the first screen. On a narrower window the drawing
+     goes under the facts. */
   .hero {
-    padding-top: clamp(2.5rem, min(8vw, 10vh), 6.5rem);
+    row-gap: 0;
+    align-items: end;
+    padding-block: clamp(2.5rem, min(8vw, 10vh), 6.5rem) clamp(2.5rem, 5vw, 4rem);
   }
+  .hero h1,
+  .hero-fig,
+  .hero-foot {
+    grid-column: 1 / -1;
+    min-width: 0;
+  }
+  /* The measure is in em, not ch: a ch is the width of the font's zero, which differs
+     between the real font and its stand-in. */
   .hero h1 {
-    max-width: 27ch;
+    max-width: 12.75em;
     font-size: var(--t-hero);
     line-height: 1.08;
     letter-spacing: -0.022em;
@@ -291,6 +311,18 @@ pieces.forEach((p, i) => {
   }
   .w > span {
     display: inline-block;
+  }
+  /* Wider than a phone, the sentence breaks only where it is told to. */
+  @media (min-width: 37.5em) {
+    .hero h1 {
+      max-width: none;
+      white-space: nowrap;
+    }
+  }
+  @media not all and (min-width: 37.5em) {
+    .brk {
+      display: none;
+    }
   }
   /* Two words that stay on one line together, on a narrow phone only. */
   @media (max-width: 23em) {
@@ -336,9 +368,24 @@ pieces.forEach((p, i) => {
   .facts dd {
     text-wrap: balance;
   }
+  /* The drawing. Beside the sentence it takes the five columns the facts take under it,
+     and is never taller than the sentence: its width is worked out from the sentence's
+     height (five lines), less the room its scale and caption need. */
   .hero-fig {
+    order: 3;
     margin-top: clamp(2.25rem, 5vw, 4rem);
-    padding-bottom: clamp(2.5rem, 5vw, 4rem);
+  }
+  @media (min-width: 62.5em) {
+    .hero h1 {
+      grid-column: 1 / span 7;
+    }
+    .hero-fig {
+      order: 0;
+      grid-column: 8 / -1;
+      grid-row: 1;
+      max-width: calc((5.4 * var(--t-hero) - 6.4rem) * 2.95);
+      margin-top: 0;
+    }
   }
 
   /* The headline rises word by word; the rest of the opening follows. On a first visit
@@ -354,34 +401,25 @@ pieces.forEach((p, i) => {
     }
     :global(html.js) .hero-fig {
       animation: fade-up 0.9s var(--ease) both;
-      animation-delay: calc(var(--enter, 0.1s) + 0.8s);
+      animation-delay: calc(var(--enter, 0.1s) + 0.5s);
     }
-    /* Leaving the top of the page, the headline lags behind and thins out. */
+    /* Leaving the top of the page, the headline lags behind a little and thins out. It
+       only starts once the opening has been scrolled a good way, so nothing is dimmed
+       while it is still being read. Not on a phone. */
     @supports (animation-timeline: scroll()) {
-      .hero h1 {
-        animation: hero-out linear both;
-        animation-timeline: scroll(root block);
-        animation-range: 0px 80vh;
-      }
-      .lede,
-      .hero-links,
-      .facts {
-        animation: hero-out-fast linear both;
-        animation-timeline: scroll(root block);
-        animation-range: 0px 65vh;
+      @media (min-width: 43.75em) {
+        .hero h1 {
+          animation: hero-out linear both;
+          animation-timeline: scroll(root block);
+          animation-range: 30vh 95vh;
+        }
       }
     }
   }
   @keyframes hero-out {
     to {
-      opacity: 0.12;
-      transform: translateY(60px);
-    }
-  }
-  @keyframes hero-out-fast {
-    to {
-      opacity: 0;
-      transform: translateY(-26px);
+      opacity: 0.2;
+      transform: translateY(36px);
     }
   }
 
@@ -463,8 +501,11 @@ pieces.forEach((p, i) => {
     font-size: var(--t-sm);
     line-height: 1.5;
   }
-  .lead-result span:last-child {
+  /* The result is the proof: reading size, main ink. */
+  .lead-result > span:last-child {
     max-width: 30rem;
+    color: var(--ink);
+    font-size: var(--t-md);
   }
   .lead-fig {
     margin: 0;

@@ -1,7 +1,8 @@
 ---
-// Awards as one table of equal rows: the award, the result, and a note beside them. It
-// sits in a ledger section's content, so its rows are set on the same nine columns. The
-// home page shows the first few; the Experience page shows them all.
+// Awards as one table of equal rows: the award, and beside it the result with a note
+// under it. The result is the proof, so it and its note are at reading size. It sits in a
+// ledger section's content, so its rows are set on the same nine columns. The home page
+// shows the first few; the Experience page shows them all.
 import Rich from './Rich.astro';
 import { recognition } from '../data/profile';
 
@@ -18,9 +19,11 @@ const items = limit ? recognition.slice(0, limit) : recognition;
     items.map((r) => (
       <li class="g9">
         <a class="award-name ext" href={r.href} rel="noopener">{r.name}</a>
-        <span class="award-result">{r.result}</span>
-        <span class="award-note">
-          <Rich parts={r.note} />
+        <span class="award-what">
+          <span class="award-result">{r.result}</span>
+          <span class="award-note">
+            <Rich parts={r.note} />
+          </span>
         </span>
       </li>
     ))
@@ -48,33 +51,23 @@ const items = limit ? recognition.slice(0, limit) : recognition;
     line-height: 1.4;
     text-decoration: none;
   }
+  .award-what {
+    grid-column: 5 / -1;
+    display: grid;
+    gap: 0.15rem;
+    line-height: 1.5;
+  }
   .award-result {
-    grid-column: 5 / span 2;
-    font-size: var(--t-sm);
     font-weight: 500;
   }
   .award-note {
-    grid-column: 7 / -1;
+    max-width: 32rem;
     color: var(--ink-2);
-    font-size: var(--t-sm);
-    line-height: 1.5;
   }
-  /* Less room: the name and the result share a line, and the note goes under them. */
+  /* Less room: the name, then the result and its note under it. */
   @media (max-width: 62.5em) {
-    .award-name {
-      grid-column: 1 / span 6;
-    }
-    .award-result {
-      grid-column: 7 / -1;
-    }
-    .award-note {
-      grid-column: 1 / -1;
-      max-width: 32rem;
-    }
-  }
-  @media (max-width: 35em) {
     .award-name,
-    .award-result {
+    .award-what {
       grid-column: 1 / -1;
     }
   }

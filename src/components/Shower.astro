@@ -8,9 +8,10 @@
 // paper. Only the hottest cells take the accent colour.
 //
 // The drawing is also a button: pressing it sends one more particle in at the height
-// that was pressed, drawn from the same shape in the browser. Pointing at it names the
-// layer under the pointer. The Pause in the caption stops the showers taking turns, along
-// with everything else on the site that moves on its own.
+// that was pressed, drawn from the same shape in the browser. The Pause in the caption
+// stops the showers taking turns, along with everything else on the site that moves on
+// its own. How much of the detector is shown is said in the caption, in a sentence: a
+// bare scale under the drawing ("layer 1 ... 32 of 65") read as noise.
 const COLS = 65; // the calorimeter in the Fast-MC-CBSC project has 65 layers
 const ROWS = 11;
 const CELL = 12;
@@ -91,19 +92,14 @@ const NEAR_W = NEAR * STEP - GAP;
         ))
       }
     </svg>
-    <span class="axis" aria-hidden="true">
-      <span data-layer>layer 1</span>
-      <span class="far">{COLS}</span>
-      <span class="near">{NEAR} of {COLS}</span>
-    </span>
   </button>
   <figcaption>
-    <span class="n mono">Fig. 1</span>
-    <span>
-      A particle hits the detector on the left and its energy spreads through the layers. Drawn, not measured.
-      <span class="hint" data-hint role="status">Press the detector to send another.</span>
-      <button class="pause" type="button" data-pause aria-label="Pause the animations">Pause</button>
-    </span>
+    A particle’s energy spreading through{' '}
+    <span class="far">a detector’s {COLS} layers.</span>
+    <span class="near">the first {NEAR} of a detector’s {COLS} layers.</span>{' '}
+    <span class="nb">Drawn, not measured.</span>
+    <span class="hint" data-hint role="status">Press it to send another.</span>
+    <button class="pause" type="button" data-pause aria-label="Pause the animations">Pause</button>
   </figcaption>
 </figure>
 
@@ -113,26 +109,14 @@ const NEAR_W = NEAR * STEP - GAP;
     const button = root.querySelector<HTMLButtonElement>('[data-fire]')!;
     const svg = root.querySelector<SVGSVGElement>('svg')!;
     const hint = root.querySelector<HTMLElement>('[data-hint]')!;
-    const layer = root.querySelector<HTMLElement>('[data-layer]')!;
     const COLS = Number(root.dataset.cols);
     const ROWS = Number(root.dataset.rows);
     const STEP = Number(root.dataset.step);
     const CELL = Number(root.dataset.cell);
     const CROSS = Number(root.dataset.cross);
-    const H = ROWS * STEP - (STEP - CELL);
     const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
     let sent = 0;
     let timer = 0;
-
-    // Which layer is under the pointer. The drawing keeps its height and is cut off at
-    // the right on a narrow window, so the scale comes from the height.
-    svg.addEventListener('pointermove', (e) => {
-      if (e.pointerType !== 'mouse') return;
-      const box = svg.getBoundingClientRect();
-      const col = Math.floor(((e.clientX - box.left) * (H / box.height)) / STEP);
-      layer.textContent = `layer ${Math.min(COLS, Math.max(1, col + 1))}`;
-    });
-    svg.addEventListener('pointerleave', () => (layer.textContent = 'layer 1'));
 
     button.addEventListener('click', (e) => {
       // Aim: the row that was pressed. From the keyboard there is no position, so any row.
@@ -186,8 +170,10 @@ const NEAR_W = NEAR * STEP - GAP;
 </script>
 
 <style>
+  /* A container: what it shows depends on the room it is given, not on the window. */
   .shower {
     margin: 0;
+    container-type: inline-size;
   }
   /* No frame and no surface of its own: the cells are drawn on the page. */
   .screen {
@@ -222,33 +208,20 @@ const NEAR_W = NEAR * STEP - GAP;
     --lit: 1;
     fill: var(--accent);
   }
-  .axis {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 0.6rem;
-    font-family: var(--font-mono);
-    font-size: var(--t-xs);
-    line-height: 1;
-    letter-spacing: 0.02em;
-    font-variant-numeric: tabular-nums;
-    color: var(--ink-3);
-  }
+  /* The caption says how much of the detector is in view: all of it, or the near half. */
   .near {
     display: none;
   }
-  /* Numbered and captioned the way the figures in the write-ups are. */
   figcaption {
-    display: grid;
-    grid-template-columns: 3.25rem minmax(0, 1fr);
-    gap: 0.75rem;
     max-width: 36rem;
-    margin-top: 1rem;
+    margin-top: 0.85rem;
     font-size: var(--t-sm);
     line-height: 1.5;
     color: var(--ink-3);
   }
-  .n {
-    padding-top: 0.15em;
+  /* A short phrase that is not split over two lines. */
+  .nb {
+    white-space: nowrap;
   }
   /* The invitation and the pause control share the caption's last line. */
   .hint {
@@ -261,8 +234,9 @@ const NEAR_W = NEAR * STEP - GAP;
   .pause {
     margin-left: 0.75rem;
   }
-  /* A narrow window shows the near half of the detector, at a size that can be seen. */
-  @media (max-width: 40em) {
+  /* In a narrow space (a phone, or a column of the opening) it shows the near half of
+     the detector, where the shower is, at a size that can be seen. */
+  @container (max-width: 40rem) {
     svg {
       aspect-ratio: var(--near);
     }

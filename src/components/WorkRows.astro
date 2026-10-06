@@ -29,7 +29,7 @@ const rows = await Promise.all(
         <a class="row" href={href(`/work/${w.id}/`)} data-row={w.id} data-status={w.data.status}>
           <span class="num mono">{num(w.data.order)}</span>
           <span class="what">
-            <span class="title display" style={`view-transition-name: work-${w.id}`}>
+            <span class="title display" role="heading" aria-level="3" data-vt={`work-${w.id}`}>
               {w.data.title}
             </span>
             <span class="question">{w.data.question}</span>
@@ -137,9 +137,9 @@ const rows = await Promise.all(
     justify-items: start;
     gap: 0.35rem;
   }
+  /* The result is the proof, so it is set at reading size in the page's main ink. */
   .evidence {
-    color: var(--ink-2);
-    font-size: var(--t-sm);
+    font-size: var(--t-md);
     line-height: 1.5;
   }
   .arrow {
@@ -164,10 +164,10 @@ const rows = await Promise.all(
     z-index: 2;
   }
 
-  /* Each row assembles as it arrives and comes apart as it leaves by the top: number,
-     title out of its mask, then the rest. All the parts read one timeline, the row's own
-     passage through the window. */
-  @media (prefers-reduced-motion: no-preference) {
+  /* Each row assembles as it arrives: number, title out of its mask, then the rest, all
+     within the first stretch of its way into the window. Once in, it stays. All the
+     parts read one timeline, the row's own passage. Not on a phone. */
+  @media (prefers-reduced-motion: no-preference) and (min-width: 43.75em) {
     @supports (animation-timeline: view()) {
       .rows > li {
         view-timeline: --row block;
@@ -178,40 +178,27 @@ const rows = await Promise.all(
       .row .question,
       .row .result,
       .row .domain,
-      .row .arrow,
-      .row .thumb {
-        animation:
-          reveal linear both,
-          leave linear forwards;
-        animation-timeline: --row, --row;
-        animation-range:
-          entry 60px entry 300px,
-          exit calc(100% - 150px) exit 100%;
+      .row .arrow {
+        animation: reveal linear both;
+        animation-timeline: --row;
+        animation-range: entry 20px entry 120px;
       }
       .row .num {
-        animation-name: slide-in-left, leave;
-        animation-range:
-          entry 0px entry 220px,
-          exit calc(100% - 150px) exit 100%;
+        animation-name: slide-in-left;
+        animation-range: entry 0px entry 100px;
       }
       .row .title {
-        animation-name: unmask, leave;
-        animation-range:
-          entry 10px entry 250px,
-          exit calc(100% - 150px) exit 100%;
+        animation-name: unmask;
+        animation-range: entry 0px entry 110px;
       }
       .row .result {
-        animation-range:
-          entry 100px entry 340px,
-          exit calc(100% - 150px) exit 100%;
+        animation-range: entry 35px entry 135px;
       }
       /* These two move on hover, so only their opacity is animated here. */
       .row .domain,
       .row .arrow {
-        animation-name: fade-in, fade-out;
-        animation-range:
-          entry 140px entry 380px,
-          exit calc(100% - 150px) exit 100%;
+        animation-name: fade-in;
+        animation-range: entry 50px entry 150px;
       }
     }
   }

@@ -47,10 +47,10 @@ const sections = [
 
   <section class="section wrap ledger" id="highlighted" data-rule>
     <h2 class="sec-title marked"><span data-reveal="mask-in">Highlighted project</span></h2>
-    <article class="lead g9">
+    <article class="lead g9" data-vt-scope>
       <div class="lead-text">
-        <h3 class="lead-title display" style={`view-transition-name: work-${lead.id}`} data-reveal>
-          <span class="num mono">{num(lead.data.order)}</span>
+        <h3 class="lead-title display" data-vt={`work-${lead.id}`} data-reveal>
+          <span class="num mono" aria-hidden="true">{num(lead.data.order)}</span>
           <a class="quiet" href={href(`/work/${lead.id}/`)}>{lead.data.title}</a>
         </h3>
         <p class="lead-question" data-reveal>{lead.data.question}</p>
@@ -210,8 +210,11 @@ const sections = [
     font-size: var(--t-sm);
     line-height: 1.5;
   }
-  .lead-result span:last-child {
+  /* The result is the proof: reading size, main ink. */
+  .lead-result > span:last-child {
     max-width: 32rem;
+    color: var(--ink);
+    font-size: var(--t-md);
   }
   .lead-links {
     display: flex;

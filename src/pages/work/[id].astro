@@ -276,7 +276,7 @@ const num = (n: number) => String(n).padStart(2, '0');
   }
   .evidence {
     max-width: 32rem;
-    font-size: var(--t-sm);
+    color: var(--ink);
     line-height: 1.5;
   }
   .links {
@@ -376,21 +376,22 @@ const num = (n: number) => String(n).padStart(2, '0');
   }
 
   /* ---------- Body: the evidence ---------- */
+  /* A section's heading is a clear step above the text, so the page can be scanned by
+     its headings. */
   .prose :global(h2),
   .outcome h2 {
-    margin-top: clamp(2.5rem, 5vw, 3.5rem);
-    font-size: var(--t-h3);
+    margin-top: clamp(2.75rem, 5vw, 3.75rem);
+    font-size: var(--t-h2);
+    line-height: 1.15;
     letter-spacing: -0.02em;
   }
-  @media (prefers-reduced-motion: no-preference) {
+  @media (prefers-reduced-motion: no-preference) and (min-width: 43.75em) {
     @supports (animation-timeline: view()) {
-      /* They only arrive. The list of sections jumps to them, and a departure timed by
-         the scroll would leave the one just jumped to half faded under the header. */
       .prose :global(h2),
       .outcome h2 {
         animation: unmask linear both;
         animation-timeline: view(block var(--header-h) 0px);
-        animation-range: entry 20px entry 220px;
+        animation-range: entry 10px entry 110px;
       }
     }
   }

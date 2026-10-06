@@ -76,6 +76,7 @@ const contactLabel = contact.accessKey || dev ? 'Send a message' : 'Ways to reac
           <span class="live-dot" aria-hidden="true"></span>
           Local time <span data-clock>in California</span>
         </span>
+        <button class="pause" type="button" data-pause="motion">Pause motion</button>
       </span>
       <nav aria-label="Footer">
         <a href={href('/')}>Home</a>
@@ -251,6 +252,16 @@ const contactLabel = contact.accessKey || dev ? 'Send a message' : 'Ways to reac
     display: inline-flex;
     align-items: center;
     gap: 0.6em;
+  }
+  /* The word that stops what moves, set like the line it sits in. */
+  .meta .pause {
+    padding-block: 0.3rem;
+    margin-block: -0.3rem;
+    color: inherit;
+    font: inherit;
+  }
+  .meta .pause:hover {
+    color: var(--footer-ink);
   }
   .base nav {
     display: flex;

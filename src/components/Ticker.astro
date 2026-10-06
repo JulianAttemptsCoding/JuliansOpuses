@@ -1,10 +1,9 @@
 ---
-// A slow band of the fields the work sits in, separated by the five verdict glyphs.
-// It drifts at one steady speed, pauses under the pointer, and stops with everything
-// else when the reader presses Pause. Decorative: everything in it is stated elsewhere on
-// the page, so it is hidden from assistive tech.
-import { STATUS_ORDER } from '../data/verdicts';
-
+// A slow band of the fields the work sits in. It drifts at one steady speed, pauses under
+// the pointer, and stops with everything else when the reader presses Pause. The mark
+// between the names is a plain stroke: the five status symbols mean something on this
+// site, so they are not used as decoration. Decorative: everything in it is stated
+// elsewhere on the page, so it is hidden from assistive tech.
 const fields = [
   'Experimental high-energy physics',
   'Detector simulation',
@@ -25,32 +24,10 @@ const copies = Array.from({ length: COPIES }, (_, i) => i);
     {
       copies.map(() => (
         <ul>
-          {fields.map((f, i) => (
+          {fields.map((f) => (
             <li>
               <span>{f}</span>
-              <svg class="glyph" viewBox="0 0 12 12" width="11" height="11">
-                {STATUS_ORDER[i % 5] === 'holds' && <circle cx="6" cy="6" r="5" fill="currentColor" />}
-                {STATUS_ORDER[i % 5] === 'open' && (
-                  <>
-                    <circle cx="6" cy="6" r="4.25" fill="none" stroke="currentColor" stroke-width="1.5" />
-                    <path d="M6 1.75a4.25 4.25 0 0 1 0 8.5z" fill="currentColor" />
-                  </>
-                )}
-                {STATUS_ORDER[i % 5] === 'prototype' && (
-                  <circle cx="6" cy="6" r="4.25" fill="none" stroke="currentColor" stroke-width="1.5" />
-                )}
-                {STATUS_ORDER[i % 5] === 'shipped' && (
-                  <rect x="2.5" y="2.5" width="7" height="7" fill="currentColor" transform="rotate(45 6 6)" />
-                )}
-                {STATUS_ORDER[i % 5] === 'negative' && (
-                  <path
-                    d="M2.25 2.25l7.5 7.5M9.75 2.25l-7.5 7.5"
-                    stroke="currentColor"
-                    stroke-width="1.75"
-                    stroke-linecap="round"
-                  />
-                )}
-              </svg>
+              <span class="sep">/</span>
             </li>
           ))}
         </ul>
@@ -89,9 +66,10 @@ const copies = Array.from({ length: COPIES }, (_, i) => i);
     color: var(--ink-2);
     white-space: nowrap;
   }
-  .glyph {
+  .sep {
     flex: none;
-    color: var(--ink);
+    color: var(--ink-3);
+    font-weight: 300;
   }
 
   @keyframes tick {

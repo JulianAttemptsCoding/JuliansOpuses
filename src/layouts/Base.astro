@@ -3,6 +3,10 @@
 import '@fontsource-variable/source-serif-4/opsz.css';
 import '@fontsource-variable/geist';
 import '@fontsource-variable/geist-mono';
+// The two fonts the first screen is set in are fetched as soon as the page starts, not
+// when the stylesheet that names them has been read.
+import serifFont from '@fontsource-variable/source-serif-4/files/source-serif-4-latin-opsz-normal.woff2?url';
+import sansFont from '@fontsource-variable/geist/files/geist-latin-wght-normal.woff2?url';
 import 'lenis/dist/lenis.css';
 import '../styles/global.css';
 import Header from '../components/Header.astro';
@@ -47,19 +51,10 @@ const person = {
 // is something that has a page or a section here. The timings live in one place: a beat
 // of dark screen while the page arrives, the phrases at a quick steady pace, the name
 // held, then the curtain lifts.
-const introWords = [
-  'Particle physics',
-  'Detector simulation',
-  'Machine learning',
-  'Math modeling',
-  'Web security',
-  'Hardware',
-  'School budgets',
-  'Hackathons',
-];
+const introWords = ['Particle physics', 'Machine learning', 'Math modeling', 'School budgets'];
 const INTRO_LEAD = 0.25; // seconds before the first phrase
 const INTRO_WORD = 0.24; // seconds each phrase is shown
-const INTRO_HOLD = 0.9; // seconds from the name appearing to the curtain starting to lift
+const INTRO_HOLD = 0.5; // seconds from the name appearing to the curtain starting to lift
 const INTRO_LIFT = 0.7; // seconds the curtain takes
 const introName = INTRO_LEAD + introWords.length * INTRO_WORD;
 const introOut = introName + INTRO_HOLD;
@@ -75,6 +70,8 @@ const introMs = Math.round((introOut + INTRO_LIFT) * 1000);
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
+    <link rel="preload" as="font" type="font/woff2" href={serifFont} crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href={sansFont} crossorigin />
     <link rel="icon" type="image/svg+xml" href={href('/favicon.svg')} />
     <link rel="sitemap" href={href('/sitemap.xml')} />
     <meta property="og:type" content="website" />
@@ -197,6 +194,22 @@ const introMs = Math.round((introOut + INTRO_LIFT) * 1000);
     setTimeout(done, Number(intro!.dataset.intro) + 500);
   });
 
+  // ---- A project's title travels to the title of its write-up, but only when that
+  // project is the thing that was pressed. A title that merely exists on both pages is
+  // not named, so it never flies across the window from somewhere out of sight when the
+  // reader was going somewhere else.
+  addEventListener(
+    'click',
+    (e) => {
+      const link = (e.target as Element | null)?.closest?.<HTMLAnchorElement>('a[href]');
+      const id = link?.pathname.match(/\/work\/([^/]+)\/$/)?.[1];
+      if (!link || !id) return;
+      const title = (link.closest('[data-vt-scope]') ?? link).querySelector<HTMLElement>(`[data-vt="work-${id}"]`);
+      if (title) title.style.viewTransitionName = `work-${id}`;
+    },
+    true,
+  );
+
   // ---- Page-to-page transitions: a link to something that cannot take part (the résumé
   // PDF, another site on this host) ends the transition early. That is expected, so the
   // rejection is absorbed here instead of surfacing as an error.
@@ -227,7 +240,8 @@ const introMs = Math.round((introOut + INTRO_LIFT) * 1000);
   const showPaused = () => {
     const paused = root.dataset.motion === 'paused';
     pauses.forEach((b) => {
-      b.textContent = paused ? 'Play' : 'Pause';
+      // A control away from the thing it stops names it: "Pause motion".
+      b.textContent = (paused ? 'Play' : 'Pause') + (b.dataset.pause ? ` ${b.dataset.pause}` : '');
       b.setAttribute('aria-label', paused ? 'Play the animations' : 'Pause the animations');
     });
   };
