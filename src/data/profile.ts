@@ -176,7 +176,9 @@ export const activities: {
   {
     title: 'Tutoring',
     role: 'Paid tutor',
-    body: 'I tutor math, science, and history, including precalculus, AP Calculus BC, AP Physics, chemistry, biology, AP European History, and AP U.S. History.',
+    // Nine: Calculus AB and BC and the two Physics C courses each count as two.
+    figures: [{ value: '9', label: 'AP courses' }],
+    body: 'I tutor nine AP courses: Calculus AB and BC, Chemistry, Biology, Physics 1, Physics C (Mechanics and E&M), U.S. History, and European History. I also tutor regular chemistry, biology, and the rest of high-school math.',
   },
 ];
 
